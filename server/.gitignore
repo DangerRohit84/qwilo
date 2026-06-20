@@ -1,6 +1,5 @@
 node_modules/
 dist/
-.expo/
+uploads/
 .env
 *.log
-uploads/

@@ -1,0 +1,183 @@
+import prisma from "../utils/prisma";
+import * as groqService from "./groq.service";
+import { uploadFromBuffer } from "../utils/cloudinary";
+
+export async function uploadHomeworkImage(
+  studentId: string,
+  buffer: Buffer,
+  mimetype: string
+) {
+  const url = await uploadFromBuffer(buffer, `homework/${studentId}`);
+
+  const session = await prisma.homeworkSession.create({
+    data: {
+      studentId,
+      homeworkImageUrl: url,
+      status: "PENDING",
+    },
+  });
+
+  return session;
+}
+
+export async function processHomework(sessionId: string) {
+  const session = await prisma.homeworkSession.findUnique({
+    where: { id: sessionId },
+  });
+  if (!session) throw new Error("Session not found");
+
+  await prisma.homeworkSession.update({
+    where: { id: sessionId },
+    data: { status: "PROCESSING" },
+  });
+
+  const ocrText = await groqService.ocrHomeworkImage(session.homeworkImageUrl);
+
+  const tasks = await groqService.parseTasksFromOcr(ocrText);
+
+  const createdTasks: any[] = [];
+  for (let i = 0; i < tasks.length; i++) {
+    const task = await prisma.task.create({
+      data: {
+        sessionId,
+        type: tasks[i].type,
+        subject: tasks[i].subject,
+        description: tasks[i].description,
+        orderIndex: i,
+      },
+    });
+    createdTasks.push(task);
+  }
+
+  await prisma.homeworkSession.update({
+    where: { id: sessionId },
+    data: { rawOcrText: ocrText, status: "COMPLETED" },
+  });
+
+  return { sessionId, ocrText, tasks: createdTasks };
+}
+
+export async function getStudentTasks(studentId: string) {
+  const sessions = await prisma.homeworkSession.findMany({
+    where: { studentId },
+    orderBy: { date: "desc" },
+    include: {
+      tasks: {
+        include: { submission: true },
+        orderBy: { orderIndex: "asc" },
+      },
+    },
+  });
+
+  const allTasks = sessions.flatMap((s) =>
+    s.tasks.map((t) => ({
+      ...t,
+      sessionDate: s.date,
+      sessionStatus: s.status,
+    }))
+  );
+
+  const pending = allTasks.filter((t) => t.status === "PENDING");
+  const completed = allTasks.filter((t) => t.status !== "PENDING");
+
+  return { pending, completed };
+}
+
+export async function submitTaskWork(
+  taskId: string,
+  buffers: { buffer: Buffer; mimetype: string }[]
+) {
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: { session: true },
+  });
+  if (!task) throw new Error("Task not found");
+
+  const urls: string[] = [];
+  for (const buf of buffers) {
+    const url = await uploadFromBuffer(
+      buf.buffer,
+      `submissions/${task.session.studentId}/${taskId}`
+    );
+    urls.push(url);
+  }
+
+  const analysis = await groqService.analyzeSubmittedWork(
+    urls,
+    task.type,
+    task.description
+  );
+
+  const submission = await prisma.submission.create({
+    data: {
+      taskId,
+      images: urls,
+      aiAnalysis: analysis,
+    },
+  });
+
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { status: "SUBMITTED" },
+  });
+
+  return submission;
+}
+
+export async function getStudentProgress(studentId: string) {
+  const sessions = await prisma.homeworkSession.findMany({
+    where: { studentId },
+    orderBy: { date: "desc" },
+    include: {
+      tasks: {
+        include: { submission: true, questions: { include: { answers: true } } },
+      },
+    },
+  });
+
+  const totalSessions = sessions.length;
+  const totalTasks = sessions.flatMap((s) => s.tasks);
+
+  const completedTasks = totalTasks.filter(
+    (t) => t.status === "COMPLETED" || t.status === "SUBMITTED"
+  );
+  const completionRate = totalTasks.length
+    ? Math.round((completedTasks.length / totalTasks.length) * 100)
+    : 0;
+
+  const allAnswers = totalTasks.flatMap((t) =>
+    t.questions.flatMap((q) => q.answers)
+  );
+  const correctAnswers = allAnswers.filter((a) => a.isCorrect);
+  const accuracy = allAnswers.length
+    ? Math.round((correctAnswers.length / allAnswers.length) * 100)
+    : 0;
+
+  const subjectBreakdown: Record<string, { total: number; completed: number }> =
+    {};
+  for (const t of totalTasks) {
+    const subj = t.subject || "Other";
+    if (!subjectBreakdown[subj])
+      subjectBreakdown[subj] = { total: 0, completed: 0 };
+    subjectBreakdown[subj].total++;
+    if (t.status === "COMPLETED" || t.status === "SUBMITTED")
+      subjectBreakdown[subj].completed++;
+  }
+
+  return {
+    totalSessions,
+    totalTasks: totalTasks.length,
+    completedTasks: completedTasks.length,
+    completionRate,
+    totalQuestions: allAnswers.length,
+    correctAnswers: correctAnswers.length,
+    accuracy,
+    subjectBreakdown,
+    recentSessions: sessions.slice(0, 7).map((s) => ({
+      id: s.id,
+      date: s.date,
+      status: s.status,
+      taskCount: s.tasks.length,
+    })),
+  };
+}

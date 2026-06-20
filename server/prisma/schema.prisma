@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  PARENT
+  TEACHER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role
+  name         String
+  pushToken    String?
+  createdAt    DateTime @default(now())
+
+  studentParents StudentParent[] @relation("Student")
+  parentStudents StudentParent[] @relation("Parent")
+  sessions       HomeworkSession[]
+  answers        Answer[]
+}
+
+model StudentParent {
+  id        String @id @default(cuid())
+  studentId String
+  parentId  String
+
+  student User @relation("Student", fields: [studentId], references: [id], onDelete: Cascade)
+  parent  User @relation("Parent", fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, parentId])
+}
+
+model HomeworkSession {
+  id               String   @id @default(cuid())
+  studentId        String
+  date             DateTime @default(now())
+  homeworkImageUrl String
+  rawOcrText       String?
+  status           String   @default("PENDING")
+  createdAt        DateTime @default(now())
+
+  student User  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  sessionId   String
+  type        String
+  subject     String?
+  description String
+  status      String   @default("PENDING")
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  session    HomeworkSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  submission Submission?
+  questions  Question[]
+}
+
+model Submission {
+  id          String   @id @default(cuid())
+  taskId      String   @unique
+  images      Json
+  aiAnalysis  String?
+  submittedAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id            String  @id @default(cuid())
+  taskId        String
+  questionText  String
+  type          String
+  options       Json?
+  correctAnswer String
+  createdAt     DateTime @default(now())
+
+  task    Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  answers Answer[]
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  questionId String
+  studentId  String
+  answerText String?
+  answerAudio String?
+  isCorrect  Boolean
+  score      Float?
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  student  User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
