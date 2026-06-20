@@ -31,7 +31,8 @@
         {
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for voice answers."
         }
-      ]
+      ],
+      "expo-asset"
     ]
   }
 }
