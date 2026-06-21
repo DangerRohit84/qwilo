@@ -96,12 +96,6 @@ export default function ParentDashboard() {
             <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
           </TouchableOpacity>
         )}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Ionicons name="people-outline" size={48} color={colors.textMuted} />
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No children linked yet</Text>
-          </View>
-        }
       />
     </View>
   );
@@ -151,6 +145,5 @@ const styles = StyleSheet.create({
   childInfo: { flex: 1 },
   childName: { fontSize: 16, fontWeight: "600" },
   childEmail: { fontSize: 13, marginTop: 2 },
-  empty: { alignItems: "center", marginTop: 60 },
-  emptyText: { fontSize: 16, marginTop: 12 },
+
 });
