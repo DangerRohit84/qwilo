@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Platform,
   Alert,
   ScrollView,
 } from "react-native";
@@ -23,17 +24,17 @@ export default function ProfileScreen() {
   }, []);
 
   async function handleLogout() {
-    Alert.alert("Logout", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-          router.replace("/(auth)");
-        },
-      },
-    ]);
+    const confirmed = Platform.OS === "web"
+      ? window.confirm("Are you sure you want to logout?")
+      : await new Promise<boolean>((resolve) => {
+          Alert.alert("Logout", "Are you sure?", [
+            { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+            { text: "Logout", style: "destructive", onPress: () => resolve(true) },
+          ]);
+        });
+    if (!confirmed) return;
+    await logout();
+    router.replace("/(auth)");
   }
 
   return (
