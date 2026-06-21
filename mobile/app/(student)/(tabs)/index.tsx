@@ -110,6 +110,12 @@ export default function StudentDashboard() {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
+        <View style={styles.headerRow}>
+          <View style={styles.logoBox}>
+            <Ionicons name="book" size={24} color="#fff" />
+          </View>
+          <Text style={[styles.logoText, { color: colors.text }]}>Qwilo</Text>
+        </View>
         <Text style={[styles.greeting, { color: colors.text }]}>
           Hi, {user?.name?.split(" ")[0] || "Student"}
         </Text>
@@ -176,6 +182,9 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8 },
+  headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
+  logoBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: "#4F46E5", justifyContent: "center", alignItems: "center" },
+  logoText: { fontSize: 22, fontWeight: "700", letterSpacing: 1 },
   greeting: { fontSize: 26, fontWeight: "800" },
   date: { fontSize: 14, marginTop: 4 },
   stats: {
