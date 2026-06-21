@@ -170,3 +170,32 @@ export async function evaluateVoiceAnswer(
     return { isCorrect: false, score: 0, feedback: "Could not evaluate." };
   }
 }
+
+export async function explainCorrectAnswer(
+  questionText: string,
+  correctAnswer: string,
+  studentAnswer: string
+): Promise<{ explanation: string }> {
+  const response = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [
+      {
+        role: "system",
+        content: "You explain correct answers to students. Given the question, correct answer, and the student's wrong answer, provide a brief explanation (2-3 sentences) of why the correct answer is right. Be encouraging and educational.",
+      },
+      {
+        role: "user",
+        content: `Question: "${questionText}"\nCorrect answer: "${correctAnswer}"\nStudent answered: "${studentAnswer}"\n\nExplain why the correct answer is right.`,
+      },
+    ],
+    response_format: { type: "json_object" },
+    max_tokens: 300,
+  });
+
+  const content = response.choices[0]?.message?.content || "{}";
+  try {
+    return JSON.parse(content);
+  } catch {
+    return { explanation: `The correct answer is: ${correctAnswer}` };
+  }
+}

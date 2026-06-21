@@ -274,12 +274,28 @@ export default function QuestionsScreen() {
             size={24}
             color={isCorrect ? "#10B981" : "#EF4444"}
           />
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.resultTitle}>
               {isCorrect ? "Correct!" : "Not quite"}
             </Text>
-            <Text style={styles.resultScore}>Score: {score}/100</Text>
+            {question?.type !== "MCQ" && (
+              <Text style={styles.resultScore}>Score: {score}/100</Text>
+            )}
+            {result.correctAnswer && (
+              <Text style={styles.correctAnswerText}>
+                Answer: {result.correctAnswer}
+              </Text>
+            )}
           </View>
+        </View>
+      )}
+
+      {answered && result?.explanation && (
+        <View style={styles.explanationBox}>
+          <Text style={styles.explanationTitle}>
+            {question?.type === "MCQ" ? "Explanation" : "How to Improve"}
+          </Text>
+          <Text style={styles.explanationText}>{result.explanation}</Text>
         </View>
       )}
 
@@ -378,6 +394,15 @@ const styles = StyleSheet.create({
   wrongBg: { backgroundColor: "#FEF2F2" },
   resultTitle: { fontSize: 16, fontWeight: "700" },
   resultScore: { fontSize: 14, color: "#6B7280", marginTop: 2 },
+  correctAnswerText: { fontSize: 14, color: "#059669", fontWeight: "600", marginTop: 4 },
+  explanationBox: {
+    backgroundColor: "#EFF6FF",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  explanationTitle: { fontSize: 14, fontWeight: "700", color: "#1D4ED8", marginBottom: 4 },
+  explanationText: { fontSize: 14, color: "#1E3A5F", lineHeight: 20 },
   nextBtn: {
     backgroundColor: "#4F46E5",
     padding: 16,

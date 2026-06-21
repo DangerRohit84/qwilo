@@ -58,6 +58,8 @@ export interface AnswerResult {
   };
   isCorrect: boolean;
   score: number;
+  correctAnswer: string;
+  explanation?: string;
 }
 
 export interface StudentProgress {

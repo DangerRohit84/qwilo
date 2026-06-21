@@ -89,10 +89,23 @@ export async function submitAnswer(
 
   let isCorrect = false;
   let score = 0;
+  let explanation: string | undefined;
 
   if (question.type === "MCQ") {
     isCorrect = answerText?.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
     score = isCorrect ? 100 : 0;
+    if (!isCorrect) {
+      try {
+        const res = await groqService.explainCorrectAnswer(
+          question.questionText,
+          question.correctAnswer,
+          answerText || ""
+        );
+        explanation = res.explanation;
+      } catch {
+        explanation = `The correct answer is: ${question.correctAnswer}`;
+      }
+    }
   } else {
     const result = await groqService.evaluateVoiceAnswer(
       question.questionText,
@@ -101,6 +114,7 @@ export async function submitAnswer(
     );
     isCorrect = result.isCorrect;
     score = result.score;
+    explanation = result.feedback;
   }
 
   const answer = await prisma.answer.create({
@@ -131,7 +145,7 @@ export async function submitAnswer(
     });
   }
 
-  return { answer, isCorrect, score };
+  return { answer, isCorrect, score, correctAnswer: question.correctAnswer, explanation };
 }
 
 function shuffleArray<T>(arr: T[]): T[] {
