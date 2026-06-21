@@ -125,36 +125,62 @@ export default function SessionDetailScreen() {
                 {task.questions.map((q) => {
                   const answer = q.answers?.[0];
                   return (
-                    <View key={q.id} style={[styles.qRow, { backgroundColor: colors.bg }]}>
-                      <View style={styles.qLeft}>
+                    <View key={q.id} style={[styles.qCard, { backgroundColor: colors.bg }]}>
+                      <View style={styles.qHeader}>
                         <View style={[styles.qTypeBg, { backgroundColor: colors.primary + "18" }]}>
-                          <Text style={[styles.qType, { color: colors.primary }]}>
+                          <Text style={[styles.qTypeText, { color: colors.primary }]}>
                             {q.type === "MCQ" ? "MCQ" : "Voice"}
                           </Text>
                         </View>
-                        <Text style={[styles.qText, { color: colors.text }]} numberOfLines={2}>
-                          {q.questionText}
-                        </Text>
+                        <Text style={[styles.qQuestion, { color: colors.text }]}>{q.questionText}</Text>
+                        {answer && (
+                          <Ionicons
+                            name={answer.isCorrect ? "checkmark-circle" : "close-circle"}
+                            size={20}
+                            color={answer.isCorrect ? colors.success : colors.danger}
+                          />
+                        )}
                       </View>
-                      {answer && (
-                        <View
-                          style={[
-                            styles.qScore,
-                            answer.isCorrect
-                              ? { backgroundColor: colors.success + "22" }
-                              : { backgroundColor: colors.danger + "22" },
-                          ]}
-                        >
-                          <Text
-                            style={{
-                              color: answer.isCorrect ? colors.success : colors.danger,
-                              fontSize: 12,
-                              fontWeight: "700",
-                            }}
-                          >
-                            {answer.score}
-                          </Text>
+
+                      {q.type === "MCQ" && q.options && typeof q.options === "object" && (
+                        <View style={styles.optionsWrap}>
+                          {Object.entries(q.options as Record<string, string>).map(([key, val]) => {
+                            const isStudentAnswer = answer?.answer === key || answer?.answer === val;
+                            let bg = "transparent";
+                            let border = colors.border;
+                            if (isStudentAnswer) {
+                              bg = answer?.isCorrect ? colors.success + "22" : colors.danger + "22";
+                              border = answer?.isCorrect ? colors.success : colors.danger;
+                            }
+                            return (
+                              <View key={key} style={[styles.optionRow, { backgroundColor: bg, borderColor: border }]}>
+                                <Text style={[styles.optionKey, { color: colors.textMuted }]}>{key}.</Text>
+                                <Text style={[styles.optionVal, { color: colors.text }]}>{val}</Text>
+                                {isStudentAnswer && (
+                                  <Ionicons name={answer?.isCorrect ? "checkmark-circle" : "close-circle"} size={16} color={answer?.isCorrect ? colors.success : colors.danger} />
+                                )}
+                              </View>
+                            );
+                          })}
                         </View>
+                      )}
+
+                      {q.type === "Voice" && answer && (
+                        <View style={styles.voiceRow}>
+                          <Ionicons name="mic" size={16} color={colors.textSecondary} />
+                          <Text style={[styles.voiceText, { color: colors.textSecondary }]} numberOfLines={2}>
+                            {answer.answer || "No transcription"}
+                          </Text>
+                          <View style={[styles.scoreBadge, { backgroundColor: answer.isCorrect ? colors.success + "22" : colors.danger + "22" }]}>
+                            <Text style={{ color: answer.isCorrect ? colors.success : colors.danger, fontSize: 12, fontWeight: "700" }}>
+                              {answer.score}
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+
+                      {answer?.feedback && (
+                        <Text style={[styles.feedbackText, { color: colors.textMuted }]}>Feedback: {answer.feedback}</Text>
                       )}
                     </View>
                   );
@@ -231,23 +257,37 @@ const styles = StyleSheet.create({
   },
   analysisTitle: { fontSize: 13, fontWeight: "600" },
   analysisText: { fontSize: 13, marginTop: 4, lineHeight: 18 },
-  qRow: {
+  qCard: { padding: 12, borderRadius: 8, marginTop: 8 },
+  qHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  qTypeBg: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  qTypeText: { fontSize: 10, fontWeight: "700" },
+  qQuestion: { fontSize: 14, fontWeight: "500", flex: 1 },
+  optionsWrap: { gap: 4, marginBottom: 4 },
+  optionRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 6,
+    gap: 6,
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 1,
   },
-  qLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8 },
-  qTypeBg: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  qType: { fontSize: 10, fontWeight: "700" },
-  qText: { fontSize: 13, flex: 1 },
-  qScore: {
+  optionKey: { fontSize: 13, fontWeight: "600", width: 16 },
+  optionVal: { fontSize: 13, flex: 1 },
+  voiceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  voiceText: { fontSize: 13, flex: 1, fontStyle: "italic" },
+  scoreBadge: {
     width: 32,
     height: 24,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
+  feedbackText: { fontSize: 12, marginTop: 4, lineHeight: 16, fontStyle: "italic" },
 });
