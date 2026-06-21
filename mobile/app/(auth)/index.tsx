@@ -33,6 +33,10 @@ export default function AuthScreen() {
       Alert.alert("Error", "Please fill all required fields");
       return;
     }
+    if (!isLogin && form.role === "STUDENT" && !form.parentEmail) {
+      Alert.alert("Error", "Please enter your parent's email");
+      return;
+    }
     setLoading(true);
     try {
       if (isLogin) {
@@ -117,7 +121,7 @@ export default function AuthScreen() {
             {form.role === "STUDENT" && (
               <TextInput
                 style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
-                placeholder="Parent Email (optional)"
+                placeholder="Parent Email"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 value={form.parentEmail}

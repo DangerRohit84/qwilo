@@ -18,15 +18,18 @@ export async function register(
     data: { email, passwordHash, name, role },
   });
 
-  if (role === "STUDENT" && parentEmail) {
+  if (role === "STUDENT") {
+    if (!parentEmail) throw new Error("Parent email is required for student registration");
+
     const parent = await prisma.user.findUnique({
       where: { email: parentEmail },
     });
-    if (parent && parent.role === "PARENT") {
-      await prisma.studentParent.create({
-        data: { studentId: user.id, parentId: parent.id },
-      });
+    if (!parent || parent.role !== "PARENT") {
+      throw new Error("Parent not found with that email");
     }
+    await prisma.studentParent.create({
+      data: { studentId: user.id, parentId: parent.id },
+    });
   }
 
   const token = generateToken(user.id, user.email, user.role);
