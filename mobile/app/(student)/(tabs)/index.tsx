@@ -146,6 +146,7 @@ export default function StudentDashboard() {
       <Text style={[styles.sectionTitle, { color: colors.text }]}>Today's Tasks</Text>
 
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={[...(data?.pending || []), ...(data?.completed || [])]}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => renderTask(item)}
