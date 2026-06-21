@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Calendar } from "react-native-calendars";
 import api from "../../../services/api";
@@ -43,6 +43,7 @@ function getPresetRange(preset: Preset) {
 }
 
 export default function ProgressScreen() {
+  const router = useRouter();
   const [data, setData] = useState<StudentProgress | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -249,7 +250,11 @@ export default function ProgressScreen() {
         <Text style={styles.sectionTitle}>Tasks</Text>
         {tasks.length > 0 ? (
           tasks.map((t: any) => (
-            <View key={t.id} style={styles.taskRow}>
+            <TouchableOpacity
+              key={t.id}
+              style={styles.taskRow}
+              onPress={() => router.push(`/(student)/tasks/${t.id}`)}
+            >
               <View style={styles.taskLeft}>
                 <Ionicons
                   name={
@@ -285,7 +290,7 @@ export default function ProgressScreen() {
                   ? "Submitted"
                   : "Pending"}
               </Text>
-            </View>
+            </TouchableOpacity>
           ))
         ) : (
           <Text style={styles.emptyText}>No tasks in this period</Text>
