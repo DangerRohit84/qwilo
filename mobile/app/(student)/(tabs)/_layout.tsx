@@ -1,59 +1,13 @@
-import { useRef, useState, useEffect } from "react";
-import {
-  Platform,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  Dimensions,
-  View,
-} from "react-native";
+import { Platform, TouchableOpacity, StyleSheet, Animated, View } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
-
 export default function TabsLayout() {
   const { theme, toggle, colors } = useTheme();
-  const toggleRef = useRef<TouchableOpacity>(null);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const [btnPos, setBtnPos] = useState({ x: 0, y: 0, size: 40 });
-  const [cover, setCover] = useState(false);
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      toggleRef.current?.measureInWindow((x, y, w, h) => {
-        if (x || y) setBtnPos({ x: x + w / 2, y: y + h / 2, size: Math.max(w, h) });
-      });
-    }, 200);
-    return () => clearTimeout(id);
-  }, []);
-
-  function handleToggle() {
-    const cx = btnPos.x;
-    const cy = btnPos.y;
-    const maxDist = Math.max(
-      Math.sqrt(cx * cx + cy * cy),
-      Math.sqrt((SCREEN_W - cx) * (SCREEN_W - cx) + cy * cy),
-      Math.sqrt(cx * cx + (SCREEN_H - cy) * (SCREEN_H - cy)),
-      Math.sqrt((SCREEN_W - cx) * (SCREEN_W - cx) + (SCREEN_H - cy) * (SCREEN_H - cy))
-    );
-    const startScale = (maxDist * 2) / btnPos.size;
-
-    scaleAnim.setValue(startScale);
-    setCover(true);
-
-    toggle();
-
-    Animated.timing(scaleAnim, {
-      toValue: 0,
-      duration: 900,
-      useNativeDriver: true,
-    }).start(() => setCover(false));
-  }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -99,9 +53,8 @@ export default function TabsLayout() {
       </Tabs>
 
       <TouchableOpacity
-        ref={toggleRef}
         style={[styles.themeToggle, { backgroundColor: colors.card }]}
-        onPress={handleToggle}
+        onPress={toggle}
       >
         <Ionicons
           name={theme === "dark" ? "sunny" : "moon"}
@@ -109,22 +62,6 @@ export default function TabsLayout() {
           color={colors.text}
         />
       </TouchableOpacity>
-
-      {cover && (
-        <Animated.View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            left: btnPos.x - btnPos.size / 2,
-            top: btnPos.y - btnPos.size / 2,
-            width: btnPos.size,
-            height: btnPos.size,
-            borderRadius: btnPos.size / 2,
-            backgroundColor: theme === "dark" ? "#F9FAFB" : "#0F172A",
-            transform: [{ scale: scaleAnim }],
-          }}
-        />
-      )}
     </View>
   );
 }
