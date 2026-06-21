@@ -7,6 +7,30 @@ const router = Router();
 router.use(authenticate);
 router.use(authorize("PARENT"));
 
+router.get("/progress", async (req: AuthRequest, res: Response) => {
+  try {
+    const links = await prisma.studentParent.findMany({
+      where: { parentId: req.user!.id },
+      include: {
+        student: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    const { getStudentProgress } = await import("../services/homework.service");
+    const results = await Promise.all(
+      links.map(async (l: { student: { id: string; name: string; email: string } }) => {
+        const progress = await getStudentProgress(l.student.id);
+        return { id: l.student.id, name: l.student.name, email: l.student.email, ...progress };
+      })
+    );
+    res.json(results);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 router.get("/children", async (req: AuthRequest, res: Response) => {
   try {
     const links = await prisma.studentParent.findMany({

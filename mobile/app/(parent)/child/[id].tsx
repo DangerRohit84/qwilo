@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 24,
-    paddingTop: 56,
+    paddingTop: 40,
   },
   backBtn: { width: 28 },
   title: { fontSize: 20, fontWeight: "700" },

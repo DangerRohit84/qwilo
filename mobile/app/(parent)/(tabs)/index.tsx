@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 56,
+    paddingTop: 20,
     paddingBottom: 16,
   },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
