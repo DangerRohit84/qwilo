@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Calendar } from "react-native-calendars";
 import api from "../../../services/api";
 import { StudentProgress } from "../../../types";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 type Preset = "today" | "week" | "month" | "all";
 
@@ -44,6 +45,7 @@ function getPresetRange(preset: Preset) {
 
 export default function ProgressScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [data, setData] = useState<StudentProgress | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,28 +134,33 @@ export default function ProgressScreen() {
 
   if (loading && !data) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>My Progress</Text>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <ScrollView style={[styles.scroll, { backgroundColor: colors.bg }]} showsVerticalScrollIndicator={false}>
+        <Text style={[styles.title, { color: colors.text }]}>My Progress</Text>
 
         <View style={styles.presetRow}>
           {presets.map((p) => (
             <TouchableOpacity
               key={p.key}
-              style={[styles.presetBtn, preset === p.key && styles.presetActive]}
+              style={[
+                styles.presetBtn,
+                { backgroundColor: colors.card, borderColor: colors.border },
+                preset === p.key && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
               onPress={() => applyPreset(p.key)}
             >
               <Text
                 style={[
                   styles.presetText,
-                  preset === p.key && styles.presetTextActive,
+                  { color: colors.textSecondary },
+                  preset === p.key && { color: "#fff" },
                 ]}
               >
                 {p.label}
@@ -169,59 +176,64 @@ export default function ProgressScreen() {
           <Ionicons
             name={showCalendar ? "chevron-up" : "calendar"}
             size={18}
-            color="#4F46E5"
+            color={colors.primary}
           />
-          <Text style={styles.calendarToggleText}>
+          <Text style={[styles.calendarToggleText, { color: colors.primary }]}>
             {showCalendar ? "Hide Calendar" : "Pick a Date"}
           </Text>
         </TouchableOpacity>
 
         {showCalendar && (
-          <View style={styles.calendarWrap}>
+          <View style={[styles.calendarWrap, { backgroundColor: colors.card }]}>
             <Calendar
               onDayPress={onDayPress}
               markedDates={markedDates}
               theme={{
-                selectedDayBackgroundColor: "#4F46E5",
-                todayTextColor: "#4F46E5",
-                arrowColor: "#4F46E5",
+                selectedDayBackgroundColor: colors.primary,
+                todayTextColor: colors.primary,
+                arrowColor: colors.primary,
                 textMonthFontWeight: "700",
                 textDayFontSize: 14,
+                backgroundColor: colors.card,
+                calendarBackground: colors.card,
+                dayTextColor: colors.text,
+                textDisabledColor: colors.textMuted,
+                monthTextColor: colors.text,
               }}
             />
           </View>
         )}
 
         <View style={styles.cardsRow}>
-          <View style={[styles.card, styles.cardPrimary]}>
-            <Text style={styles.cardVal}>{data?.completionRate || 0}%</Text>
-            <Text style={styles.cardLabel}>Completion</Text>
+          <View style={[styles.card, { backgroundColor: colors.inputBg }]}>
+            <Text style={[styles.cardVal, { color: colors.text }]}>{data?.completionRate || 0}%</Text>
+            <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Completion</Text>
           </View>
-          <View style={[styles.card, styles.cardSuccess]}>
-            <Text style={styles.cardVal}>{data?.accuracy || 0}%</Text>
-            <Text style={styles.cardLabel}>Accuracy</Text>
+          <View style={[styles.card, { backgroundColor: colors.inputBg }]}>
+            <Text style={[styles.cardVal, { color: colors.text }]}>{data?.accuracy || 0}%</Text>
+            <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Accuracy</Text>
           </View>
         </View>
 
         <View style={styles.miniRow}>
-          <View style={styles.miniCard}>
-            <Ionicons name="checkmark-done" size={20} color="#10B981" />
-            <Text style={styles.miniVal}>{data?.totalTasks || 0}</Text>
-            <Text style={styles.miniLabel}>Tasks</Text>
+          <View style={[styles.miniCard, { backgroundColor: colors.card }]}>
+            <Ionicons name="checkmark-done" size={20} color={colors.success} />
+            <Text style={[styles.miniVal, { color: colors.text }]}>{data?.totalTasks || 0}</Text>
+            <Text style={[styles.miniLabel, { color: colors.textMuted }]}>Tasks</Text>
           </View>
-          <View style={styles.miniCard}>
-            <Ionicons name="help-circle" size={20} color="#4F46E5" />
-            <Text style={styles.miniVal}>{data?.totalQuestions || 0}</Text>
-            <Text style={styles.miniLabel}>Questions</Text>
+          <View style={[styles.miniCard, { backgroundColor: colors.card }]}>
+            <Ionicons name="help-circle" size={20} color={colors.primary} />
+            <Text style={[styles.miniVal, { color: colors.text }]}>{data?.totalQuestions || 0}</Text>
+            <Text style={[styles.miniLabel, { color: colors.textMuted }]}>Questions</Text>
           </View>
-          <View style={styles.miniCard}>
-            <Ionicons name="calendar" size={20} color="#F59E0B" />
-            <Text style={styles.miniVal}>{data?.totalSessions || 0}</Text>
-            <Text style={styles.miniLabel}>Sessions</Text>
+          <View style={[styles.miniCard, { backgroundColor: colors.card }]}>
+            <Ionicons name="calendar" size={20} color={colors.warning} />
+            <Text style={[styles.miniVal, { color: colors.text }]}>{data?.totalSessions || 0}</Text>
+            <Text style={[styles.miniLabel, { color: colors.textMuted }]}>Sessions</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>By Subject</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>By Subject</Text>
         {data?.subjectBreakdown &&
           Object.entries(data.subjectBreakdown).length > 0 ? (
           Object.entries(data.subjectBreakdown).map(([subject, stats]) => {
@@ -231,28 +243,28 @@ export default function ProgressScreen() {
                 : 0;
             return (
               <View key={subject} style={styles.subjectRow}>
-                <Text style={styles.subjectName}>{subject}</Text>
-                <View style={styles.subjectBar}>
+                <Text style={[styles.subjectName, { color: colors.textSecondary }]}>{subject}</Text>
+                <View style={[styles.subjectBar, { backgroundColor: colors.border }]}>
                   <View
-                    style={[styles.subjectFill, { width: `${pct}%` }]}
+                    style={[styles.subjectFill, { width: `${pct}%`, backgroundColor: colors.primary }]}
                   />
                 </View>
-                <Text style={styles.subjectStat}>
+                <Text style={[styles.subjectStat, { color: colors.textSecondary }]}>
                   {stats.completed}/{stats.total}
                 </Text>
               </View>
             );
           })
         ) : (
-          <Text style={styles.emptyText}>No data for this period</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>No data for this period</Text>
         )}
 
-        <Text style={styles.sectionTitle}>Tasks</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Tasks</Text>
         {tasks.length > 0 ? (
           tasks.map((t: any) => (
             <TouchableOpacity
               key={t.id}
-              style={styles.taskRow}
+              style={[styles.taskRow, { backgroundColor: colors.card }]}
               onPress={() => router.push(`/(student)/tasks/${t.id}`)}
             >
               <View style={styles.taskLeft}>
@@ -267,23 +279,23 @@ export default function ProgressScreen() {
                   size={18}
                   color={
                     t.status === "COMPLETED"
-                      ? "#10B981"
+                      ? colors.success
                       : t.status === "SUBMITTED"
-                      ? "#F59E0B"
-                      : "#9CA3AF"
+                      ? colors.warning
+                      : colors.textMuted
                   }
                 />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.taskDesc} numberOfLines={2}>
+                  <Text style={[styles.taskDesc, { color: colors.text }]} numberOfLines={2}>
                     {t.description}
                   </Text>
-                  <Text style={styles.taskMeta}>
+                  <Text style={[styles.taskMeta, { color: colors.textMuted }]}>
                     {t.subject} &middot;{" "}
                     {new Date(t.sessionDate).toLocaleDateString()}
                   </Text>
                 </View>
               </View>
-              <Text style={styles.taskStatus}>
+              <Text style={[styles.taskStatus, { color: colors.textSecondary }]}>
                 {t.status === "COMPLETED"
                   ? "Done"
                   : t.status === "SUBMITTED"
@@ -293,7 +305,7 @@ export default function ProgressScreen() {
             </TouchableOpacity>
           ))
         ) : (
-          <Text style={styles.emptyText}>No tasks in this period</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>No tasks in this period</Text>
         )}
 
         <View style={{ height: 40 }} />
@@ -303,13 +315,12 @@ export default function ProgressScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   scroll: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   title: {
     fontSize: 26,
     fontWeight: "800",
-    color: "#111827",
     marginBottom: 20,
   },
   presetRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
@@ -317,13 +328,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
-  presetActive: { backgroundColor: "#4F46E5", borderColor: "#4F46E5" },
-  presetText: { fontSize: 13, fontWeight: "600", color: "#374151" },
-  presetTextActive: { color: "#fff" },
+  presetText: { fontSize: 13, fontWeight: "600" },
   calendarToggle: {
     flexDirection: "row",
     alignItems: "center",
@@ -334,10 +341,8 @@ const styles = StyleSheet.create({
   calendarToggleText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#4F46E5",
   },
   calendarWrap: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     overflow: "hidden",
     marginBottom: 16,
@@ -354,14 +359,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  cardPrimary: { backgroundColor: "#EEF2FF" },
-  cardSuccess: { backgroundColor: "#F0FDF4" },
-  cardVal: { fontSize: 32, fontWeight: "800", color: "#111827" },
-  cardLabel: { fontSize: 13, color: "#6B7280", marginTop: 4, fontWeight: "600" },
+  cardVal: { fontSize: 32, fontWeight: "800" },
+  cardLabel: { fontSize: 13, marginTop: 4, fontWeight: "600" },
   miniRow: { flexDirection: "row", gap: 12, marginBottom: 20 },
   miniCard: {
     flex: 1,
-    backgroundColor: "#fff",
     padding: 14,
     borderRadius: 12,
     alignItems: "center",
@@ -372,12 +374,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  miniVal: { fontSize: 20, fontWeight: "700", color: "#111827" },
-  miniLabel: { fontSize: 11, color: "#9CA3AF", fontWeight: "600" },
+  miniVal: { fontSize: 20, fontWeight: "700" },
+  miniLabel: { fontSize: 11, fontWeight: "600" },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#111827",
     marginTop: 20,
     marginBottom: 12,
   },
@@ -390,47 +391,26 @@ const styles = StyleSheet.create({
   subjectName: {
     width: 80,
     fontSize: 14,
-    color: "#374151",
     fontWeight: "600",
   },
   subjectBar: {
     flex: 1,
     height: 8,
-    backgroundColor: "#E5E7EB",
     borderRadius: 4,
     overflow: "hidden",
   },
-  subjectFill: { height: "100%", backgroundColor: "#4F46E5", borderRadius: 4 },
+  subjectFill: { height: "100%", borderRadius: 4 },
   subjectStat: {
     width: 50,
     textAlign: "right",
     fontSize: 13,
-    color: "#6B7280",
     fontWeight: "600",
   },
-  emptyText: { color: "#9CA3AF", fontSize: 14, textAlign: "center", marginTop: 8 },
-  sessionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 8,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  sessionLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
-  sessionDate: { fontSize: 14, color: "#374151", fontWeight: "500" },
-  sessionTasks: { fontSize: 13, color: "#6B7280" },
+  emptyText: { fontSize: 14, textAlign: "center", marginTop: 8 },
   taskRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#fff",
     padding: 14,
     borderRadius: 10,
     marginBottom: 8,
@@ -441,7 +421,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   taskLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
-  taskDesc: { fontSize: 14, color: "#374151", fontWeight: "500" },
-  taskMeta: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
-  taskStatus: { fontSize: 12, fontWeight: "600", color: "#6B7280", marginLeft: 8 },
+  taskDesc: { fontSize: 14, fontWeight: "500" },
+  taskMeta: { fontSize: 12, marginTop: 2 },
+  taskStatus: { fontSize: 12, fontWeight: "600", marginLeft: 8 },
 });

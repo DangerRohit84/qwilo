@@ -68,3 +68,23 @@ export async function getToken(): Promise<string | null> {
     return null;
   }
 }
+
+export async function getStoredData(key: string): Promise<string | null> {
+  try {
+    return await storage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+export async function storeData(key: string, value: string) {
+  try {
+    await storage.setItem(key, value);
+  } catch {}
+}
+
+export async function removeData(key: string) {
+  try {
+    await storage.removeItem(key);
+  } catch {}
+}

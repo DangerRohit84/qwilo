@@ -14,8 +14,11 @@ import api from "../../../services/api";
 import { getStoredUser } from "../../../services/auth";
 import { TaskListResponse, User } from "../../../types";
 
+import { useTheme } from "../../../contexts/ThemeContext";
+
 export default function StudentDashboard() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [data, setData] = useState<TaskListResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,18 +67,22 @@ export default function StudentDashboard() {
     const isPending = item.status === "PENDING";
     return (
       <TouchableOpacity
-        style={[styles.taskCard, isPending ? styles.pending : styles.completed]}
+        style={[
+          styles.taskCard,
+          isPending ? styles.pending : styles.completed,
+          { backgroundColor: colors.card, borderLeftColor: isPending ? colors.primary : colors.success },
+        ]}
         onPress={() => router.push(`/(student)/tasks/${item.id}`)}
       >
         <View style={styles.taskLeft}>
           <Ionicons
             name={typeIcon(item.type)}
             size={24}
-            color={isPending ? "#4F46E5" : "#10B981"}
+            color={isPending ? colors.primary : colors.success}
           />
           <View style={styles.taskInfo}>
-            <Text style={styles.taskSubject}>{item.subject || "Task"}</Text>
-            <Text style={styles.taskDesc} numberOfLines={1}>
+            <Text style={[styles.taskSubject, { color: colors.text }]}>{item.subject || "Task"}</Text>
+            <Text style={[styles.taskDesc, { color: colors.textSecondary }]} numberOfLines={1}>
               {item.description}
             </Text>
           </View>
@@ -83,7 +90,7 @@ export default function StudentDashboard() {
         <Ionicons
           name={isPending ? "ellipse-outline" : "checkmark-circle"}
           size={24}
-          color={isPending ? "#D1D5DB" : "#10B981"}
+          color={isPending ? colors.textMuted : colors.success}
         />
       </TouchableOpacity>
     );
@@ -91,8 +98,8 @@ export default function StudentDashboard() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -101,12 +108,12 @@ export default function StudentDashboard() {
   const completedCount = data?.completed?.length || 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>
+        <Text style={[styles.greeting, { color: colors.text }]}>
           Hi, {user?.name?.split(" ")[0] || "Student"}
         </Text>
-        <Text style={styles.date}>
+        <Text style={[styles.date, { color: colors.textSecondary }]}>
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             month: "long",
@@ -116,27 +123,27 @@ export default function StudentDashboard() {
       </View>
 
       <View style={styles.stats}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNum}>{pendingCount}</Text>
-          <Text style={styles.statLabel}>Pending</Text>
+        <View style={[styles.statBox, { backgroundColor: colors.card }]}>
+          <Text style={[styles.statNum, { color: colors.primary }]}>{pendingCount}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pending</Text>
         </View>
-        <View style={styles.statBox}>
-          <Text style={[styles.statNum, { color: "#10B981" }]}>
+        <View style={[styles.statBox, { backgroundColor: colors.card }]}>
+          <Text style={[styles.statNum, { color: colors.success }]}>
             {completedCount}
           </Text>
-          <Text style={styles.statLabel}>Completed</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Completed</Text>
         </View>
       </View>
 
       <TouchableOpacity
-        style={styles.uploadBtn}
+        style={[styles.uploadBtn, { backgroundColor: colors.primary }]}
         onPress={() => router.push("/(student)/homework-upload")}
       >
         <Ionicons name="camera" size={24} color="#fff" />
         <Text style={styles.uploadBtnText}>Upload Homework</Text>
       </TouchableOpacity>
 
-      <Text style={styles.sectionTitle}>Today's Tasks</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Today's Tasks</Text>
 
       <FlatList
         data={[...(data?.pending || []), ...(data?.completed || [])]}
@@ -153,8 +160,8 @@ export default function StudentDashboard() {
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="clipboard-outline" size={48} color="#D1D5DB" />
-            <Text style={styles.emptyText}>
+            <Ionicons name="clipboard-outline" size={48} color={colors.textMuted} />
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
               Upload your homework to get started!
             </Text>
           </View>
@@ -165,11 +172,11 @@ export default function StudentDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8 },
-  greeting: { fontSize: 26, fontWeight: "800", color: "#111827" },
-  date: { fontSize: 14, color: "#6B7280", marginTop: 4 },
+  greeting: { fontSize: 26, fontWeight: "800" },
+  date: { fontSize: 14, marginTop: 4 },
   stats: {
     flexDirection: "row",
     gap: 12,
@@ -178,7 +185,6 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
@@ -187,13 +193,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  statNum: { fontSize: 28, fontWeight: "700", color: "#4F46E5" },
-  statLabel: { fontSize: 14, color: "#6B7280", marginTop: 4 },
+  statNum: { fontSize: 28, fontWeight: "700" },
+  statLabel: { fontSize: 14, marginTop: 4 },
   uploadBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4F46E5",
     marginHorizontal: 24,
     padding: 16,
     borderRadius: 12,
@@ -204,7 +209,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#111827",
     paddingHorizontal: 24,
     marginBottom: 12,
   },
@@ -212,7 +216,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#fff",
     marginHorizontal: 24,
     marginBottom: 8,
     padding: 16,
@@ -222,12 +225,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
-  pending: { borderLeftWidth: 3, borderLeftColor: "#4F46E5" },
-  completed: { borderLeftWidth: 3, borderLeftColor: "#10B981", opacity: 0.7 },
+  pending: { borderLeftWidth: 3, opacity: 1 },
+  completed: { borderLeftWidth: 3, opacity: 0.7 },
   taskLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   taskInfo: { flex: 1 },
-  taskSubject: { fontSize: 14, fontWeight: "600", color: "#111827" },
-  taskDesc: { fontSize: 13, color: "#6B7280", marginTop: 2 },
+  taskSubject: { fontSize: 14, fontWeight: "600" },
+  taskDesc: { fontSize: 13, marginTop: 2 },
   empty: { alignItems: "center", marginTop: 60 },
-  emptyText: { color: "#9CA3AF", fontSize: 16, marginTop: 12 },
+  emptyText: { fontSize: 16, marginTop: 12 },
 });
