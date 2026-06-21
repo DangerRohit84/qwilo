@@ -1,18 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useColorScheme } from "react-native";
 import { getStoredData, storeData } from "../services/auth";
 
 type Theme = "light" | "dark";
-
-const ThemeContext = createContext<{
-  theme: Theme;
-  toggle: () => void;
-  colors: typeof lightColors;
-}>({
-  theme: "light",
-  toggle: () => {},
-  colors: lightColors,
-});
 
 export const lightColors = {
   bg: "#F9FAFB",
@@ -46,8 +35,17 @@ export const darkColors = {
   inputBg: "#334155",
 };
 
+const ThemeContext = createContext<{
+  theme: Theme;
+  toggle: () => void;
+  colors: typeof lightColors;
+}>({
+  theme: "light",
+  toggle: () => {},
+  colors: lightColors,
+});
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const system = useColorScheme();
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
