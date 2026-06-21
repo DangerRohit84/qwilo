@@ -7,13 +7,28 @@ import { useTheme } from "../../../contexts/ThemeContext";
 export default function TabsLayout() {
   const { theme, toggle, colors } = useTheme();
   const bgAnim = useRef(new Animated.Value(theme === "dark" ? 1 : 0)).current;
+  const contentOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.timing(bgAnim, {
-      toValue: theme === "dark" ? 1 : 0,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
+    Animated.sequence([
+      Animated.timing(contentOpacity, {
+        toValue: 0.85,
+        duration: 150,
+        useNativeDriver: false,
+      }),
+      Animated.parallel([
+        Animated.timing(bgAnim, {
+          toValue: theme === "dark" ? 1 : 0,
+          duration: 500,
+          useNativeDriver: false,
+        }),
+        Animated.timing(contentOpacity, {
+          toValue: 1,
+          duration: 350,
+          useNativeDriver: false,
+        }),
+      ]),
+    ]).start();
   }, [theme]);
 
   const bgColor = bgAnim.interpolate({
@@ -23,7 +38,8 @@ export default function TabsLayout() {
 
   return (
     <Animated.View style={{ flex: 1, backgroundColor: bgColor }}>
-      <Tabs
+      <Animated.View style={{ flex: 1, opacity: contentOpacity }}>
+        <Tabs
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: colors.primary,
@@ -90,6 +106,7 @@ export default function TabsLayout() {
           />
         </Animated.View>
       </TouchableOpacity>
+      </Animated.View>
     </Animated.View>
   );
 }
