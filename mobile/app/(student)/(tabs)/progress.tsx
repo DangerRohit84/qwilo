@@ -22,15 +22,21 @@ function getPresetRange(preset: Preset) {
   const d = now.getDate();
   switch (preset) {
     case "today":
-      return { startDate: new Date(y, m, d), endDate: new Date(y, m, d) };
+      return {
+        startDate: new Date(Date.UTC(y, m, d)),
+        endDate: new Date(Date.UTC(y, m, d, 23, 59, 59, 999)),
+      };
     case "week": {
       const day = now.getDay();
-      const start = new Date(y, m, d - (day === 0 ? 6 : day - 1));
-      const end = new Date(y, m, d + (day === 0 ? 0 : 7 - day));
+      const start = new Date(Date.UTC(y, m, d - (day === 0 ? 6 : day - 1)));
+      const end = new Date(Date.UTC(y, m, d + (day === 0 ? 0 : 7 - day), 23, 59, 59, 999));
       return { startDate: start, endDate: end };
     }
     case "month":
-      return { startDate: new Date(y, m, 1), endDate: new Date(y, m + 1, 0) };
+      return {
+        startDate: new Date(Date.UTC(y, m, 1)),
+        endDate: new Date(Date.UTC(y, m + 1, 0, 23, 59, 59, 999)),
+      };
     default:
       return { startDate: undefined, endDate: undefined };
   }
@@ -88,8 +94,9 @@ export default function ProgressScreen() {
   }
 
   function onDayPress(day: { dateString: string }) {
-    const d = new Date(day.dateString);
-    fetchProgress(d, d);
+    const start = new Date(day.dateString + "T00:00:00.000Z");
+    const end = new Date(day.dateString + "T23:59:59.999Z");
+    fetchProgress(start, end);
     setMarkedDates((prev) => ({
       ...prev,
       [day.dateString]: { selected: true, selectedColor: "#4F46E5" },
