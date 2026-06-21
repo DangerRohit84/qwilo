@@ -16,6 +16,7 @@ import { useTheme } from "../../../contexts/ThemeContext";
 export default function ChildProgressScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { id } = useLocalSearchParams();
   const [data, setData] = useState<StudentProgress | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,144 +29,139 @@ export default function ChildProgressScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={28} color="#111827" />
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <View style={[styles.header, { backgroundColor: colors.card }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Progress</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Progress</Text>
         <TouchableOpacity
           onPress={() => router.push(`/(parent)/sessions/${id}`)}
         >
-          <Ionicons name="calendar" size={24} color="#4F46E5" />
+          <Ionicons name="calendar" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         <View style={styles.cards}>
-          <View style={styles.card}>
-            <Text style={styles.cardValue}>{data?.completionRate}%</Text>
-            <Text style={styles.cardLabel}>Completion</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <Text style={[styles.cardValue, { color: colors.primary }]}>{data?.completionRate}%</Text>
+            <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Completion</Text>
           </View>
-          <View style={styles.card}>
-            <Text style={styles.cardValue}>{data?.accuracy}%</Text>
-            <Text style={styles.cardLabel}>Accuracy</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <Text style={[styles.cardValue, { color: colors.primary }]}>{data?.accuracy}%</Text>
+            <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Accuracy</Text>
           </View>
         </View>
 
         <View style={styles.cards}>
-          <View style={styles.cardSmall}>
-            <Text style={styles.cardValueSmall}>{data?.completedTasks}</Text>
-            <Text style={styles.cardLabel}>/{data?.totalTasks} Tasks</Text>
+          <View style={[styles.cardSmall, { backgroundColor: colors.card }]}>
+            <Text style={[styles.cardValueSmall, { color: colors.text }]}>{data?.completedTasks}</Text>
+            <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>/{data?.totalTasks} Tasks</Text>
           </View>
-          <View style={styles.cardSmall}>
-            <Text style={styles.cardValueSmall}>{data?.correctAnswers}</Text>
-            <Text style={styles.cardLabel}>/{data?.totalQuestions} Correct</Text>
+          <View style={[styles.cardSmall, { backgroundColor: colors.card }]}>
+            <Text style={[styles.cardValueSmall, { color: colors.text }]}>{data?.correctAnswers}</Text>
+            <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>/{data?.totalQuestions} Correct</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>By Subject</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>By Subject</Text>
         {data?.subjectBreakdown &&
           Object.entries(data.subjectBreakdown).map(([subject, stats]) => (
             <View key={subject} style={styles.subjectRow}>
-              <Text style={styles.subjectName}>{subject}</Text>
-              <View style={styles.subjectBar}>
+              <Text style={[styles.subjectName, { color: colors.text }]}>{subject}</Text>
+              <View style={[styles.subjectBar, { backgroundColor: colors.inputBg }]}>
                 <View
                   style={[
                     styles.subjectFill,
                     {
                       width: `${stats.total > 0 ? (stats.completed / stats.total) * 100 : 0}%`,
+                      backgroundColor: colors.primary,
                     },
                   ]}
                 />
               </View>
-              <Text style={styles.subjectStat}>
+              <Text style={[styles.subjectStat, { color: colors.textSecondary }]}>
                 {stats.completed}/{stats.total}
               </Text>
             </View>
           ))}
 
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Activity</Text>
         {data?.recentSessions.map((s) => (
           <TouchableOpacity
             key={s.id}
-            style={styles.sessionRow}
+            style={[styles.sessionRow, { backgroundColor: colors.card }]}
             onPress={() => router.push(`/(parent)/sessions/${s.id}`)}
           >
-            <Text style={styles.sessionDate}>
+            <Text style={[styles.sessionDate, { color: colors.text }]}>
               {new Date(s.date).toLocaleDateString()}
             </Text>
-            <Text style={styles.sessionTasks}>{s.taskCount} tasks</Text>
+            <Text style={[styles.sessionTasks, { color: colors.textSecondary }]}>{s.taskCount} tasks</Text>
             <View
               style={[
                 styles.statusBadge,
                 s.status === "COMPLETED"
-                  ? styles.statusDone
-                  : styles.statusPending,
+                  ? { backgroundColor: colors.success + "22" }
+                  : { backgroundColor: colors.warning + "22" },
               ]}
             >
               <Text
                 style={[
                   styles.statusText,
-                  s.status === "COMPLETED"
-                    ? styles.statusTextDone
-                    : styles.statusTextPending,
+                  { color: s.status === "COMPLETED" ? colors.success : colors.warning },
                 ]}
               >
                 {s.status}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
           </TouchableOpacity>
         ))}
-        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     padding: 24,
-    paddingTop: 60,
-    backgroundColor: "#fff",
+    paddingTop: 56,
   },
-  title: { fontSize: 20, fontWeight: "700", color: "#111827" },
+  backBtn: { width: 28 },
+  title: { fontSize: 20, fontWeight: "700" },
   content: { flex: 1, padding: 24 },
   cards: { flexDirection: "row", gap: 12, marginBottom: 12 },
   card: {
     flex: 1,
-    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 12,
     alignItems: "center",
   },
-  cardValue: { fontSize: 32, fontWeight: "700", color: "#4F46E5" },
-  cardLabel: { fontSize: 14, color: "#6B7280", marginTop: 4 },
+  cardValue: { fontSize: 32, fontWeight: "700" },
+  cardLabel: { fontSize: 14, marginTop: 4 },
   cardSmall: {
     flex: 1,
-    backgroundColor: "#fff",
     padding: 16,
     borderRadius: 12,
     alignItems: "center",
   },
-  cardValueSmall: { fontSize: 24, fontWeight: "700", color: "#111827" },
+  cardValueSmall: { fontSize: 24, fontWeight: "700" },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#111827",
     marginTop: 20,
     marginBottom: 12,
   },
@@ -175,30 +171,24 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 12,
   },
-  subjectName: { width: 80, fontSize: 14, color: "#374151", fontWeight: "500" },
+  subjectName: { width: 80, fontSize: 14, fontWeight: "500" },
   subjectBar: {
     flex: 1,
     height: 8,
-    backgroundColor: "#E5E7EB",
     borderRadius: 4,
     overflow: "hidden",
   },
-  subjectFill: { height: "100%", backgroundColor: "#4F46E5", borderRadius: 4 },
-  subjectStat: { width: 50, textAlign: "right", fontSize: 13, color: "#6B7280" },
+  subjectFill: { height: "100%", borderRadius: 4 },
+  subjectStat: { width: 50, textAlign: "right", fontSize: 13 },
   sessionRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
   },
-  sessionDate: { flex: 1, fontSize: 14, color: "#374151" },
-  sessionTasks: { fontSize: 14, color: "#6B7280", marginRight: 12 },
+  sessionDate: { flex: 1, fontSize: 14 },
+  sessionTasks: { fontSize: 14, marginRight: 12 },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20 },
-  statusDone: { backgroundColor: "#D1FAE5" },
-  statusPending: { backgroundColor: "#FEF3C7" },
   statusText: { fontSize: 12, fontWeight: "600" },
-  statusTextDone: { color: "#059669" },
-  statusTextPending: { color: "#D97706" },
 });

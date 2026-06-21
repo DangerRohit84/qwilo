@@ -33,24 +33,32 @@ export default function ParentDashboard() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>
-            Hi, {user?.name?.split(" ")[0] || "Parent"}
-          </Text>
-          <Text style={styles.subtitle}>Your Children</Text>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <View style={[styles.header, { backgroundColor: colors.card }]}>
+        <View style={styles.headerRow}>
+          <View style={styles.logoBox}>
+            <Ionicons name="book" size={20} color="#fff" />
+          </View>
+          <Text style={[styles.logoText, { color: colors.text }]}>Qwilo</Text>
         </View>
-        <TouchableOpacity onPress={() => setShowLogout(true)}>
-          <Ionicons name="log-out-outline" size={24} color="#EF4444" />
-        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <View>
+            <Text style={[styles.greeting, { color: colors.text }]}>
+              Hi, {user?.name?.split(" ")[0] || "Parent"}
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Your Children</Text>
+          </View>
+          <TouchableOpacity onPress={() => setShowLogout(true)} style={[styles.logoutIcon, { backgroundColor: colors.inputBg }]}>
+            <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ConfirmModal
@@ -70,10 +78,10 @@ export default function ParentDashboard() {
       <FlatList
         data={children}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 24 }}
+        contentContainerStyle={[styles.listContent, { padding: 24, paddingBottom: 100 }]}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.childCard}
+            style={[styles.childCard, { backgroundColor: colors.card }]}
             onPress={() => router.push(`/(parent)/child/${item.id}`)}
           >
             <View style={styles.avatar}>
@@ -82,16 +90,16 @@ export default function ParentDashboard() {
               </Text>
             </View>
             <View style={styles.childInfo}>
-              <Text style={styles.childName}>{item.name}</Text>
-              <Text style={styles.childEmail}>{item.email}</Text>
+              <Text style={[styles.childName, { color: colors.text }]}>{item.name}</Text>
+              <Text style={[styles.childEmail, { color: colors.textSecondary }]}>{item.email}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
           </TouchableOpacity>
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="people-outline" size={48} color="#D1D5DB" />
-            <Text style={styles.emptyText}>No children linked yet</Text>
+            <Ionicons name="people-outline" size={48} color={colors.textMuted} />
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No children linked yet</Text>
           </View>
         }
       />
@@ -100,29 +108,35 @@ export default function ParentDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
+    paddingHorizontal: 24,
+    paddingTop: 56,
+    paddingBottom: 16,
+  },
+  headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
+  logoBox: { width: 32, height: 32, borderRadius: 8, backgroundColor: "#4F46E5", justifyContent: "center", alignItems: "center" },
+  logoText: { fontSize: 18, fontWeight: "700", letterSpacing: 1 },
+  headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 24,
-    paddingTop: 60,
-    backgroundColor: "#fff",
   },
-  greeting: { fontSize: 24, fontWeight: "700", color: "#111827" },
-  subtitle: { fontSize: 14, color: "#6B7280", marginTop: 4 },
+  greeting: { fontSize: 24, fontWeight: "700" },
+  subtitle: { fontSize: 14, marginTop: 4 },
+  logoutIcon: { width: 40, height: 40, borderRadius: 10, justifyContent: "center", alignItems: "center" },
+  listContent: {},
   childCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
     elevation: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
   avatar: {
     width: 48,
@@ -135,8 +149,8 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: "#fff", fontSize: 20, fontWeight: "700" },
   childInfo: { flex: 1 },
-  childName: { fontSize: 16, fontWeight: "600", color: "#111827" },
-  childEmail: { fontSize: 13, color: "#6B7280", marginTop: 2 },
+  childName: { fontSize: 16, fontWeight: "600" },
+  childEmail: { fontSize: 13, marginTop: 2 },
   empty: { alignItems: "center", marginTop: 60 },
-  emptyText: { color: "#9CA3AF", fontSize: 16, marginTop: 12 },
+  emptyText: { fontSize: 16, marginTop: 12 },
 });
