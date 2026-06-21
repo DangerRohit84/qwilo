@@ -9,6 +9,7 @@ router.use(authorize("PARENT"));
 
 router.get("/progress", async (req: AuthRequest, res: Response) => {
   try {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
     const links = await prisma.studentParent.findMany({
       where: { parentId: req.user!.id },
       include: {
@@ -21,11 +22,33 @@ router.get("/progress", async (req: AuthRequest, res: Response) => {
     const { getStudentProgress } = await import("../services/homework.service");
     const results = await Promise.all(
       links.map(async (l: { student: { id: string; name: string; email: string } }) => {
-        const progress = await getStudentProgress(l.student.id);
+        const progress = await getStudentProgress(
+          l.student.id,
+          startDate ? new Date(startDate) : undefined,
+          endDate ? new Date(endDate) : undefined
+        );
         return { id: l.student.id, name: l.student.name, email: l.student.email, ...progress };
       })
     );
-    res.json(results);
+
+    const totalTasks = results.reduce((s: number, r: any) => s + (r.totalTasks || 0), 0);
+    const completedTasks = results.reduce((s: number, r: any) => s + (r.completedTasks || 0), 0);
+    const totalQuestions = results.reduce((s: number, r: any) => s + (r.totalQuestions || 0), 0);
+    const correctAnswers = results.reduce((s: number, r: any) => s + (r.correctAnswers || 0), 0);
+    const allSessions = results.flatMap((r: any) => r.recentSessions || []);
+
+    res.json({
+      children: results,
+      aggregated: {
+        completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+        accuracy: totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
+        completedTasks,
+        totalTasks,
+        correctAnswers,
+        totalQuestions,
+      },
+      recentSessions: allSessions.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
