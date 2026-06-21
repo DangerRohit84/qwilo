@@ -13,9 +13,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { login, register } from "../../services/auth";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function AuthScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -56,20 +58,21 @@ export default function AuthScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={[styles.container, { backgroundColor: colors.bg }]}
     >
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>Homework Tracker</Text>
-        <Text style={styles.subtitle}>
-          {isLogin ? "Welcome back!" : "Create your account"}
+        <Text style={[styles.title, { color: colors.primary }]}>Qwilo</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          {isLogin ? "Welcome back!" : "Start your learning journey"}
         </Text>
 
         {!isLogin && (
           <>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
               placeholder="Full Name"
+              placeholderTextColor={colors.textMuted}
               value={form.name}
               onChangeText={(t) => setForm({ ...form, name: t })}
             />
@@ -77,14 +80,16 @@ export default function AuthScreen() {
               <TouchableOpacity
                 style={[
                   styles.roleBtn,
-                  form.role === "STUDENT" && styles.roleActive,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  form.role === "STUDENT" && { borderColor: colors.primary, backgroundColor: colors.inputBg },
                 ]}
                 onPress={() => setForm({ ...form, role: "STUDENT" })}
               >
                 <Text
                   style={[
                     styles.roleText,
-                    form.role === "STUDENT" && styles.roleTextActive,
+                    { color: colors.textSecondary },
+                    form.role === "STUDENT" && { color: colors.primary, fontWeight: "600" },
                   ]}
                 >
                   Student
@@ -93,14 +98,16 @@ export default function AuthScreen() {
               <TouchableOpacity
                 style={[
                   styles.roleBtn,
-                  form.role === "PARENT" && styles.roleActive,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  form.role === "PARENT" && { borderColor: colors.primary, backgroundColor: colors.inputBg },
                 ]}
                 onPress={() => setForm({ ...form, role: "PARENT" })}
               >
                 <Text
                   style={[
                     styles.roleText,
-                    form.role === "PARENT" && styles.roleTextActive,
+                    { color: colors.textSecondary },
+                    form.role === "PARENT" && { color: colors.primary, fontWeight: "600" },
                   ]}
                 >
                   Parent
@@ -109,8 +116,9 @@ export default function AuthScreen() {
             </View>
             {form.role === "STUDENT" && (
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Parent Email (optional)"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 value={form.parentEmail}
                 onChangeText={(t) => setForm({ ...form, parentEmail: t })}
@@ -120,23 +128,25 @@ export default function AuthScreen() {
         )}
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
           placeholder="Email"
+          placeholderTextColor={colors.textMuted}
           keyboardType="email-address"
           autoCapitalize="none"
           value={form.email}
           onChangeText={(t) => setForm({ ...form, email: t })}
         />
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
           placeholder="Password"
+          placeholderTextColor={colors.textMuted}
           secureTextEntry
           value={form.password}
           onChangeText={(t) => setForm({ ...form, password: t })}
         />
 
         <TouchableOpacity
-          style={styles.btn}
+          style={[styles.btn, { backgroundColor: colors.primary }]}
           onPress={handleSubmit}
           disabled={loading}
         >
@@ -150,7 +160,7 @@ export default function AuthScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
-          <Text style={styles.switchText}>
+          <Text style={[styles.switchText, { color: colors.primary }]}>
             {isLogin
               ? "Don't have an account? Register"
               : "Already have an account? Login"}
@@ -162,7 +172,7 @@ export default function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   scroll: {
     flexGrow: 1,
     justifyContent: "center",
@@ -171,20 +181,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "800",
-    color: "#4F46E5",
     textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#6B7280",
     textAlign: "center",
     marginBottom: 32,
   },
   input: {
-    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#E5E7EB",
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
@@ -200,18 +206,10 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
     alignItems: "center",
-    backgroundColor: "#fff",
   },
-  roleActive: {
-    borderColor: "#4F46E5",
-    backgroundColor: "#EEF2FF",
-  },
-  roleText: { fontSize: 16, color: "#6B7280" },
-  roleTextActive: { color: "#4F46E5", fontWeight: "600" },
+  roleText: { fontSize: 16 },
   btn: {
-    backgroundColor: "#4F46E5",
     padding: 16,
     borderRadius: 12,
     alignItems: "center",
@@ -219,7 +217,6 @@ const styles = StyleSheet.create({
   },
   btnText: { color: "#fff", fontSize: 18, fontWeight: "600" },
   switchText: {
-    color: "#4F46E5",
     textAlign: "center",
     marginTop: 16,
     fontSize: 14,

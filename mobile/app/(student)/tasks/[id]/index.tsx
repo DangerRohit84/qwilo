@@ -15,10 +15,12 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../../../services/api";
 import { Task } from "../../../../types";
+import { useTheme } from "../../../../contexts/ThemeContext";
 
 export default function TaskDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -88,46 +90,46 @@ export default function TaskDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   if (!task) {
     return (
-      <View style={styles.center}>
-        <Text>Task not found</Text>
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <Text style={{ color: colors.text }}>Task not found</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <View style={[styles.header, { backgroundColor: colors.card }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={28} color="#111827" />
+          <Ionicons name="arrow-back" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Task Details</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Task Details</Text>
         <View style={{ width: 28 }} />
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.taskInfo}>
-          <Text style={styles.taskType}>{task.type}</Text>
-          <Text style={styles.taskSubject}>{task.subject}</Text>
-          <Text style={styles.taskDesc}>{task.description}</Text>
+        <View style={[styles.taskInfo, { backgroundColor: colors.card }]}>
+          <Text style={[styles.taskType, { color: colors.primary }]}>{task.type}</Text>
+          <Text style={[styles.taskSubject, { color: colors.text }]}>{task.subject}</Text>
+          <Text style={[styles.taskDesc, { color: colors.textSecondary }]}>{task.description}</Text>
         </View>
 
         {task.status === "PENDING" ? (
           <>
-            <Text style={styles.sectionLabel}>Upload Your Work</Text>
+            <Text style={[styles.sectionLabel, { color: colors.text }]}>Upload Your Work</Text>
             <TouchableOpacity
-              style={styles.addImageBtn}
+              style={[styles.addImageBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={pickWorkImage}
             >
-              <Ionicons name="add-circle" size={32} color="#4F46E5" />
-              <Text style={styles.addImageText}>Add Photos</Text>
+              <Ionicons name="add-circle" size={32} color={colors.primary} />
+              <Text style={[styles.addImageText, { color: colors.primary }]}>Add Photos</Text>
             </TouchableOpacity>
 
             <View style={styles.imageGrid}>
@@ -137,7 +139,7 @@ export default function TaskDetailScreen() {
             </View>
 
             <TouchableOpacity
-              style={styles.submitBtn}
+              style={[styles.submitBtn, { backgroundColor: colors.primary }]}
               onPress={submitWork}
               disabled={submitting}
             >
@@ -150,7 +152,7 @@ export default function TaskDetailScreen() {
           </>
         ) : task.status === "SUBMITTED" ? (
           <TouchableOpacity
-            style={styles.questionBtn}
+            style={[styles.questionBtn, { backgroundColor: colors.primary }]}
             onPress={() => router.push(`/(student)/tasks/${id}/questions`)}
           >
             <Ionicons name="help-circle" size={24} color="#fff" />
@@ -158,16 +160,16 @@ export default function TaskDetailScreen() {
           </TouchableOpacity>
         ) : task.status === "COMPLETED" ? (
           <View style={styles.completedBox}>
-            <Ionicons name="checkmark-circle" size={48} color="#10B981" />
-            <Text style={styles.completedText}>Completed!</Text>
+            <Ionicons name="checkmark-circle" size={48} color={colors.success} />
+            <Text style={[styles.completedText, { color: colors.success }]}>Completed!</Text>
           </View>
         ) : null}
       </ScrollView>
 
       {task.status === "COMPLETED" && task.questions?.some(q => q.answers?.length) && (
-        <View style={styles.bottomBar}>
+        <View style={[styles.bottomBar, { backgroundColor: colors.card }]}>
           <TouchableOpacity
-            style={styles.reviewBtn}
+            style={[styles.reviewBtn, { backgroundColor: colors.primary }]}
             onPress={() => router.push(`/(student)/tasks/${id}/review`)}
           >
             <Ionicons name="eye" size={20} color="#fff" />
@@ -180,7 +182,7 @@ export default function TaskDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
     flexDirection: "row",
@@ -188,12 +190,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 24,
     paddingTop: 60,
-    backgroundColor: "#fff",
   },
-  title: { fontSize: 20, fontWeight: "700", color: "#111827" },
+  title: { fontSize: 20, fontWeight: "700" },
   content: { flex: 1, padding: 24 },
   taskInfo: {
-    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 12,
     marginBottom: 20,
@@ -201,41 +201,35 @@ const styles = StyleSheet.create({
   taskType: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#4F46E5",
     textTransform: "uppercase",
     letterSpacing: 1,
   },
   taskSubject: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#111827",
     marginTop: 8,
   },
-  taskDesc: { fontSize: 15, color: "#6B7280", marginTop: 8, lineHeight: 22 },
+  taskDesc: { fontSize: 15, marginTop: 8, lineHeight: 22 },
   sectionLabel: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111827",
     marginBottom: 12,
   },
   addImageBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff",
     padding: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#E5E7EB",
     borderStyle: "dashed",
     gap: 8,
     marginBottom: 16,
   },
-  addImageText: { fontSize: 16, color: "#4F46E5", fontWeight: "600" },
+  addImageText: { fontSize: 16, fontWeight: "600" },
   imageGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 },
   thumb: { width: 100, height: 100, borderRadius: 8 },
   submitBtn: {
-    backgroundColor: "#4F46E5",
     padding: 16,
     borderRadius: 12,
     alignItems: "center",
@@ -245,7 +239,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4F46E5",
     padding: 16,
     borderRadius: 12,
     gap: 8,
@@ -253,21 +246,15 @@ const styles = StyleSheet.create({
   },
   questionBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   completedBox: { alignItems: "center", marginTop: 40 },
-  completedText: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#10B981",
-    marginTop: 12,
-  },
+  completedText: { fontSize: 20, fontWeight: "700", marginTop: 12 },
   reviewBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4F46E5",
     padding: 16,
     borderRadius: 12,
     gap: 8,
   },
   reviewBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  bottomBar: { padding: 16, paddingBottom: 32, backgroundColor: "#fff" },
+  bottomBar: { padding: 16, paddingBottom: 32 },
 });

@@ -12,10 +12,11 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../../services/api";
 import { HomeworkSession } from "../../../types";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 export default function SessionDetailScreen() {
-  const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
   const [session, setSession] = useState<HomeworkSession | null>(null);
   const [loading, setLoading] = useState(true);
 

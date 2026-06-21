@@ -11,10 +11,11 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../../services/api";
 import { StudentProgress } from "../../../types";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 export default function ChildProgressScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
   const [data, setData] = useState<StudentProgress | null>(null);
   const [loading, setLoading] = useState(true);
 

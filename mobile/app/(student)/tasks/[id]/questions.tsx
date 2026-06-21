@@ -14,10 +14,12 @@ import { Audio } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../../../services/api";
 import { Question, AnswerResult } from "../../../../types";
+import { useTheme } from "../../../../contexts/ThemeContext";
 
 export default function QuestionsScreen() {
   const { id: taskId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
   const [question, setQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answered, setAnswered] = useState(false);
@@ -160,19 +162,19 @@ export default function QuestionsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   if (done) {
     return (
-      <View style={styles.center}>
-        <Ionicons name="checkmark-done-circle" size={64} color="#10B981" />
-        <Text style={styles.doneTitle}>All Questions Answered!</Text>
-        <Text style={styles.doneSub}>Great job completing your homework</Text>
-        <TouchableOpacity style={styles.doneBtn} onPress={() => router.replace("/(student)/(tabs)")}>code: correct_answer
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <Ionicons name="checkmark-done-circle" size={64} color={colors.success} />
+        <Text style={[styles.doneTitle, { color: colors.text }]}>All Questions Answered!</Text>
+        <Text style={[styles.doneSub, { color: colors.textSecondary }]}>Great job completing your homework</Text>
+        <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={() => router.replace("/(student)/(tabs)")}>code: correct_answer
           <Text style={styles.doneBtnText}>Back to Dashboard</Text>
         </TouchableOpacity>
       </View>
@@ -183,16 +185,16 @@ export default function QuestionsScreen() {
   const score = result?.score;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Question</Text>
-        <Text style={styles.badge}>
+        <Text style={[styles.title, { color: colors.text }]}>Question</Text>
+        <Text style={[styles.badge, { color: colors.primary, backgroundColor: colors.inputBg }]}>
           {question?.type === "MCQ" ? "Multiple Choice" : "Voice Answer"}
         </Text>
       </View>
 
-      <View style={styles.questionBox}>
-        <Text style={styles.questionText}>{question?.questionText}</Text>
+      <View style={[styles.questionBox, { backgroundColor: colors.card }]}>
+        <Text style={[styles.questionText, { color: colors.text }]}>{question?.questionText}</Text>
       </View>
 
       {question?.type === "MCQ" ? (
@@ -206,9 +208,10 @@ export default function QuestionsScreen() {
                 key={i}
                 style={[
                   styles.option,
-                  isSelected && styles.selectedOption,
-                  isRight && styles.correctOption,
-                  isWrong && styles.wrongOption,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  isSelected && { borderColor: colors.primary },
+                  isRight && { borderColor: colors.success, backgroundColor: "#F0FDF4" },
+                  isWrong && { borderColor: colors.danger, backgroundColor: "#FEF2F2" },
                 ]}
                 onPress={() => !answered && submitMCQAnswer(opt)}
                 disabled={answered}
@@ -216,16 +219,17 @@ export default function QuestionsScreen() {
                 <Text
                   style={[
                     styles.optionText,
-                    isSelected && styles.selectedOptionText,
+                    { color: colors.textSecondary },
+                    isSelected && { color: colors.primary, fontWeight: "600" },
                   ]}
                 >
                   {opt}
                 </Text>
                 {isRight && (
-                  <Ionicons name="checkmark" size={20} color="#10B981" />
+                  <Ionicons name="checkmark" size={20} color={colors.success} />
                 )}
                 {isWrong && (
-                  <Ionicons name="close" size={20} color="#EF4444" />
+                  <Ionicons name="close" size={20} color={colors.danger} />
                 )}
               </TouchableOpacity>
             );
@@ -237,14 +241,15 @@ export default function QuestionsScreen() {
             style={styles.replayBtn}
             onPress={() => speakQuestion(question?.questionText || "")}
           >
-            <Ionicons name="volume-high" size={24} color="#4F46E5" />
-            <Text style={styles.replayText}>Listen Again</Text>
+            <Ionicons name="volume-high" size={24} color={colors.primary} />
+            <Text style={[styles.replayText, { color: colors.primary }]}>Listen Again</Text>
           </TouchableOpacity>
 
           {!recordedUri && (
             <TouchableOpacity
               style={[
                 styles.recordBtn,
+                { backgroundColor: colors.primary },
                 recording && styles.recordingActive,
               ]}
               onPress={recording ? stopRecording : startRecording}
@@ -266,23 +271,23 @@ export default function QuestionsScreen() {
         <View
           style={[
             styles.resultBox,
-            isCorrect ? styles.correctBg : styles.wrongBg,
+            isCorrect ? { backgroundColor: "#F0FDF4" } : { backgroundColor: "#FEF2F2" },
           ]}
         >
           <Ionicons
             name={isCorrect ? "happy-outline" : "sad-outline"}
             size={24}
-            color={isCorrect ? "#10B981" : "#EF4444"}
+            color={isCorrect ? colors.success : colors.danger}
           />
           <View style={{ flex: 1 }}>
-            <Text style={styles.resultTitle}>
+            <Text style={[styles.resultTitle, { color: isCorrect ? colors.success : colors.danger }]}>
               {isCorrect ? "Correct!" : "Not quite"}
             </Text>
             {question?.type !== "MCQ" && (
-              <Text style={styles.resultScore}>Score: {score}/100</Text>
+              <Text style={[styles.resultScore, { color: colors.textSecondary }]}>Score: {score}/100</Text>
             )}
             {result.correctAnswer && (
-              <Text style={styles.correctAnswerText}>
+              <Text style={[styles.correctAnswerText, { color: colors.success }]}>
                 Answer: {result.correctAnswer}
               </Text>
             )}
@@ -291,19 +296,19 @@ export default function QuestionsScreen() {
       )}
 
       {answered && result?.explanation && (
-        <View style={styles.explanationBox}>
-          <Text style={styles.explanationTitle}>
+        <View style={[styles.explanationBox, { backgroundColor: colors.inputBg }]}>
+          <Text style={[styles.explanationTitle, { color: colors.primary }]}>
             {question?.type === "MCQ" ? "Explanation" : "How to Improve"}
           </Text>
           {question?.type !== "MCQ" && result.correctAnswer && (
-            <Text style={styles.explanationSub}>Correct answer: {result.correctAnswer}</Text>
+            <Text style={[styles.explanationSub, { color: colors.success }]}>Correct answer: {result.correctAnswer}</Text>
           )}
-          <Text style={styles.explanationText}>{result.explanation}</Text>
+          <Text style={[styles.explanationText, { color: colors.textSecondary }]}>{result.explanation}</Text>
         </View>
       )}
 
       {answered && (
-        <TouchableOpacity style={styles.nextBtn} onPress={nextQuestion}>
+        <TouchableOpacity style={[styles.nextBtn, { backgroundColor: colors.primary }]} onPress={nextQuestion}>
           <Text style={styles.nextBtnText}>
             {done ? "Finish" : "Next Question"}
           </Text>
@@ -314,12 +319,11 @@ export default function QuestionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB", padding: 24 },
+  container: { flex: 1, padding: 24 },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F9FAFB",
     padding: 24,
   },
   header: {
@@ -329,39 +333,30 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 24,
   },
-  title: { fontSize: 24, fontWeight: "700", color: "#111827" },
+  title: { fontSize: 24, fontWeight: "700" },
   badge: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#4F46E5",
-    backgroundColor: "#EEF2FF",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   questionBox: {
-    backgroundColor: "#fff",
     padding: 24,
     borderRadius: 16,
     marginBottom: 24,
   },
-  questionText: { fontSize: 18, color: "#111827", lineHeight: 28 },
+  questionText: { fontSize: 18, lineHeight: 28 },
   options: { gap: 10, marginBottom: 24 },
   option: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#fff",
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#E5E7EB",
   },
-  selectedOption: { borderColor: "#4F46E5" },
-  correctOption: { borderColor: "#10B981", backgroundColor: "#F0FDF4" },
-  wrongOption: { borderColor: "#EF4444", backgroundColor: "#FEF2F2" },
-  optionText: { fontSize: 16, color: "#374151", flex: 1 },
-  selectedOptionText: { color: "#4F46E5", fontWeight: "600" },
+  optionText: { fontSize: 16, flex: 1 },
   voiceSection: { alignItems: "center", gap: 20, marginBottom: 24 },
   replayBtn: {
     flexDirection: "row",
@@ -369,12 +364,11 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 12,
   },
-  replayText: { fontSize: 16, color: "#4F46E5", fontWeight: "600" },
+  replayText: { fontSize: 16, fontWeight: "600" },
   recordBtn: {
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: "#4F46E5",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -393,31 +387,26 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 20,
   },
-  correctBg: { backgroundColor: "#F0FDF4" },
-  wrongBg: { backgroundColor: "#FEF2F2" },
   resultTitle: { fontSize: 16, fontWeight: "700" },
-  resultScore: { fontSize: 14, color: "#6B7280", marginTop: 2 },
-  correctAnswerText: { fontSize: 14, color: "#059669", fontWeight: "600", marginTop: 4 },
+  resultScore: { fontSize: 14, marginTop: 2 },
+  correctAnswerText: { fontSize: 14, fontWeight: "600", marginTop: 4 },
   explanationBox: {
-    backgroundColor: "#EFF6FF",
     padding: 16,
     borderRadius: 12,
     marginBottom: 20,
   },
-  explanationTitle: { fontSize: 14, fontWeight: "700", color: "#1D4ED8", marginBottom: 4 },
-  explanationSub: { fontSize: 14, fontWeight: "600", color: "#059669", marginBottom: 4 },
-  explanationText: { fontSize: 14, color: "#1E3A5F", lineHeight: 20 },
+  explanationTitle: { fontSize: 14, fontWeight: "700", marginBottom: 4 },
+  explanationSub: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
+  explanationText: { fontSize: 14, lineHeight: 20 },
   nextBtn: {
-    backgroundColor: "#4F46E5",
     padding: 16,
     borderRadius: 12,
     alignItems: "center",
   },
   nextBtnText: { color: "#fff", fontSize: 18, fontWeight: "600" },
-  doneTitle: { fontSize: 22, fontWeight: "700", color: "#111827", marginTop: 16 },
-  doneSub: { fontSize: 16, color: "#6B7280", marginTop: 8 },
+  doneTitle: { fontSize: 22, fontWeight: "700", marginTop: 16 },
+  doneSub: { fontSize: 16, marginTop: 8 },
   doneBtn: {
-    backgroundColor: "#4F46E5",
     padding: 16,
     borderRadius: 12,
     marginTop: 32,

@@ -14,8 +14,11 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../services/api";
 
+import { useTheme } from "../../contexts/ThemeContext";
+
 export default function HomeworkUploadScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -76,12 +79,12 @@ export default function HomeworkUploadScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <View style={[styles.header, { backgroundColor: colors.card }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={28} color="#111827" />
+          <Ionicons name="arrow-back" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Upload Homework</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Upload Homework</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -90,14 +93,14 @@ export default function HomeworkUploadScreen() {
           <Image source={{ uri: image }} style={styles.image} />
           <View style={styles.actionRow}>
             <TouchableOpacity
-              style={styles.retakeBtn}
+              style={[styles.retakeBtn, { borderColor: colors.primary }]}
               onPress={() => setImage(null)}
             >
-              <Ionicons name="refresh" size={20} color="#4F46E5" />
-              <Text style={styles.retakeText}>Retake</Text>
+              <Ionicons name="refresh" size={20} color={colors.primary} />
+              <Text style={[styles.retakeText, { color: colors.primary }]}>Retake</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.processBtn}
+              style={[styles.processBtn, { backgroundColor: colors.primary }]}
               onPress={uploadAndProcess}
               disabled={loading}
             >
@@ -111,13 +114,13 @@ export default function HomeworkUploadScreen() {
         </View>
       ) : (
         <View style={styles.options}>
-          <TouchableOpacity style={styles.optionBtn} onPress={pickImage}>
-            <Ionicons name="camera" size={40} color="#4F46E5" />
-            <Text style={styles.optionText}>Take Photo</Text>
+          <TouchableOpacity style={[styles.optionBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={pickImage}>
+            <Ionicons name="camera" size={40} color={colors.primary} />
+            <Text style={[styles.optionText, { color: colors.textSecondary }]}>Take Photo</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.optionBtn} onPress={pickFromGallery}>
-            <Ionicons name="images" size={40} color="#4F46E5" />
-            <Text style={styles.optionText}>Choose from Gallery</Text>
+          <TouchableOpacity style={[styles.optionBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={pickFromGallery}>
+            <Ionicons name="images" size={40} color={colors.primary} />
+            <Text style={[styles.optionText, { color: colors.textSecondary }]}>Choose from Gallery</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -126,16 +129,15 @@ export default function HomeworkUploadScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     padding: 24,
     paddingTop: 60,
-    backgroundColor: "#fff",
   },
-  title: { fontSize: 20, fontWeight: "700", color: "#111827" },
+  title: { fontSize: 20, fontWeight: "700" },
   options: {
     flex: 1,
     justifyContent: "center",
@@ -144,16 +146,14 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   optionBtn: {
-    backgroundColor: "#fff",
     width: "100%",
     padding: 32,
     borderRadius: 16,
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#E5E7EB",
     borderStyle: "dashed",
   },
-  optionText: { fontSize: 16, fontWeight: "600", color: "#374151", marginTop: 12 },
+  optionText: { fontSize: 16, fontWeight: "600", marginTop: 12 },
   preview: { flex: 1, padding: 24 },
   image: { flex: 1, borderRadius: 12, marginBottom: 16 },
   actionRow: { flexDirection: "row", gap: 12 },
@@ -165,13 +165,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#4F46E5",
     gap: 8,
   },
-  retakeText: { color: "#4F46E5", fontSize: 16, fontWeight: "600" },
+  retakeText: { fontSize: 16, fontWeight: "600" },
   processBtn: {
     flex: 1,
-    backgroundColor: "#4F46E5",
     padding: 16,
     borderRadius: 12,
     alignItems: "center",

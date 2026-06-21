@@ -11,10 +11,12 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../../../services/api";
 import { ReviewQuestion } from "../../../../types";
+import { useTheme } from "../../../../contexts/ThemeContext";
 
 export default function ReviewScreen() {
   const { id: taskId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
   const [questions, setQuestions] = useState<ReviewQuestion[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,36 +29,36 @@ export default function ReviewScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <View style={[styles.header, { backgroundColor: colors.card }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={28} color="#111827" />
+          <Ionicons name="arrow-back" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Review Answers</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Review Answers</Text>
         <View style={{ width: 28 }} />
       </View>
       <ScrollView style={styles.list}>
         {questions.length === 0 ? (
-          <Text style={styles.empty}>No questions found</Text>
+          <Text style={[styles.empty, { color: colors.textMuted }]}>No questions found</Text>
         ) : (
           questions.map((q, i) => (
-            <View key={q.id} style={styles.card}>
+            <View key={q.id} style={[styles.card, { backgroundColor: colors.card }]}>
               <View style={styles.cardHeader}>
-                <Text style={styles.qNum}>Q{i + 1}</Text>
-                <View style={[styles.badge, q.type === "MCQ" ? styles.mcqBadge : styles.voiceBadge]}>
-                  <Text style={[styles.badgeText, q.type === "MCQ" ? styles.mcqBadgeText : styles.voiceBadgeText]}>
+                <Text style={[styles.qNum, { color: colors.primary }]}>Q{i + 1}</Text>
+                <View style={[styles.badge, { backgroundColor: colors.inputBg }]}>
+                  <Text style={[styles.badgeText, { color: colors.primary }]}>
                     {q.type}
                   </Text>
                 </View>
               </View>
-              <Text style={styles.qText}>{q.questionText}</Text>
+              <Text style={[styles.qText, { color: colors.text }]}>{q.questionText}</Text>
 
               {q.type === "MCQ" && q.options && (
                 <View style={styles.options}>
@@ -68,16 +70,17 @@ export default function ReviewScreen() {
                         key={oi}
                         style={[
                           styles.optionRow,
-                          isCorrectAnswer && styles.correctOpt,
-                          isStudentAnswer && !isCorrectAnswer && styles.wrongOpt,
+                          { borderColor: colors.border },
+                          isCorrectAnswer && { borderColor: colors.success, backgroundColor: "#F0FDF4" },
+                          isStudentAnswer && !isCorrectAnswer && { borderColor: colors.danger, backgroundColor: "#FEF2F2" },
                         ]}
                       >
-                        <Text style={styles.optionText}>{opt}</Text>
+                        <Text style={[styles.optionText, { color: colors.textSecondary }]}>{opt}</Text>
                         {isCorrectAnswer && (
-                          <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                          <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                         )}
                         {isStudentAnswer && !isCorrectAnswer && (
-                          <Ionicons name="close-circle" size={20} color="#EF4444" />
+                          <Ionicons name="close-circle" size={20} color={colors.danger} />
                         )}
                       </View>
                     );
@@ -87,21 +90,21 @@ export default function ReviewScreen() {
 
               {q.type === "VOICE" && (
                 <View style={styles.voiceResult}>
-                  <Text style={styles.label}>Your answer:</Text>
-                  <Text style={styles.voiceAnswer}>{q.studentAnswer || "No answer"}</Text>
-                  <Text style={styles.label}>Correct answer:</Text>
-                  <Text style={styles.voiceCorrect}>{q.correctAnswer}</Text>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Your answer:</Text>
+                  <Text style={[styles.voiceAnswer, { color: colors.text }]}>{q.studentAnswer || "No answer"}</Text>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Correct answer:</Text>
+                  <Text style={[styles.voiceCorrect, { color: colors.success }]}>{q.correctAnswer}</Text>
                 </View>
               )}
 
               {q.score !== null && q.type !== "MCQ" && (
-                <View style={styles.scoreRow}>
+                <View style={[styles.scoreRow, { borderTopColor: colors.border }]}>
                   <Ionicons
                     name={q.isCorrect ? "checkmark-circle" : "close-circle"}
                     size={20}
-                    color={q.isCorrect ? "#10B981" : "#EF4444"}
+                    color={q.isCorrect ? colors.success : colors.danger}
                   />
-                  <Text style={[styles.scoreText, q.isCorrect ? styles.correctScore : styles.wrongScore]}>
+                  <Text style={[styles.scoreText, { color: q.isCorrect ? colors.success : colors.danger }]}>
                     {q.isCorrect ? "Correct" : "Incorrect"} — Score: {q.score}/100
                   </Text>
                 </View>
@@ -115,7 +118,7 @@ export default function ReviewScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
     flexDirection: "row",
@@ -123,13 +126,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 24,
     paddingTop: 60,
-    backgroundColor: "#fff",
   },
-  title: { fontSize: 20, fontWeight: "700", color: "#111827" },
+  title: { fontSize: 20, fontWeight: "700" },
   list: { padding: 16 },
-  empty: { textAlign: "center", color: "#9CA3AF", marginTop: 40, fontSize: 16 },
+  empty: { textAlign: "center", marginTop: 40, fontSize: 16 },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -140,14 +141,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
   },
-  qNum: { fontSize: 14, fontWeight: "700", color: "#4F46E5" },
+  qNum: { fontSize: 14, fontWeight: "700" },
   badge: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 8 },
-  mcqBadge: { backgroundColor: "#EEF2FF" },
-  voiceBadge: { backgroundColor: "#FFF7ED" },
   badgeText: { fontSize: 12, fontWeight: "600" },
-  mcqBadgeText: { color: "#4F46E5" },
-  voiceBadgeText: { color: "#EA580C" },
-  qText: { fontSize: 16, color: "#111827", marginBottom: 12 },
+  qText: { fontSize: 16, marginBottom: 12 },
   options: { gap: 8 },
   optionRow: {
     flexDirection: "row",
@@ -156,15 +153,12 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
-  correctOpt: { borderColor: "#10B981", backgroundColor: "#F0FDF4" },
-  wrongOpt: { borderColor: "#EF4444", backgroundColor: "#FEF2F2" },
-  optionText: { fontSize: 14, color: "#374151", flex: 1 },
+  optionText: { fontSize: 14, flex: 1 },
   voiceResult: { gap: 4, marginBottom: 8 },
-  label: { fontSize: 13, color: "#6B7280", fontWeight: "600" },
-  voiceAnswer: { fontSize: 14, color: "#111827", marginBottom: 8 },
-  voiceCorrect: { fontSize: 14, color: "#059669", fontWeight: "600" },
+  label: { fontSize: 13, fontWeight: "600" },
+  voiceAnswer: { fontSize: 14, marginBottom: 8 },
+  voiceCorrect: { fontSize: 14, fontWeight: "600" },
   scoreRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -172,9 +166,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
   },
   scoreText: { fontSize: 14, fontWeight: "600" },
-  correctScore: { color: "#10B981" },
-  wrongScore: { color: "#EF4444" },
 });

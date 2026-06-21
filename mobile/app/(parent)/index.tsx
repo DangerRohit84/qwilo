@@ -12,9 +12,11 @@ import { Ionicons } from "@expo/vector-icons";
 import api from "../../services/api";
 import { logout, getStoredUser } from "../../services/auth";
 import { User } from "../../types";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function ParentDashboard() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [children, setChildren] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
