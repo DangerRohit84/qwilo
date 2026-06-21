@@ -166,7 +166,7 @@ export default function SessionDetailScreen() {
                         </View>
                       )}
 
-                      {q.type === "Voice" && answer && (
+                      {(q.type === "VOICE" || q.type === "Voice") && answer && (
                         <View style={styles.voiceRow}>
                           <Ionicons name="mic" size={16} color={colors.textSecondary} />
                           <Text style={[styles.voiceText, { color: colors.textSecondary }]} numberOfLines={2}>
