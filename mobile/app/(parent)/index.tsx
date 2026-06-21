@@ -13,6 +13,7 @@ import api from "../../services/api";
 import { logout, getStoredUser } from "../../services/auth";
 import { User } from "../../types";
 import { useTheme } from "../../contexts/ThemeContext";
+import ConfirmModal from "../../components/ConfirmModal";
 
 export default function ParentDashboard() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function ParentDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [children, setChildren] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showLogout, setShowLogout] = useState(false);
 
   useEffect(() => {
     getStoredUser().then(setUser);
@@ -46,15 +48,24 @@ export default function ParentDashboard() {
           </Text>
           <Text style={styles.subtitle}>Your Children</Text>
         </View>
-        <TouchableOpacity
-          onPress={async () => {
-            await logout();
-            router.replace("/(auth)");
-          }}
-        >
+        <TouchableOpacity onPress={() => setShowLogout(true)}>
           <Ionicons name="log-out-outline" size={24} color="#EF4444" />
         </TouchableOpacity>
       </View>
+
+      <ConfirmModal
+        visible={showLogout}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmLabel="Logout"
+        cancelLabel="Cancel"
+        onConfirm={async () => {
+          setShowLogout(false);
+          await logout();
+          router.replace("/(auth)");
+        }}
+        onCancel={() => setShowLogout(false)}
+      />
 
       <FlatList
         data={children}

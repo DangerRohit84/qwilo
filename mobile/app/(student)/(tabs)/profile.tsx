@@ -4,8 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Platform,
-  Alert,
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -13,26 +11,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { logout, getStoredUser } from "../../../services/auth";
 import { User } from "../../../types";
 import { useTheme } from "../../../contexts/ThemeContext";
+import ConfirmModal from "../../../components/ConfirmModal";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const [user, setUser] = useState<User | null>(null);
+  const [showLogout, setShowLogout] = useState(false);
 
   useEffect(() => {
     getStoredUser().then(setUser);
   }, []);
 
   async function handleLogout() {
-    const confirmed = Platform.OS === "web"
-      ? window.confirm("Are you sure you want to logout?")
-      : await new Promise<boolean>((resolve) => {
-          Alert.alert("Logout", "Are you sure?", [
-            { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
-            { text: "Logout", style: "destructive", onPress: () => resolve(true) },
-          ]);
-        });
-    if (!confirmed) return;
+    setShowLogout(false);
     await logout();
     router.replace("/(auth)");
   }
@@ -53,10 +45,20 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: colors.danger }]} onPress={handleLogout}>
+        <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: colors.danger }]} onPress={() => setShowLogout(true)}>
           <Ionicons name="log-out-outline" size={20} color="#fff" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
+
+        <ConfirmModal
+          visible={showLogout}
+          title="Logout"
+          message="Are you sure you want to logout?"
+          confirmLabel="Logout"
+          cancelLabel="Cancel"
+          onConfirm={handleLogout}
+          onCancel={() => setShowLogout(false)}
+        />
       </ScrollView>
     </View>
   );
