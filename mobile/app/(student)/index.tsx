@@ -11,7 +11,7 @@ import {
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../services/api";
-import { logout, getStoredUser } from "../../services/auth";
+import { getStoredUser } from "../../services/auth";
 import { TaskListResponse, User } from "../../types";
 
 export default function StudentDashboard() {
@@ -103,35 +103,16 @@ export default function StudentDashboard() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>
-            Hi, {user?.name?.split(" ")[0] || "Student"}
-          </Text>
-          <Text style={styles.date}>
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            })}
-          </Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            onPress={() => router.push("/(student)/progress")}
-            style={styles.iconBtn}
-          >
-            <Ionicons name="bar-chart" size={24} color="#4F46E5" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => {
-              await logout();
-              router.replace("/(auth)");
-            }}
-            style={styles.iconBtn}
-          >
-            <Ionicons name="log-out-outline" size={24} color="#EF4444" />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.greeting}>
+          Hi, {user?.name?.split(" ")[0] || "Student"}
+        </Text>
+        <Text style={styles.date}>
+          {new Date().toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
+        </Text>
       </View>
 
       <View style={styles.stats}>
@@ -186,18 +167,9 @@ export default function StudentDashboard() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9FAFB" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 24,
-    paddingTop: 60,
-    backgroundColor: "#fff",
-  },
-  greeting: { fontSize: 24, fontWeight: "700", color: "#111827" },
+  header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8 },
+  greeting: { fontSize: 26, fontWeight: "800", color: "#111827" },
   date: { fontSize: 14, color: "#6B7280", marginTop: 4 },
-  headerRight: { flexDirection: "row", gap: 12 },
-  iconBtn: { padding: 8 },
   stats: {
     flexDirection: "row",
     gap: 12,

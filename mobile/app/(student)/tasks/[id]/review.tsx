@@ -94,7 +94,7 @@ export default function ReviewScreen() {
                 </View>
               )}
 
-              {q.score !== null && (
+              {q.score !== null && q.type !== "MCQ" && (
                 <View style={styles.scoreRow}>
                   <Ionicons
                     name={q.isCorrect ? "checkmark-circle" : "close-circle"}

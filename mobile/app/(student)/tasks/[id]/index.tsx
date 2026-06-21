@@ -160,18 +160,21 @@ export default function TaskDetailScreen() {
           <View style={styles.completedBox}>
             <Ionicons name="checkmark-circle" size={48} color="#10B981" />
             <Text style={styles.completedText}>Completed!</Text>
-            {task.questions?.some(q => q.answers?.length) && (
-              <TouchableOpacity
-                style={styles.reviewBtn}
-                onPress={() => router.push(`/(student)/tasks/${id}/review`)}
-              >
-                <Ionicons name="eye" size={20} color="#4F46E5" />
-                <Text style={styles.reviewBtnText}>Review Answers</Text>
-              </TouchableOpacity>
-            )}
           </View>
         ) : null}
       </ScrollView>
+
+      {task.status === "COMPLETED" && task.questions?.some(q => q.answers?.length) && (
+        <View style={styles.bottomBar}>
+          <TouchableOpacity
+            style={styles.reviewBtn}
+            onPress={() => router.push(`/(student)/tasks/${id}/review`)}
+          >
+            <Ionicons name="eye" size={20} color="#fff" />
+            <Text style={styles.reviewBtnText}>Review Answers</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -260,12 +263,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EEF2FF",
-    padding: 14,
+    backgroundColor: "#4F46E5",
+    padding: 16,
     borderRadius: 12,
     gap: 8,
-    marginTop: 20,
-    width: "100%",
   },
-  reviewBtnText: { color: "#4F46E5", fontSize: 16, fontWeight: "600" },
+  reviewBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  bottomBar: { padding: 16, paddingBottom: 32, backgroundColor: "#fff" },
 });

@@ -285,7 +285,15 @@ router.post(
 
 router.get("/history", async (req: AuthRequest, res: Response) => {
   try {
-    const progress = await homeworkService.getStudentProgress(req.user!.id);
+    const { startDate, endDate } = req.query as {
+      startDate?: string;
+      endDate?: string;
+    };
+    const progress = await homeworkService.getStudentProgress(
+      req.user!.id,
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined
+    );
     res.json(progress);
   } catch (err: any) {
     res.status(400).json({ error: err.message });

@@ -128,9 +128,20 @@ export async function submitTaskWork(
   return submission;
 }
 
-export async function getStudentProgress(studentId: string) {
+export async function getStudentProgress(
+  studentId: string,
+  startDate?: Date,
+  endDate?: Date
+) {
+  const dateFilter: any = {};
+  if (startDate || endDate) {
+    dateFilter.date = {};
+    if (startDate) dateFilter.date.gte = startDate;
+    if (endDate) dateFilter.date.lte = endDate;
+  }
+
   const sessions = await prisma.homeworkSession.findMany({
-    where: { studentId },
+    where: { studentId, ...dateFilter },
     orderBy: { date: "desc" },
     include: {
       tasks: {

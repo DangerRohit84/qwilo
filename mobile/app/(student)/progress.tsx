@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,25 +6,116 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Calendar } from "react-native-calendars";
 import api from "../../services/api";
 import { StudentProgress } from "../../types";
 
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+type Preset = "today" | "week" | "month" | "all";
+
+function getPresetRange(preset: Preset) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  switch (preset) {
+    case "today":
+      return { startDate: new Date(y, m, d), endDate: new Date(y, m, d) };
+    case "week": {
+      const day = now.getDay();
+      const start = new Date(y, m, d - (day === 0 ? 6 : day - 1));
+      const end = new Date(y, m, d + (day === 0 ? 0 : 7 - day));
+      return { startDate: start, endDate: end };
+    }
+    case "month":
+      return { startDate: new Date(y, m, 1), endDate: new Date(y, m + 1, 0) };
+    default:
+      return { startDate: undefined, endDate: undefined };
+  }
+}
+
+function fmt(d: Date) {
+  return d.toISOString().split("T")[0];
+}
+
 export default function ProgressScreen() {
-  const router = useRouter();
   const [data, setData] = useState<StudentProgress | null>(null);
   const [loading, setLoading] = useState(true);
+  const [preset, setPreset] = useState<Preset>("all");
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
 
-  useEffect(() => {
-    api.get("/student/history").then(({ data }) => {
-      setData(data);
-      setLoading(false);
-    });
-  }, []);
+  const fetchProgress = useCallback(
+    async (startDate?: Date, endDate?: Date) => {
+      setLoading(true);
+      try {
+        const params: any = {};
+        if (startDate) params.startDate = startDate.toISOString();
+        if (endDate) params.endDate = endDate.toISOString();
+        const { data: result } = await api.get<StudentProgress>(
+          "/student/history",
+          { params }
+        );
+        setData(result);
 
-  if (loading) {
+        const marks: Record<string, any> = {};
+        result.recentSessions.forEach((s) => {
+          const dateStr = s.date.split("T")[0];
+          marks[dateStr] = {
+            marked: true,
+            dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
+            selected: true,
+            selectedColor: "#EEF2FF",
+          };
+        });
+        setMarkedDates(marks);
+      } catch {
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const range = getPresetRange(preset);
+      fetchProgress(range.startDate, range.endDate);
+    }, [preset])
+  );
+
+  function applyPreset(p: Preset) {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setPreset(p);
+  }
+
+  function onDayPress(day: { dateString: string }) {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    const d = new Date(day.dateString);
+    fetchProgress(d, d);
+    setMarkedDates((prev) => ({
+      ...prev,
+      [day.dateString]: { selected: true, selectedColor: "#4F46E5" },
+    }));
+  }
+
+  const presets: { key: Preset; label: string }[] = [
+    { key: "today", label: "Today" },
+    { key: "week", label: "This Week" },
+    { key: "month", label: "This Month" },
+    { key: "all", label: "All Time" },
+  ];
+
+  if (loading && !data) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#4F46E5" />
@@ -34,90 +125,141 @@ export default function ProgressScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={28} color="#111827" />
-        </TouchableOpacity>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>My Progress</Text>
-        <View style={{ width: 28 }} />
-      </View>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.cards}>
-          <View style={styles.card}>
-            <Text style={styles.cardValue}>{data?.completionRate}%</Text>
-            <Text style={styles.cardLabel}>Completion Rate</Text>
+        <View style={styles.presetRow}>
+          {presets.map((p) => (
+            <TouchableOpacity
+              key={p.key}
+              style={[styles.presetBtn, preset === p.key && styles.presetActive]}
+              onPress={() => applyPreset(p.key)}
+            >
+              <Text
+                style={[
+                  styles.presetText,
+                  preset === p.key && styles.presetTextActive,
+                ]}
+              >
+                {p.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TouchableOpacity
+          style={styles.calendarToggle}
+          onPress={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setShowCalendar(!showCalendar);
+          }}
+        >
+          <Ionicons
+            name={showCalendar ? "chevron-up" : "calendar"}
+            size={18}
+            color="#4F46E5"
+          />
+          <Text style={styles.calendarToggleText}>
+            {showCalendar ? "Hide Calendar" : "Pick a Date"}
+          </Text>
+        </TouchableOpacity>
+
+        {showCalendar && (
+          <View style={styles.calendarWrap}>
+            <Calendar
+              onDayPress={onDayPress}
+              markedDates={markedDates}
+              theme={{
+                selectedDayBackgroundColor: "#4F46E5",
+                todayTextColor: "#4F46E5",
+                arrowColor: "#4F46E5",
+                textMonthFontWeight: "700",
+                textDayFontSize: 14,
+              }}
+            />
           </View>
-          <View style={styles.card}>
-            <Text style={styles.cardValue}>{data?.accuracy}%</Text>
+        )}
+
+        <View style={styles.cardsRow}>
+          <View style={[styles.card, styles.cardPrimary]}>
+            <Text style={styles.cardVal}>{data?.completionRate || 0}%</Text>
+            <Text style={styles.cardLabel}>Completion</Text>
+          </View>
+          <View style={[styles.card, styles.cardSuccess]}>
+            <Text style={styles.cardVal}>{data?.accuracy || 0}%</Text>
             <Text style={styles.cardLabel}>Accuracy</Text>
           </View>
         </View>
 
-        <View style={styles.cards}>
-          <View style={styles.cardSmall}>
-            <Text style={styles.cardValueSmall}>{data?.totalTasks}</Text>
-            <Text style={styles.cardLabel}>Tasks</Text>
+        <View style={styles.miniRow}>
+          <View style={styles.miniCard}>
+            <Ionicons name="checkmark-done" size={20} color="#10B981" />
+            <Text style={styles.miniVal}>{data?.totalTasks || 0}</Text>
+            <Text style={styles.miniLabel}>Tasks</Text>
           </View>
-          <View style={styles.cardSmall}>
-            <Text style={styles.cardValueSmall}>{data?.totalQuestions}</Text>
-            <Text style={styles.cardLabel}>Questions</Text>
+          <View style={styles.miniCard}>
+            <Ionicons name="help-circle" size={20} color="#4F46E5" />
+            <Text style={styles.miniVal}>{data?.totalQuestions || 0}</Text>
+            <Text style={styles.miniLabel}>Questions</Text>
           </View>
-          <View style={styles.cardSmall}>
-            <Text style={styles.cardValueSmall}>{data?.totalSessions}</Text>
-            <Text style={styles.cardLabel}>Sessions</Text>
+          <View style={styles.miniCard}>
+            <Ionicons name="calendar" size={20} color="#F59E0B" />
+            <Text style={styles.miniVal}>{data?.totalSessions || 0}</Text>
+            <Text style={styles.miniLabel}>Sessions</Text>
           </View>
         </View>
 
         <Text style={styles.sectionTitle}>By Subject</Text>
         {data?.subjectBreakdown &&
-          Object.entries(data.subjectBreakdown).map(([subject, stats]) => (
-            <View key={subject} style={styles.subjectRow}>
-              <Text style={styles.subjectName}>{subject}</Text>
-              <View style={styles.subjectBar}>
-                <View
-                  style={[
-                    styles.subjectFill,
-                    {
-                      width: `${stats.total > 0 ? (stats.completed / stats.total) * 100 : 0}%`,
-                    },
-                  ]}
-                />
+          Object.entries(data.subjectBreakdown).length > 0 ? (
+          Object.entries(data.subjectBreakdown).map(([subject, stats]) => {
+            const pct =
+              stats.total > 0
+                ? Math.round((stats.completed / stats.total) * 100)
+                : 0;
+            return (
+              <View key={subject} style={styles.subjectRow}>
+                <Text style={styles.subjectName}>{subject}</Text>
+                <View style={styles.subjectBar}>
+                  <View
+                    style={[styles.subjectFill, { width: `${pct}%` }]}
+                  />
+                </View>
+                <Text style={styles.subjectStat}>
+                  {stats.completed}/{stats.total}
+                </Text>
               </View>
-              <Text style={styles.subjectStat}>
-                {stats.completed}/{stats.total}
-              </Text>
-            </View>
-          ))}
+            );
+          })
+        ) : (
+          <Text style={styles.emptyText}>No data for this period</Text>
+        )}
 
-        <Text style={styles.sectionTitle}>Recent Sessions</Text>
-        {data?.recentSessions.map((s) => (
-          <View key={s.id} style={styles.sessionRow}>
-            <Text style={styles.sessionDate}>
-              {new Date(s.date).toLocaleDateString()}
-            </Text>
-            <Text style={styles.sessionTasks}>{s.taskCount} tasks</Text>
-            <View
-              style={[
-                styles.statusBadge,
-                s.status === "COMPLETED"
-                  ? styles.statusDone
-                  : styles.statusPending,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.statusText,
-                  s.status === "COMPLETED"
-                    ? styles.statusTextDone
-                    : styles.statusTextPending,
-                ]}
-              >
-                {s.status}
-              </Text>
+        <Text style={styles.sectionTitle}>Sessions</Text>
+        {data?.recentSessions && data.recentSessions.length > 0 ? (
+          data.recentSessions.map((s) => (
+            <View key={s.id} style={styles.sessionRow}>
+              <View style={styles.sessionLeft}>
+                <Ionicons
+                  name={
+                    s.status === "COMPLETED"
+                      ? "checkmark-circle"
+                      : "time-outline"
+                  }
+                  size={20}
+                  color={s.status === "COMPLETED" ? "#10B981" : "#F59E0B"}
+                />
+                <Text style={styles.sessionDate}>
+                  {new Date(s.date).toLocaleDateString()}
+                </Text>
+              </View>
+              <Text style={styles.sessionTasks}>{s.taskCount} tasks</Text>
             </View>
-          </View>
-        ))}
+          ))
+        ) : (
+          <Text style={styles.emptyText}>No sessions in this period</Text>
+        )}
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
@@ -127,37 +269,78 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9FAFB" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: {
+  scroll: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
+  title: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 20,
+  },
+  presetRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
+  presetBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  presetActive: { backgroundColor: "#4F46E5", borderColor: "#4F46E5" },
+  presetText: { fontSize: 13, fontWeight: "600", color: "#374151" },
+  presetTextActive: { color: "#fff" },
+  calendarToggle: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: 24,
-    paddingTop: 60,
-    backgroundColor: "#fff",
+    gap: 6,
+    marginBottom: 12,
+    paddingVertical: 8,
   },
-  title: { fontSize: 20, fontWeight: "700", color: "#111827" },
-  content: { flex: 1, padding: 24 },
-  cards: { flexDirection: "row", gap: 12, marginBottom: 12 },
+  calendarToggleText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#4F46E5",
+  },
+  calendarWrap: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 16,
+  },
+  cardsRow: { flexDirection: "row", gap: 12, marginBottom: 12 },
   card: {
     flex: 1,
-    backgroundColor: "#fff",
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: "center",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  cardValue: { fontSize: 32, fontWeight: "700", color: "#4F46E5" },
-  cardLabel: { fontSize: 14, color: "#6B7280", marginTop: 4 },
-  cardSmall: {
+  cardPrimary: { backgroundColor: "#EEF2FF" },
+  cardSuccess: { backgroundColor: "#F0FDF4" },
+  cardVal: { fontSize: 32, fontWeight: "800", color: "#111827" },
+  cardLabel: { fontSize: 13, color: "#6B7280", marginTop: 4, fontWeight: "600" },
+  miniRow: { flexDirection: "row", gap: 12, marginBottom: 20 },
+  miniCard: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 16,
+    padding: 14,
     borderRadius: 12,
     alignItems: "center",
+    gap: 4,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  cardValueSmall: { fontSize: 24, fontWeight: "700", color: "#111827" },
+  miniVal: { fontSize: 20, fontWeight: "700", color: "#111827" },
+  miniLabel: { fontSize: 11, color: "#9CA3AF", fontWeight: "600" },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#111827",
     marginTop: 20,
     marginBottom: 12,
@@ -168,7 +351,12 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 12,
   },
-  subjectName: { width: 80, fontSize: 14, color: "#374151", fontWeight: "500" },
+  subjectName: {
+    width: 80,
+    fontSize: 14,
+    color: "#374151",
+    fontWeight: "600",
+  },
   subjectBar: {
     flex: 1,
     height: 8,
@@ -177,21 +365,29 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   subjectFill: { height: "100%", backgroundColor: "#4F46E5", borderRadius: 4 },
-  subjectStat: { width: 50, textAlign: "right", fontSize: 13, color: "#6B7280" },
+  subjectStat: {
+    width: 50,
+    textAlign: "right",
+    fontSize: 13,
+    color: "#6B7280",
+    fontWeight: "600",
+  },
+  emptyText: { color: "#9CA3AF", fontSize: 14, textAlign: "center", marginTop: 8 },
   sessionRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 10,
     marginBottom: 8,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  sessionDate: { flex: 1, fontSize: 14, color: "#374151" },
-  sessionTasks: { fontSize: 14, color: "#6B7280", marginRight: 12 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20 },
-  statusDone: { backgroundColor: "#D1FAE5" },
-  statusPending: { backgroundColor: "#FEF3C7" },
-  statusText: { fontSize: 12, fontWeight: "600" },
-  statusTextDone: { color: "#059669" },
-  statusTextPending: { color: "#D97706" },
+  sessionLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+  sessionDate: { fontSize: 14, color: "#374151", fontWeight: "500" },
+  sessionTasks: { fontSize: 13, color: "#6B7280" },
 });
