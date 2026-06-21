@@ -9,11 +9,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import api from "../../services/api";
-import { logout, getStoredUser } from "../../services/auth";
-import { User } from "../../types";
-import { useTheme } from "../../contexts/ThemeContext";
-import ConfirmModal from "../../components/ConfirmModal";
+import api from "../../../services/api";
+import { logout, getStoredUser } from "../../../services/auth";
+import { User } from "../../../types";
+import { useTheme } from "../../../contexts/ThemeContext";
+import ConfirmModal from "../../../components/ConfirmModal";
 
 export default function ParentDashboard() {
   const router = useRouter();
@@ -49,15 +49,10 @@ export default function ParentDashboard() {
           <Text style={[styles.logoText, { color: colors.text }]}>Qwilo</Text>
         </View>
         <View style={styles.headerContent}>
-          <View>
-            <Text style={[styles.greeting, { color: colors.text }]}>
-              Hi, {user?.name?.split(" ")[0] || "Parent"}
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Your Children</Text>
-          </View>
-          <TouchableOpacity onPress={() => setShowLogout(true)} style={[styles.logoutIcon, { backgroundColor: colors.inputBg }]}>
-            <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-          </TouchableOpacity>
+          <Text style={[styles.greeting, { color: colors.text }]}>
+            Hi, {user?.name?.split(" ")[0] || "Parent"}
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Your Children</Text>
         </View>
       </View>
 
@@ -75,28 +70,35 @@ export default function ParentDashboard() {
         onCancel={() => setShowLogout(false)}
       />
 
-      <FlatList
-        data={children}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.listContent, { padding: 24, paddingBottom: 100 }]}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.childCard, { backgroundColor: colors.card }]}
-            onPress={() => router.push(`/(parent)/child/${item.id}`)}
-          >
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {item.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.childInfo}>
-              <Text style={[styles.childName, { color: colors.text }]}>{item.name}</Text>
-              <Text style={[styles.childEmail, { color: colors.textSecondary }]}>{item.email}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
-          </TouchableOpacity>
-        )}
-      />
+      {children.length === 0 ? (
+        <View style={styles.emptyCenter}>
+          <Ionicons name="people-outline" size={48} color={colors.textMuted} />
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>No children linked yet</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={children}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ padding: 24, paddingBottom: 90 }}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[styles.childCard, { backgroundColor: colors.card }]}
+              onPress={() => router.push(`/(parent)/child/${item.id}`)}
+            >
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {item.name.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <View style={styles.childInfo}>
+                <Text style={[styles.childName, { color: colors.text }]}>{item.name}</Text>
+                <Text style={[styles.childEmail, { color: colors.textSecondary }]}>{item.email}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -112,15 +114,16 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
   logoBox: { width: 32, height: 32, borderRadius: 8, backgroundColor: "#4F46E5", justifyContent: "center", alignItems: "center" },
   logoText: { fontSize: 18, fontWeight: "700", letterSpacing: 1 },
-  headerContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
+  headerContent: {},
   greeting: { fontSize: 24, fontWeight: "700" },
   subtitle: { fontSize: 14, marginTop: 4 },
-  logoutIcon: { width: 40, height: 40, borderRadius: 10, justifyContent: "center", alignItems: "center" },
-  listContent: {},
+  emptyCenter: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 80,
+  },
+  emptyText: { fontSize: 16, marginTop: 12 },
   childCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -145,5 +148,4 @@ const styles = StyleSheet.create({
   childInfo: { flex: 1 },
   childName: { fontSize: 16, fontWeight: "600" },
   childEmail: { fontSize: 13, marginTop: 2 },
-
 });
