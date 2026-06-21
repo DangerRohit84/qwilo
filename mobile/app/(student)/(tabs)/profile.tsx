@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -37,7 +38,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.avatar}>
           <Ionicons name="person-circle" size={80} color={colors.primary} />
         </View>
@@ -55,14 +56,14 @@ export default function ProfileScreen() {
           <Ionicons name="log-out-outline" size={20} color="#fff" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingBottom: 90 },
-  content: { alignItems: "center", paddingTop: 80, padding: 24, paddingBottom: 90 },
+  container: { flex: 1 },
+  content: { alignItems: "center", paddingTop: 80, padding: 24, paddingBottom: 100 },
   avatar: { marginBottom: 16 },
   name: { fontSize: 24, fontWeight: "700" },
   email: { fontSize: 14, marginTop: 4, marginBottom: 32 },

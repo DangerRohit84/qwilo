@@ -142,7 +142,7 @@ export default function ProgressScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <ScrollView style={[styles.scroll, { backgroundColor: colors.bg }]} showsVerticalScrollIndicator={false}>
+      <ScrollView style={[styles.scroll, { backgroundColor: colors.bg }]} contentContainerStyle={{ paddingBottom: 90 }} showsVerticalScrollIndicator={false}>
         <Text style={[styles.title, { color: colors.text }]}>My Progress</Text>
 
         <View style={styles.presetRow}>
@@ -320,7 +320,7 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  scroll: { flex: 1, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 90 },
+  scroll: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   title: {
     fontSize: 26,
     fontWeight: "800",

@@ -153,6 +153,7 @@ export default function StudentDashboard() {
 
       <FlatList
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 90 }}
         data={[...(data?.pending || []), ...(data?.completed || [])]}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => renderTask(item)}
@@ -179,7 +180,7 @@ export default function StudentDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingBottom: 90 },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8 },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
