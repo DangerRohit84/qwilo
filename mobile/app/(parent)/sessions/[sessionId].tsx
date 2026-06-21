@@ -17,7 +17,7 @@ import { useTheme } from "../../../contexts/ThemeContext";
 export default function SessionDetailScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { sessionId } = useLocalSearchParams();
+  const { sessionId, taskId } = useLocalSearchParams();
   const [session, setSession] = useState<HomeworkSession | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -63,7 +63,7 @@ export default function SessionDetailScreen() {
         />
 
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Tasks</Text>
-        {session.tasks?.map((task) => (
+        {(taskId ? session.tasks?.filter((t) => t.id === taskId) : session.tasks)?.map((task) => (
           <View key={task.id} style={[styles.taskCard, { backgroundColor: colors.card }]}>
             <View style={styles.taskHeader}>
               <View style={[styles.taskTypeBg, { backgroundColor: colors.primary + "18" }]}>

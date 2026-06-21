@@ -255,7 +255,7 @@ export default function ChildProgressScreen() {
                 <TouchableOpacity
                   key={t.id}
                   style={[styles.taskRow, { backgroundColor: colors.card }]}
-                  onPress={() => router.push(`/(parent)/sessions/${t.sessionId}`)}
+                  onPress={() => router.push(`/(parent)/sessions/${t.sessionId}?taskId=${t.id}`)}
                 >
                   <View style={styles.taskLeft}>
                     <View style={[styles.taskSubjectBadge, { backgroundColor: colors.primary + "18" }]}>
