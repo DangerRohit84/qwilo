@@ -16,10 +16,9 @@ const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 export default function TabsLayout() {
   const { theme, toggle, colors } = useTheme();
   const toggleRef = useRef<TouchableOpacity>(null);
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const bgAnim = useRef(new Animated.Value(theme === "dark" ? 1 : 0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const [btnPos, setBtnPos] = useState({ x: 0, y: 0, size: 40 });
-  const [showRing, setShowRing] = useState(false);
+  const [cover, setCover] = useState(false);
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -39,36 +38,22 @@ export default function TabsLayout() {
       Math.sqrt(cx * cx + (SCREEN_H - cy) * (SCREEN_H - cy)),
       Math.sqrt((SCREEN_W - cx) * (SCREEN_W - cx) + (SCREEN_H - cy) * (SCREEN_H - cy))
     );
-    const maxScale = (maxDist * 2) / btnPos.size;
+    const startScale = (maxDist * 2) / btnPos.size;
 
-    const target = theme === "dark" ? 0 : 1;
-    setShowRing(true);
-    scaleAnim.setValue(0);
+    scaleAnim.setValue(startScale);
+    setCover(true);
 
-    Animated.parallel([
-      Animated.timing(scaleAnim, {
-        toValue: maxScale,
-        duration: 900,
-        useNativeDriver: true,
-      }),
-      Animated.timing(bgAnim, {
-        toValue: target,
-        duration: 900,
-        useNativeDriver: false,
-      }),
-    ]).start(() => {
-      toggle();
-      setShowRing(false);
-    });
+    toggle();
+
+    Animated.timing(scaleAnim, {
+      toValue: 0,
+      duration: 900,
+      useNativeDriver: true,
+    }).start(() => setCover(false));
   }
 
-  const bgColor = bgAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["#F9FAFB", "#0F172A"],
-  });
-
   return (
-    <Animated.View style={{ flex: 1, backgroundColor: bgColor }}>
+    <View style={{ flex: 1 }}>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -118,25 +103,14 @@ export default function TabsLayout() {
         style={[styles.themeToggle, { backgroundColor: colors.card }]}
         onPress={handleToggle}
       >
-        <Animated.View
-          style={{
-            transform: [{
-              rotate: bgAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: ["0deg", "360deg"],
-              }),
-            }],
-          }}
-        >
-          <Ionicons
-            name={theme === "dark" ? "sunny" : "moon"}
-            size={22}
-            color={colors.text}
-          />
-        </Animated.View>
+        <Ionicons
+          name={theme === "dark" ? "sunny" : "moon"}
+          size={22}
+          color={colors.text}
+        />
       </TouchableOpacity>
 
-      {showRing && (
+      {cover && (
         <Animated.View
           pointerEvents="none"
           style={{
@@ -146,14 +120,12 @@ export default function TabsLayout() {
             width: btnPos.size,
             height: btnPos.size,
             borderRadius: btnPos.size / 2,
-            borderWidth: 3,
-            borderColor: theme === "dark" ? "#F9FAFB" : "#0F172A",
-            backgroundColor: "transparent",
+            backgroundColor: theme === "dark" ? "#F9FAFB" : "#0F172A",
             transform: [{ scale: scaleAnim }],
           }}
         />
       )}
-    </Animated.View>
+    </View>
   );
 }
 
