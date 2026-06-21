@@ -124,6 +124,7 @@ export default function SessionDetailScreen() {
                 </Text>
                 {task.questions.map((q) => {
                   const answer = q.answers?.[0];
+                  const ansText = answer?.answerText || answer?.answer;
                   return (
                     <View key={q.id} style={[styles.qCard, { backgroundColor: colors.bg }]}>
                       <View style={styles.qHeader}>
@@ -145,7 +146,7 @@ export default function SessionDetailScreen() {
                       {q.type === "MCQ" && q.options && typeof q.options === "object" && (
                         <View style={styles.optionsWrap}>
                           {Object.entries(q.options as Record<string, string>).map(([key, val]) => {
-                            const isStudentAnswer = answer?.answer === key || answer?.answer === val;
+                            const isStudentAnswer = ansText === key || ansText === val;
                             let bg = "transparent";
                             let border = colors.border;
                             if (isStudentAnswer) {
@@ -169,7 +170,7 @@ export default function SessionDetailScreen() {
                         <View style={styles.voiceRow}>
                           <Ionicons name="mic" size={16} color={colors.textSecondary} />
                           <Text style={[styles.voiceText, { color: colors.textSecondary }]} numberOfLines={2}>
-                            {answer.answer || "No transcription"}
+                            {ansText || "No transcription"}
                           </Text>
                           <View style={[styles.scoreBadge, { backgroundColor: answer.isCorrect ? colors.success + "22" : colors.danger + "22" }]}>
                             <Text style={{ color: answer.isCorrect ? colors.success : colors.danger, fontSize: 12, fontWeight: "700" }}>

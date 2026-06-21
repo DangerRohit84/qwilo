@@ -221,7 +221,7 @@ export async function getStudentProgress(
           options: q.options,
           answers: q.answers.map((a) => ({
             id: a.id,
-            answer: a.answer,
+            answer: a.answerText,
             isCorrect: a.isCorrect,
             score: a.score,
             feedback: a.feedback,

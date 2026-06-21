@@ -125,6 +125,7 @@ export async function submitAnswer(
       answerAudio: answerAudioUrl,
       isCorrect,
       score,
+      feedback: explanation,
     },
   });
 
