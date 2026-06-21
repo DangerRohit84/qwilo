@@ -15,11 +15,25 @@ import { User } from "../../../types";
 import { useTheme } from "../../../contexts/ThemeContext";
 import ConfirmModal from "../../../components/ConfirmModal";
 
+function performanceLevel(accuracy: number): { label: string; color: string } {
+  if (accuracy >= 80) return { label: "Excellent", color: "#10B981" };
+  if (accuracy >= 60) return { label: "Good", color: "#F59E0B" };
+  if (accuracy >= 1) return { label: "Needs Work", color: "#EF4444" };
+  return { label: "No Data", color: "#6B7280" };
+}
+
+function getAccuracyColor(accuracy: number): string {
+  if (accuracy >= 80) return "#10B981";
+  if (accuracy >= 60) return "#F59E0B";
+  return "#EF4444";
+}
+
 export default function ParentDashboard() {
   const router = useRouter();
   const { colors } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [children, setChildren] = useState<any[]>([]);
+  const [aggregated, setAggregated] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showLogout, setShowLogout] = useState(false);
 
@@ -27,6 +41,7 @@ export default function ParentDashboard() {
     getStoredUser().then(setUser);
     api.get("/parent/progress").then(({ data }) => {
       setChildren(data.children || []);
+      setAggregated(data.aggregated || null);
       setLoading(false);
     });
   }, []);
@@ -54,6 +69,25 @@ export default function ParentDashboard() {
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Your Children</Text>
         </View>
+
+        {aggregated && children.length > 1 && (
+          <View style={[styles.aggRow, { backgroundColor: colors.inputBg }]}>
+            <View style={styles.aggItem}>
+              <Text style={[styles.aggValue, { color: colors.primary }]}>{aggregated.completionRate}%</Text>
+              <Text style={[styles.aggLabel, { color: colors.textSecondary }]}>Completion</Text>
+            </View>
+            <View style={styles.aggDivider} />
+            <View style={styles.aggItem}>
+              <Text style={[styles.aggValue, { color: getAccuracyColor(aggregated.accuracy) }]}>{aggregated.accuracy}%</Text>
+              <Text style={[styles.aggLabel, { color: colors.textSecondary }]}>Accuracy</Text>
+            </View>
+            <View style={styles.aggDivider} />
+            <View style={styles.aggItem}>
+              <Text style={[styles.aggValue, { color: colors.text }]}>{aggregated.completedTasks}/{aggregated.totalTasks}</Text>
+              <Text style={[styles.aggLabel, { color: colors.textSecondary }]}>Tasks</Text>
+            </View>
+          </View>
+        )}
       </View>
 
       <ConfirmModal
@@ -77,39 +111,96 @@ export default function ParentDashboard() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-          {children.map((child) => (
-            <TouchableOpacity
-              key={child.id}
-              style={[styles.card, { backgroundColor: colors.card }]}
-              onPress={() => router.push(`/(parent)/child/${child.id}`)}
-            >
-              <View style={styles.cardHeader}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{child.name.charAt(0).toUpperCase()}</Text>
+          {children.map((child) => {
+            const level = performanceLevel(child.accuracy);
+            const accColor = getAccuracyColor(child.accuracy);
+            return (
+              <TouchableOpacity
+                key={child.id}
+                style={[styles.card, { backgroundColor: colors.card }]}
+                onPress={() => router.push(`/(parent)/child/${child.id}`)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={[styles.avatar, { backgroundColor: level.color }]}>
+                    <Text style={styles.avatarText}>{child.name.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View style={styles.cardInfo}>
+                    <Text style={[styles.childName, { color: colors.text }]}>{child.name}</Text>
+                    <Text style={[styles.childEmail, { color: colors.textSecondary }]}>{child.email}</Text>
+                  </View>
+                  <View style={[styles.perfBadge, { backgroundColor: level.color + "22" }]}>
+                    <Text style={[styles.perfText, { color: level.color }]}>{level.label}</Text>
+                  </View>
                 </View>
-                <View style={styles.cardInfo}>
-                  <Text style={[styles.childName, { color: colors.text }]}>{child.name}</Text>
-                  <Text style={[styles.childEmail, { color: colors.textSecondary }]}>{child.email}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
-              </View>
 
-              <View style={styles.statsRow}>
-                <View style={styles.stat}>
-                  <Text style={[styles.statValue, { color: colors.primary }]}>{child.completionRate}%</Text>
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Completion</Text>
+                <View style={styles.mainStats}>
+                  <View style={styles.stat}>
+                    <Text style={[styles.statValue, { color: colors.primary }]}>{child.completionRate}%</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Completion</Text>
+                  </View>
+                  <View style={styles.stat}>
+                    <Text style={[styles.statValue, { color: accColor }]}>{child.accuracy}%</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Accuracy</Text>
+                  </View>
+                  <View style={styles.stat}>
+                    <Text style={[styles.statValue, { color: colors.text }]}>{child.completedTasks}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Tasks Done</Text>
+                  </View>
                 </View>
-                <View style={styles.stat}>
-                  <Text style={[styles.statValue, { color: colors.success }]}>{child.accuracy}%</Text>
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Accuracy</Text>
+
+                {(child.totalQuestions ?? 0) > 0 && (
+                  <View style={[styles.questionRow, { backgroundColor: colors.inputBg }]}>
+                    <Ionicons name="help-buoy" size={16} color={colors.primary} />
+                    <Text style={[styles.questionText, { color: colors.textSecondary }]}>
+                      Questions: {child.correctAnswers}/{child.totalQuestions} correct
+                    </Text>
+                    <Text style={[styles.questionPct, { color: accColor, fontWeight: "700" }]}>
+                      ({child.accuracy}%)
+                    </Text>
+                  </View>
+                )}
+
+                {child.subjectBreakdown && Object.keys(child.subjectBreakdown).length > 0 && (
+                  <View style={styles.subjectSection}>
+                    <Text style={[styles.subjectSectionTitle, { color: colors.textMuted }]}>By Subject</Text>
+                    {Object.entries(child.subjectBreakdown as Record<string, { total: number; completed: number }>)
+                      .sort(([, a], [, b]) => (b.completed / b.total) - (a.completed / a.total))
+                      .slice(0, 4)
+                      .map(([subject, stats]) => {
+                        const pct = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+                        return (
+                          <View key={subject} style={styles.subjectRow}>
+                            <Text style={[styles.subjectName, { color: colors.text }]}>{subject}</Text>
+                            <View style={[styles.subjectBar, { backgroundColor: colors.bg }]}>
+                              <View
+                                style={[
+                                  styles.subjectFill,
+                                  { width: `${pct}%`, backgroundColor: getAccuracyColor(pct) },
+                                ]}
+                              />
+                            </View>
+                            <Text style={[styles.subjectStat, { color: colors.textSecondary }]}>
+                              {stats.completed}/{stats.total}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    {Object.keys(child.subjectBreakdown).length > 4 && (
+                      <Text style={[styles.moreSubjects, { color: colors.textMuted }]}>
+                        +{Object.keys(child.subjectBreakdown).length - 4} more
+                      </Text>
+                    )}
+                  </View>
+                )}
+
+                <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.tapHint, { color: colors.primary }]}>View full progress</Text>
+                  <Ionicons name="arrow-forward" size={16} color={colors.primary} />
                 </View>
-                <View style={styles.stat}>
-                  <Text style={[styles.statValue, { color: colors.text }]}>{child.completedTasks}</Text>
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Tasks</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       )}
     </View>
@@ -130,6 +221,17 @@ const styles = StyleSheet.create({
   headerContent: {},
   greeting: { fontSize: 24, fontWeight: "700" },
   subtitle: { fontSize: 14, marginTop: 4 },
+  aggRow: {
+    flexDirection: "row",
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 12,
+    alignItems: "center",
+  },
+  aggItem: { flex: 1, alignItems: "center" },
+  aggValue: { fontSize: 18, fontWeight: "700" },
+  aggLabel: { fontSize: 10, marginTop: 2 },
+  aggDivider: { width: 1, height: 32, backgroundColor: "#D1D5DB", opacity: 0.4 },
   emptyCenter: {
     flex: 1,
     justifyContent: "center",
@@ -150,13 +252,12 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 14,
   },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#4F46E5",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -164,9 +265,50 @@ const styles = StyleSheet.create({
   avatarText: { color: "#fff", fontSize: 18, fontWeight: "700" },
   cardInfo: { flex: 1 },
   childName: { fontSize: 16, fontWeight: "600" },
-  childEmail: { fontSize: 13, marginTop: 2 },
-  statsRow: { flexDirection: "row", gap: 12 },
+  childEmail: { fontSize: 12, marginTop: 2 },
+  perfBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  perfText: { fontSize: 11, fontWeight: "700" },
+  mainStats: { flexDirection: "row", gap: 12, marginBottom: 12 },
   stat: { flex: 1, alignItems: "center" },
   statValue: { fontSize: 22, fontWeight: "700" },
   statLabel: { fontSize: 11, marginTop: 4 },
+  questionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  questionText: { fontSize: 13, flex: 1 },
+  questionPct: { fontSize: 13 },
+  subjectSection: {
+    marginBottom: 12,
+  },
+  subjectSectionTitle: { fontSize: 12, fontWeight: "600", marginBottom: 8 },
+  subjectRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  subjectName: { width: 60, fontSize: 12, fontWeight: "500" },
+  subjectBar: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  subjectFill: { height: "100%", borderRadius: 3 },
+  subjectStat: { width: 36, textAlign: "right", fontSize: 11 },
+  moreSubjects: { fontSize: 11, marginTop: 2, fontStyle: "italic" },
+  cardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 4,
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
+  tapHint: { fontSize: 13, fontWeight: "600" },
 });
