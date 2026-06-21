@@ -320,7 +320,7 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  scroll: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
+  scroll: { flex: 1, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 90 },
   title: {
     fontSize: 26,
     fontWeight: "800",

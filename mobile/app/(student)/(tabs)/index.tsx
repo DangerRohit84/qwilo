@@ -179,7 +179,7 @@ export default function StudentDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, paddingBottom: 90 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8 },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },

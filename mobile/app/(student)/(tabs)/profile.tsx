@@ -61,8 +61,8 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { alignItems: "center", paddingTop: 80, padding: 24 },
+  container: { flex: 1, paddingBottom: 90 },
+  content: { alignItems: "center", paddingTop: 80, padding: 24, paddingBottom: 90 },
   avatar: { marginBottom: 16 },
   name: { fontSize: 24, fontWeight: "700" },
   email: { fontSize: 14, marginTop: 4, marginBottom: 32 },
