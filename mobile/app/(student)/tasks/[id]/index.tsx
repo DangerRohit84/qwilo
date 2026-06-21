@@ -160,6 +160,15 @@ export default function TaskDetailScreen() {
           <View style={styles.completedBox}>
             <Ionicons name="checkmark-circle" size={48} color="#10B981" />
             <Text style={styles.completedText}>Completed!</Text>
+            {task.questions?.some(q => q.answers?.length) && (
+              <TouchableOpacity
+                style={styles.reviewBtn}
+                onPress={() => router.push(`/(student)/tasks/${id}/review`)}
+              >
+                <Ionicons name="eye" size={20} color="#4F46E5" />
+                <Text style={styles.reviewBtnText}>Review Answers</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : null}
       </ScrollView>
@@ -247,4 +256,16 @@ const styles = StyleSheet.create({
     color: "#10B981",
     marginTop: 12,
   },
+  reviewBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EEF2FF",
+    padding: 14,
+    borderRadius: 12,
+    gap: 8,
+    marginTop: 20,
+    width: "100%",
+  },
+  reviewBtnText: { color: "#4F46E5", fontSize: 16, fontWeight: "600" },
 });

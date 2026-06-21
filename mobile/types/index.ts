@@ -48,6 +48,11 @@ export interface Question {
   type: "MCQ" | "VOICE";
   options?: string[];
   correctAnswer: string;
+  answers?: {
+    answerText?: string;
+    score: number;
+    isCorrect: boolean;
+  }[];
 }
 
 export interface AnswerResult {
@@ -82,4 +87,15 @@ export interface StudentProgress {
 export interface TaskListResponse {
   pending: Task[];
   completed: Task[];
+}
+
+export interface ReviewQuestion {
+  id: string;
+  questionText: string;
+  type: "MCQ" | "VOICE";
+  options?: string[];
+  correctAnswer: string;
+  studentAnswer: string | null;
+  score: number | null;
+  isCorrect: boolean | null;
 }

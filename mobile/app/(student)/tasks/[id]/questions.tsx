@@ -295,6 +295,9 @@ export default function QuestionsScreen() {
           <Text style={styles.explanationTitle}>
             {question?.type === "MCQ" ? "Explanation" : "How to Improve"}
           </Text>
+          {question?.type !== "MCQ" && result.correctAnswer && (
+            <Text style={styles.explanationSub}>Correct answer: {result.correctAnswer}</Text>
+          )}
           <Text style={styles.explanationText}>{result.explanation}</Text>
         </View>
       )}
@@ -402,6 +405,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   explanationTitle: { fontSize: 14, fontWeight: "700", color: "#1D4ED8", marginBottom: 4 },
+  explanationSub: { fontSize: 14, fontWeight: "600", color: "#059669", marginBottom: 4 },
   explanationText: { fontSize: 14, color: "#1E3A5F", lineHeight: 20 },
   nextBtn: {
     backgroundColor: "#4F46E5",

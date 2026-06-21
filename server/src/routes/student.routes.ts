@@ -100,7 +100,14 @@ router.get("/tasks/:id", async (req: AuthRequest, res: Response) => {
       include: {
         session: { select: { date: true, studentId: true } },
         submission: true,
-        questions: true,
+        questions: {
+          include: {
+            answers: {
+              where: { studentId: req.user!.id },
+              take: 1,
+            },
+          },
+        },
       },
     });
     if (!task || task.session.studentId !== req.user!.id) {
@@ -136,6 +143,38 @@ router.post(
       });
 
       res.json({ submission, questionCount: "pending" });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
+
+router.get(
+  "/tasks/:id/review",
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const taskId = req.params.id as string;
+      const questions = await prisma.question.findMany({
+        where: { taskId },
+        include: {
+          answers: {
+            where: { studentId: req.user!.id },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+      res.json(questions.map((q) => ({
+        id: q.id,
+        questionText: q.questionText,
+        type: q.type,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        studentAnswer: q.answers[0]?.answerText || null,
+        score: q.answers[0]?.score || null,
+        isCorrect: q.answers[0]?.isCorrect ?? null,
+      })));
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
