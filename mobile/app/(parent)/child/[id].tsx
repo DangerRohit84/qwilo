@@ -129,7 +129,7 @@ export default function ChildProgressScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={[styles.header, { backgroundColor: colors.card }]}>
-        <TouchableOpacity onPress={() => router.push("/(parent)")} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => { if (typeof window !== "undefined" && window.history.length > 1) router.back(); else router.push("/(parent)"); }} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Progress</Text>
