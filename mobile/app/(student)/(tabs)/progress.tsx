@@ -45,7 +45,7 @@ function getPresetRange(preset: Preset) {
 
 export default function ProgressScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { theme, colors } = useTheme();
   const [data, setData] = useState<StudentProgress | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,7 +152,10 @@ export default function ProgressScreen() {
               style={[
                 styles.presetBtn,
                 { backgroundColor: colors.card, borderColor: colors.border },
-                preset === p.key && { backgroundColor: colors.primary, borderColor: colors.primary },
+                preset === p.key && {
+                  backgroundColor: theme === "dark" ? "#4F46E5" : colors.primary,
+                  borderColor: colors.primary,
+                },
               ]}
               onPress={() => applyPreset(p.key)}
             >

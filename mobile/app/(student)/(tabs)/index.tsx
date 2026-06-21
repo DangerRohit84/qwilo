@@ -18,7 +18,7 @@ import { useTheme } from "../../../contexts/ThemeContext";
 
 export default function StudentDashboard() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { theme, colors } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [data, setData] = useState<TaskListResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,7 +136,7 @@ export default function StudentDashboard() {
       </View>
 
       <TouchableOpacity
-        style={[styles.uploadBtn, { backgroundColor: colors.primary }]}
+        style={[styles.uploadBtn, { backgroundColor: theme === "dark" ? "#4F46E5" : colors.primary }]}
         onPress={() => router.push("/(student)/homework-upload")}
       >
         <Ionicons name="camera" size={24} color="#fff" />

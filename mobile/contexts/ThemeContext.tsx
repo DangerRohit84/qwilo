@@ -26,7 +26,7 @@ export const darkColors = {
   textSecondary: "#94A3B8",
   textMuted: "#64748B",
   border: "#334155",
-  primary: "#818CF8",
+  primary: "#6366F1",
   success: "#34D399",
   warning: "#FBBF24",
   danger: "#F87171",
