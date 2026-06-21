@@ -214,6 +214,19 @@ export async function getStudentProgress(
         status: t.status,
         sessionDate: s.date,
         sessionId: s.id,
+        questions: t.questions.map((q) => ({
+          id: q.id,
+          questionText: q.questionText,
+          type: q.type,
+          options: q.options,
+          answers: q.answers.map((a) => ({
+            id: a.id,
+            answer: a.answer,
+            isCorrect: a.isCorrect,
+            score: a.score,
+            feedback: a.feedback,
+          })),
+        })),
       }))
     ),
   };
