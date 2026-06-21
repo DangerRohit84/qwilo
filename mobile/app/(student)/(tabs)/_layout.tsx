@@ -48,12 +48,12 @@ export default function TabsLayout() {
     Animated.parallel([
       Animated.timing(scaleAnim, {
         toValue: maxScale,
-        duration: 500,
+        duration: 900,
         useNativeDriver: true,
       }),
       Animated.timing(bgAnim, {
         toValue: target,
-        duration: 500,
+        duration: 900,
         useNativeDriver: false,
       }),
     ]).start(() => {
