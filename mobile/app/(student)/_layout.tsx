@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { View, ActivityIndicator, Platform } from "react-native";
-import { Tabs, useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { View, ActivityIndicator } from "react-native";
+import { Stack, useRouter } from "expo-router";
 import { getStoredUser } from "../../services/auth";
 
 export default function StudentLayout() {
@@ -27,52 +26,12 @@ export default function StudentLayout() {
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#4F46E5",
-        tabBarInactiveTintColor: "#9CA3AF",
-        tabBarStyle: {
-          backgroundColor: "#fff",
-          borderTopColor: "#E5E7EB",
-          paddingBottom: Platform.OS === "ios" ? 20 : 8,
-          paddingTop: 8,
-          height: Platform.OS === "ios" ? 80 : 64,
-        },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="progress"
-        options={{
-          title: "Progress",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="analytics" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen name="homework-upload" options={{ href: null }} />
-      <Tabs.Screen name="tasks/[id]" options={{ href: null }} />
-      <Tabs.Screen name="tasks/[id]/questions" options={{ href: null }} />
-      <Tabs.Screen name="tasks/[id]/review" options={{ href: null }} />
-    </Tabs>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="homework-upload" />
+      <Stack.Screen name="tasks/[id]" />
+      <Stack.Screen name="tasks/[id]/questions" />
+      <Stack.Screen name="tasks/[id]/review" />
+    </Stack>
   );
 }

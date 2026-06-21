@@ -151,7 +151,7 @@ export default function QuestionsScreen() {
 
   async function nextQuestion() {
     if (done) {
-      router.replace("/(student)");
+      router.replace("/(student)/(tabs)");
       return;
     }
     const hasNext = await fetchNextQuestion();
@@ -172,7 +172,7 @@ export default function QuestionsScreen() {
         <Ionicons name="checkmark-done-circle" size={64} color="#10B981" />
         <Text style={styles.doneTitle}>All Questions Answered!</Text>
         <Text style={styles.doneSub}>Great job completing your homework</Text>
-        <TouchableOpacity style={styles.doneBtn} onPress={() => router.replace("/(student)")}>
+        <TouchableOpacity style={styles.doneBtn} onPress={() => router.replace("/(student)/(tabs)")}>code: correct_answer
           <Text style={styles.doneBtnText}>Back to Dashboard</Text>
         </TouchableOpacity>
       </View>

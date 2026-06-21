@@ -8,8 +8,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { logout, getStoredUser } from "../../services/auth";
-import { User } from "../../types";
+import { logout, getStoredUser } from "../../../services/auth";
+import { User } from "../../../types";
 
 export default function ProfileScreen() {
   const router = useRouter();

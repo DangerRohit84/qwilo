@@ -10,9 +10,9 @@ import {
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import api from "../../services/api";
-import { getStoredUser } from "../../services/auth";
-import { TaskListResponse, User } from "../../types";
+import api from "../../../services/api";
+import { getStoredUser } from "../../../services/auth";
+import { TaskListResponse, User } from "../../../types";
 
 export default function StudentDashboard() {
   const router = useRouter();

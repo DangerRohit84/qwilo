@@ -63,7 +63,7 @@ export default function HomeworkUploadScreen() {
 
       await api.post(`/student/homework/${session.id}/process`);
 
-      router.replace("/(student)");
+      router.replace("/(student)/(tabs)");
     } catch (err: any) {
       const msg =
         err.response?.data?.error ||

@@ -13,8 +13,8 @@ import {
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Calendar } from "react-native-calendars";
-import api from "../../services/api";
-import { StudentProgress } from "../../types";
+import api from "../../../services/api";
+import { StudentProgress } from "../../../types";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
