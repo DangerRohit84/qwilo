@@ -85,7 +85,15 @@ router.get(
 
 router.get("/tasks", async (req: AuthRequest, res: Response) => {
   try {
-    const tasks = await homeworkService.getStudentTasks(req.user!.id);
+    const { startDate, endDate } = req.query as {
+      startDate?: string;
+      endDate?: string;
+    };
+    const tasks = await homeworkService.getStudentTasks(
+      req.user!.id,
+      startDate,
+      endDate
+    );
     res.json(tasks);
   } catch (err: any) {
     res.status(400).json({ error: err.message });

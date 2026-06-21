@@ -57,9 +57,20 @@ export async function processHomework(sessionId: string) {
   return { sessionId, ocrText, tasks: createdTasks };
 }
 
-export async function getStudentTasks(studentId: string) {
+export async function getStudentTasks(
+  studentId: string,
+  startDate?: string,
+  endDate?: string
+) {
+  const dateFilter: any = {};
+  if (startDate || endDate) {
+    dateFilter.date = {};
+    if (startDate) dateFilter.date.gte = startDate;
+    if (endDate) dateFilter.date.lte = endDate;
+  }
+
   const sessions = await prisma.homeworkSession.findMany({
-    where: { studentId },
+    where: { studentId, ...(Object.keys(dateFilter).length ? dateFilter : {}) },
     orderBy: { date: "desc" },
     include: {
       tasks: {

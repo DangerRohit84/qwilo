@@ -44,6 +44,7 @@ function getPresetRange(preset: Preset) {
 
 export default function ProgressScreen() {
   const [data, setData] = useState<StudentProgress | null>(null);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [preset, setPreset] = useState<Preset>("all");
   const [showCalendar, setShowCalendar] = useState(false);
@@ -63,6 +64,15 @@ export default function ProgressScreen() {
           { params }
         );
         setData(result);
+
+        const { data: tasksRes } = await api.get("/student/tasks", { params });
+        const all =
+          tasksRes?.completed?.concat(tasksRes?.pending || []) || [];
+        all.sort(
+          (a: any, b: any) =>
+            new Date(b.sessionDate).getTime() - new Date(a.sessionDate).getTime()
+        );
+        setTasks(all);
 
         const marks: Record<string, any> = {};
         result.recentSessions.forEach((s) => {
@@ -236,6 +246,51 @@ export default function ProgressScreen() {
           <Text style={styles.emptyText}>No data for this period</Text>
         )}
 
+        <Text style={styles.sectionTitle}>Tasks</Text>
+        {tasks.length > 0 ? (
+          tasks.map((t: any) => (
+            <View key={t.id} style={styles.taskRow}>
+              <View style={styles.taskLeft}>
+                <Ionicons
+                  name={
+                    t.status === "COMPLETED"
+                      ? "checkmark-circle"
+                      : t.status === "SUBMITTED"
+                      ? "time-outline"
+                      : "ellipse-outline"
+                  }
+                  size={18}
+                  color={
+                    t.status === "COMPLETED"
+                      ? "#10B981"
+                      : t.status === "SUBMITTED"
+                      ? "#F59E0B"
+                      : "#9CA3AF"
+                  }
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.taskDesc} numberOfLines={2}>
+                    {t.description}
+                  </Text>
+                  <Text style={styles.taskMeta}>
+                    {t.subject} &middot;{" "}
+                    {new Date(t.sessionDate).toLocaleDateString()}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.taskStatus}>
+                {t.status === "COMPLETED"
+                  ? "Done"
+                  : t.status === "SUBMITTED"
+                  ? "Submitted"
+                  : "Pending"}
+              </Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.emptyText}>No tasks in this period</Text>
+        )}
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
@@ -366,4 +421,22 @@ const styles = StyleSheet.create({
   sessionLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
   sessionDate: { fontSize: 14, color: "#374151", fontWeight: "500" },
   sessionTasks: { fontSize: 13, color: "#6B7280" },
+  taskRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 8,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  taskLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  taskDesc: { fontSize: 14, color: "#374151", fontWeight: "500" },
+  taskMeta: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
+  taskStatus: { fontSize: 12, fontWeight: "600", color: "#6B7280", marginLeft: 8 },
 });
