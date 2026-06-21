@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Platform,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -52,18 +53,24 @@ export default function TaskDetailScreen() {
     setSubmitting(true);
     try {
       const formData = new FormData();
-      workImages.forEach((uri, i) => {
-        formData.append("images", {
-          uri,
-          type: "image/jpeg",
-          name: `work-${i}.jpg`,
-        } as any);
-      });
+      for (let i = 0; i < workImages.length; i++) {
+        const uri = workImages[i];
+        if (Platform.OS === "web") {
+          const response = await fetch(uri);
+          const blob = await response.blob();
+          formData.append("images", blob, `work-${i}.jpg`);
+        } else {
+          formData.append("images", {
+            uri,
+            type: "image/jpeg",
+            name: `work-${i}.jpg`,
+          } as any);
+        }
+      }
 
       const { data } = await api.post(
         `/student/tasks/${id}/submit`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
       );
 
       if (data.questionCount > 0) {

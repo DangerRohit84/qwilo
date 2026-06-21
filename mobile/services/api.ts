@@ -1,7 +1,23 @@
+import { Platform } from "react-native";
 import axios from "axios";
-import * as SecureStore from "expo-secure-store";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000/api";
+
+const webStorage = {
+  getItem(key: string) { return localStorage.getItem(key); },
+  removeItem(key: string) { localStorage.removeItem(key); },
+};
+
+async function storageGet(key: string) {
+  if (Platform.OS === "web") return webStorage.getItem(key);
+  const { getItemAsync } = await import("expo-secure-store");
+  return getItemAsync(key);
+}
+
+async function storageRemove(key: string) {
+  if (Platform.OS === "web") webStorage.removeItem(key);
+  else { const { deleteItemAsync } = await import("expo-secure-store"); await deleteItemAsync(key); }
+}
 
 const api = axios.create({
   baseURL: API_URL,
@@ -11,7 +27,7 @@ const api = axios.create({
 
 api.interceptors.request.use(async (config) => {
   try {
-    const token = await SecureStore.getItemAsync("auth_token");
+    const token = await storageGet("auth_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,9 +37,9 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      SecureStore.deleteItemAsync("auth_token");
+      await storageRemove("auth_token");
     }
     return Promise.reject(error);
   }

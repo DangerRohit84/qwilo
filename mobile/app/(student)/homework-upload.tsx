@@ -7,6 +7,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -45,15 +46,19 @@ export default function HomeworkUploadScreen() {
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append("image", {
-        uri: image,
-        type: "image/jpeg",
-        name: "homework.jpg",
-      } as any);
+      if (Platform.OS === "web") {
+        const response = await fetch(image);
+        const blob = await response.blob();
+        formData.append("image", blob, "homework.jpg");
+      } else {
+        formData.append("image", {
+          uri: image,
+          type: "image/jpeg",
+          name: "homework.jpg",
+        } as any);
+      }
 
-      const { data: session } = await api.post("/student/homework", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const { data: session } = await api.post("/student/homework", formData);
 
       await api.post(`/student/homework/${session.id}/process`);
 

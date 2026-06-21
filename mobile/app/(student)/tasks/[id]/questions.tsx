@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Speech from "expo-speech";
@@ -112,16 +113,21 @@ export default function QuestionsScreen() {
     if (!uri) return;
     try {
       const formData = new FormData();
-      formData.append("audio", {
-        uri,
-        type: "audio/webm",
-        name: "answer.webm",
-      } as any);
+      if (Platform.OS === "web") {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        formData.append("audio", blob, "answer.webm");
+      } else {
+        formData.append("audio", {
+          uri,
+          type: "audio/webm",
+          name: "answer.webm",
+        } as any);
+      }
 
       const { data } = await api.post<AnswerResult>(
         `/student/questions/${question!.id}/answer-voice`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
       );
       setResult(data);
       setAnswered(true);

@@ -1,9 +1,19 @@
-import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 import api from "./api";
 import { AuthResponse, User } from "../types";
 
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
+
+const storage = Platform.OS === "web" ? {
+  async getItem(key: string) { return localStorage.getItem(key); },
+  async setItem(key: string, value: string) { localStorage.setItem(key, value); },
+  async removeItem(key: string) { localStorage.removeItem(key); },
+} : {
+  async getItem(key: string) { const { getItemAsync } = await import("expo-secure-store"); return getItemAsync(key); },
+  async setItem(key: string, value: string) { const { setItemAsync } = await import("expo-secure-store"); return setItemAsync(key, value); },
+  async removeItem(key: string) { const { deleteItemAsync } = await import("expo-secure-store"); return deleteItemAsync(key); },
+};
 
 export async function login(
   email: string,
@@ -13,8 +23,8 @@ export async function login(
     email,
     password,
   });
-  await SecureStore.setItemAsync(TOKEN_KEY, data.token);
-  await SecureStore.setItemAsync(USER_KEY, JSON.stringify(data.user));
+  await storage.setItem(TOKEN_KEY, data.token);
+  await storage.setItem(USER_KEY, JSON.stringify(data.user));
   return data;
 }
 
@@ -32,19 +42,19 @@ export async function register(
     role,
     parentEmail,
   });
-  await SecureStore.setItemAsync(TOKEN_KEY, data.token);
-  await SecureStore.setItemAsync(USER_KEY, JSON.stringify(data.user));
+  await storage.setItem(TOKEN_KEY, data.token);
+  await storage.setItem(USER_KEY, JSON.stringify(data.user));
   return data;
 }
 
 export async function logout() {
-  await SecureStore.deleteItemAsync(TOKEN_KEY);
-  await SecureStore.deleteItemAsync(USER_KEY);
+  await storage.removeItem(TOKEN_KEY);
+  await storage.removeItem(USER_KEY);
 }
 
 export async function getStoredUser(): Promise<User | null> {
   try {
-    const json = await SecureStore.getItemAsync(USER_KEY);
+    const json = await storage.getItem(USER_KEY);
     return json ? JSON.parse(json) : null;
   } catch {
     return null;
@@ -53,7 +63,7 @@ export async function getStoredUser(): Promise<User | null> {
 
 export async function getToken(): Promise<string | null> {
   try {
-    return await SecureStore.getItemAsync(TOKEN_KEY);
+    return await storage.getItem(TOKEN_KEY);
   } catch {
     return null;
   }
