@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, ActivityIndicator, Platform } from "react-native";
-import { Tabs, Stack, useRouter } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { getStoredUser } from "../../services/auth";
 
@@ -72,6 +72,7 @@ export default function StudentLayout() {
       <Tabs.Screen name="homework-upload" options={{ href: null }} />
       <Tabs.Screen name="tasks/[id]" options={{ href: null }} />
       <Tabs.Screen name="tasks/[id]/questions" options={{ href: null }} />
+      <Tabs.Screen name="tasks/[id]/review" options={{ href: null }} />
     </Tabs>
   );
 }
