@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { TouchableOpacity, StyleSheet, View } from "react-native";
+import { Platform, TouchableOpacity, StyleSheet, View } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
