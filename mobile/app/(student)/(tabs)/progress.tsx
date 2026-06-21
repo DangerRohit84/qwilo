@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,19 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  LayoutAnimation,
-  Platform,
-  UIManager,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Calendar } from "react-native-calendars";
 import api from "../../../services/api";
 import { StudentProgress } from "../../../types";
-
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 type Preset = "today" | "week" | "month" | "all";
 
@@ -41,10 +34,6 @@ function getPresetRange(preset: Preset) {
     default:
       return { startDate: undefined, endDate: undefined };
   }
-}
-
-function fmt(d: Date) {
-  return d.toISOString().split("T")[0];
 }
 
 export default function ProgressScreen() {
@@ -78,7 +67,8 @@ export default function ProgressScreen() {
           };
         });
         setMarkedDates(marks);
-      } catch {
+      } catch (err) {
+        console.log("Progress fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -94,12 +84,10 @@ export default function ProgressScreen() {
   );
 
   function applyPreset(p: Preset) {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setPreset(p);
   }
 
   function onDayPress(day: { dateString: string }) {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     const d = new Date(day.dateString);
     fetchProgress(d, d);
     setMarkedDates((prev) => ({
@@ -149,10 +137,7 @@ export default function ProgressScreen() {
 
         <TouchableOpacity
           style={styles.calendarToggle}
-          onPress={() => {
-            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-            setShowCalendar(!showCalendar);
-          }}
+          onPress={() => setShowCalendar(!showCalendar)}
         >
           <Ionicons
             name={showCalendar ? "chevron-up" : "calendar"}
