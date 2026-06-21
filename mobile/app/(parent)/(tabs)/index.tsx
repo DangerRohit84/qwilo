@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   View,
   Text,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -19,14 +19,14 @@ export default function ParentDashboard() {
   const router = useRouter();
   const { colors } = useTheme();
   const [user, setUser] = useState<User | null>(null);
-  const [children, setChildren] = useState<User[]>([]);
+  const [children, setChildren] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLogout, setShowLogout] = useState(false);
 
   useEffect(() => {
     getStoredUser().then(setUser);
-    api.get("/parent/children").then(({ data }) => {
-      setChildren(data);
+    api.get("/parent/progress").then(({ data }) => {
+      setChildren(data.children || []);
       setLoading(false);
     });
   }, []);
@@ -76,28 +76,41 @@ export default function ParentDashboard() {
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>No children linked yet</Text>
         </View>
       ) : (
-        <FlatList
-          data={children}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 24, paddingBottom: 90 }}
-          renderItem={({ item }) => (
+        <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+          {children.map((child) => (
             <TouchableOpacity
-              style={[styles.childCard, { backgroundColor: colors.card }]}
-              onPress={() => router.push(`/(parent)/child/${item.id}`)}
+              key={child.id}
+              style={[styles.card, { backgroundColor: colors.card }]}
+              onPress={() => router.push(`/(parent)/child/${child.id}`)}
             >
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {item.name.charAt(0).toUpperCase()}
-                </Text>
+              <View style={styles.cardHeader}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{child.name.charAt(0).toUpperCase()}</Text>
+                </View>
+                <View style={styles.cardInfo}>
+                  <Text style={[styles.childName, { color: colors.text }]}>{child.name}</Text>
+                  <Text style={[styles.childEmail, { color: colors.textSecondary }]}>{child.email}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
               </View>
-              <View style={styles.childInfo}>
-                <Text style={[styles.childName, { color: colors.text }]}>{item.name}</Text>
-                <Text style={[styles.childEmail, { color: colors.textSecondary }]}>{item.email}</Text>
+
+              <View style={styles.statsRow}>
+                <View style={styles.stat}>
+                  <Text style={[styles.statValue, { color: colors.primary }]}>{child.completionRate}%</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Completion</Text>
+                </View>
+                <View style={styles.stat}>
+                  <Text style={[styles.statValue, { color: colors.success }]}>{child.accuracy}%</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Accuracy</Text>
+                </View>
+                <View style={styles.stat}>
+                  <Text style={[styles.statValue, { color: colors.text }]}>{child.completedTasks}</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Tasks</Text>
+                </View>
               </View>
-              <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
             </TouchableOpacity>
-          )}
-        />
+          ))}
+        </ScrollView>
       )}
     </View>
   );
@@ -124,28 +137,36 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
   emptyText: { fontSize: 16, marginTop: 12 },
-  childCard: {
+  card: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    marginBottom: 16,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: "#4F46E5",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
-  avatarText: { color: "#fff", fontSize: 20, fontWeight: "700" },
-  childInfo: { flex: 1 },
+  avatarText: { color: "#fff", fontSize: 18, fontWeight: "700" },
+  cardInfo: { flex: 1 },
   childName: { fontSize: 16, fontWeight: "600" },
   childEmail: { fontSize: 13, marginTop: 2 },
+  statsRow: { flexDirection: "row", gap: 12 },
+  stat: { flex: 1, alignItems: "center" },
+  statValue: { fontSize: 22, fontWeight: "700" },
+  statLabel: { fontSize: 11, marginTop: 4 },
 });
