@@ -89,9 +89,13 @@ export async function submitTaskWork(
 ) {
   const task = await prisma.task.findUnique({
     where: { id: taskId },
-    include: { session: true },
+    include: { session: true, submission: true },
   });
   if (!task) throw new Error("Task not found");
+
+  if (task.submission) {
+    return task.submission;
+  }
 
   const urls: string[] = [];
   for (const buf of buffers) {

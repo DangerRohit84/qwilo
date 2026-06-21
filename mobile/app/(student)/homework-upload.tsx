@@ -49,7 +49,8 @@ export default function HomeworkUploadScreen() {
       if (Platform.OS === "web") {
         const response = await fetch(image);
         const blob = await response.blob();
-        formData.append("image", blob, "homework.jpg");
+        const file = new File([blob], "homework.jpg", { type: "image/jpeg" });
+        formData.append("image", file);
       } else {
         formData.append("image", {
           uri: image,
@@ -62,14 +63,13 @@ export default function HomeworkUploadScreen() {
 
       await api.post(`/student/homework/${session.id}/process`);
 
-      Alert.alert("Success", "Homework uploaded and processed!", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      router.replace("/(student)");
     } catch (err: any) {
-      Alert.alert(
-        "Error",
-        err.response?.data?.error || "Failed to process homework"
-      );
+      const msg =
+        err.response?.data?.error ||
+        err.message ||
+        "Failed to process homework";
+      Alert.alert("Upload Failed", msg);
     } finally {
       setLoading(false);
     }

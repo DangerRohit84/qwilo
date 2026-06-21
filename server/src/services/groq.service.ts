@@ -6,6 +6,13 @@ dotenv.config();
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+function resizeUrl(url: string): string {
+  return url.replace(
+    "/image/upload/",
+    "/image/upload/w_1000,q_auto/"
+  );
+}
+
 export async function ocrHomeworkImage(imageUrl: string): Promise<string> {
   const response = await groq.chat.completions.create({
     model: "meta-llama/llama-4-scout-17b-16e-instruct",
@@ -17,7 +24,7 @@ export async function ocrHomeworkImage(imageUrl: string): Promise<string> {
             type: "text",
             text: "Extract all homework text from this notebook page. Return the exact text as written. Include all subjects, chapter names, page numbers, and any instructions.",
           },
-          { type: "image_url", image_url: { url: imageUrl } },
+          { type: "image_url", image_url: { url: resizeUrl(imageUrl) } },
         ],
       },
     ],
@@ -65,7 +72,7 @@ export async function analyzeSubmittedWork(
     },
     ...imageUrls.map((url) => ({
       type: "image_url" as const,
-      image_url: { url },
+      image_url: { url: resizeUrl(url) },
     })),
   ];
 

@@ -4,8 +4,13 @@ import { upload } from "../middleware/upload";
 import * as homeworkService from "../services/homework.service";
 import * as questionService from "../services/question.service";
 import * as notificationService from "../services/notification.service";
+import * as groqService from "../services/groq.service";
+import * as queueService from "../services/queue.service";
 import { uploadFromBuffer } from "../utils/cloudinary";
 import prisma from "../utils/prisma";
+import fs from "fs";
+import path from "path";
+import os from "os";
 
 const router = Router();
 
@@ -36,8 +41,42 @@ router.post(
   "/homework/:id/process",
   async (req: AuthRequest, res: Response) => {
     try {
-      const result = await homeworkService.processHomework(req.params.id as string);
-      res.json(result);
+      const sessionId = req.params.id as string;
+      await prisma.homeworkSession.update({
+        where: { id: sessionId },
+        data: { status: "PROCESSING" },
+      });
+      queueService.enqueue(async () => {
+        try {
+          await homeworkService.processHomework(sessionId);
+        } catch (err: any) {
+          console.error("Background processing failed:", err.message);
+          await prisma.homeworkSession.update({
+            where: { id: sessionId },
+            data: { status: "FAILED" },
+          });
+        }
+      });
+      res.json({ message: "Processing started" });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
+
+router.get(
+  "/homework/:id/status",
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const session = await prisma.homeworkSession.findUnique({
+        where: { id: req.params.id },
+        include: { tasks: true },
+      });
+      if (!session) return res.status(404).json({ error: "Session not found" });
+      res.json({
+        status: session.status,
+        taskCount: session.tasks.length,
+      });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
@@ -88,9 +127,15 @@ router.post(
         files.map((f) => ({ buffer: f.buffer, mimetype: f.mimetype }))
       );
 
-      const questions = await questionService.generateAndSaveQuestions(taskId);
+      queueService.enqueue(async () => {
+        try {
+          await questionService.generateAndSaveQuestions(taskId);
+        } catch (err: any) {
+          console.error("Background question generation failed:", err.message);
+        }
+      });
 
-      res.json({ submission, questionCount: questions.length });
+      res.json({ submission, questionCount: "pending" });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
@@ -161,16 +206,19 @@ router.post(
       }
 
       const questionId = req.params.id as string;
-      const audioUrl = await uploadFromBuffer(
-        req.file.buffer,
-        `voice-answers/${req.user!.id}`
-      );
+
+      const ext = req.file.mimetype.split("/")[1] || "webm";
+      const tmpFile = path.join(os.tmpdir(), `voice-${Date.now()}.${ext}`);
+      fs.writeFileSync(tmpFile, req.file.buffer);
+
+      const transcript = await groqService.transcribeAudio(tmpFile);
+
+      fs.unlinkSync(tmpFile);
 
       const result = await questionService.submitAnswer(
         questionId,
         req.user!.id,
-        undefined,
-        audioUrl
+        transcript || undefined
       );
 
       const question = await prisma.question.findUnique({

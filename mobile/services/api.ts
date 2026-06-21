@@ -21,8 +21,7 @@ async function storageRemove(key: string) {
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 30000,
-  headers: { "Content-Type": "application/json" },
+  timeout: 120000,
 });
 
 api.interceptors.request.use(async (config) => {

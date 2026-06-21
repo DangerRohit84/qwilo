@@ -30,10 +30,19 @@ export default function QuestionsScreen() {
 
   useEffect(() => {
     Audio.requestPermissionsAsync();
-    fetchNextQuestion();
+    loadQuestionWithRetry();
   }, []);
 
-  async function fetchNextQuestion() {
+  async function loadQuestionWithRetry() {
+    for (let i = 0; i < 30; i++) {
+      const loaded = await fetchNextQuestion();
+      if (loaded) return;
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+    setLoading(false);
+  }
+
+  async function fetchNextQuestion(): Promise<boolean> {
     setLoading(true);
     setSelectedAnswer(null);
     setAnswered(false);
@@ -44,15 +53,16 @@ export default function QuestionsScreen() {
         `/student/tasks/${taskId}/questions/next`
       );
       if (data.done) {
-        setDone(true);
+        return false;
       } else {
         setQuestion(data);
         if (data.type === "VOICE") {
           speakQuestion(data.questionText);
         }
+        return true;
       }
     } catch {
-      Alert.alert("Error", "Failed to load question");
+      return false;
     } finally {
       setLoading(false);
     }
@@ -116,7 +126,9 @@ export default function QuestionsScreen() {
       if (Platform.OS === "web") {
         const response = await fetch(uri);
         const blob = await response.blob();
-        formData.append("audio", blob, "answer.webm");
+        const ext = blob.type.split("/")[1] || "webm";
+        const file = new File([blob], `answer.${ext}`, { type: blob.type });
+        formData.append("audio", file);
       } else {
         formData.append("audio", {
           uri,
@@ -131,17 +143,19 @@ export default function QuestionsScreen() {
       );
       setResult(data);
       setAnswered(true);
-    } catch {
-      Alert.alert("Error", "Failed to submit voice answer");
+    } catch (err: any) {
+      console.log("Voice answer error:", err.response?.status, err.response?.data);
+      Alert.alert("Error", err.response?.data?.error || "Failed to submit voice answer");
     }
   }
 
-  function nextQuestion() {
+  async function nextQuestion() {
     if (done) {
-      router.back();
-    } else {
-      fetchNextQuestion();
+      router.replace("/(student)");
+      return;
     }
+    const hasNext = await fetchNextQuestion();
+    if (!hasNext) setDone(true);
   }
 
   if (loading) {
@@ -158,7 +172,7 @@ export default function QuestionsScreen() {
         <Ionicons name="checkmark-done-circle" size={64} color="#10B981" />
         <Text style={styles.doneTitle}>All Questions Answered!</Text>
         <Text style={styles.doneSub}>Great job completing your homework</Text>
-        <TouchableOpacity style={styles.doneBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.doneBtn} onPress={() => router.replace("/(student)")}>
           <Text style={styles.doneBtnText}>Back to Dashboard</Text>
         </TouchableOpacity>
       </View>

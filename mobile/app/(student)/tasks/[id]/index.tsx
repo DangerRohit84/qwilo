@@ -58,7 +58,8 @@ export default function TaskDetailScreen() {
         if (Platform.OS === "web") {
           const response = await fetch(uri);
           const blob = await response.blob();
-          formData.append("images", blob, `work-${i}.jpg`);
+          const file = new File([blob], `work-${i}.jpg`, { type: "image/jpeg" });
+          formData.append("images", file);
         } else {
           formData.append("images", {
             uri,
@@ -73,16 +74,12 @@ export default function TaskDetailScreen() {
         formData
       );
 
-      if (data.questionCount > 0) {
-        router.push(`/(student)/tasks/${id}/questions`);
-      } else {
-        Alert.alert("Submitted", "Your work has been submitted!");
-        router.back();
-      }
+      router.push(`/(student)/tasks/${id}/questions`);
     } catch (err: any) {
+      console.log("Submit error:", err.response?.status, err.response?.data, err.message);
       Alert.alert(
         "Error",
-        err.response?.data?.error || "Failed to submit"
+        `Status: ${err.response?.status}\n${err.response?.data?.error || err.message || "Failed to submit"}`
       );
     } finally {
       setSubmitting(false);

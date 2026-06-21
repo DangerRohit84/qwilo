@@ -4,6 +4,9 @@ import * as groqService from "./groq.service";
 const recentStyles = new Map<string, string[]>();
 
 export async function generateAndSaveQuestions(taskId: string) {
+  const existing = await prisma.question.findMany({ where: { taskId } });
+  if (existing.length > 0) return existing;
+
   const task = await prisma.task.findUnique({
     where: { id: taskId },
     include: { submission: true, session: true },

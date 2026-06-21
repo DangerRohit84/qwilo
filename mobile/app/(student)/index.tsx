@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -38,6 +38,8 @@ export default function StudentDashboard() {
   useFocusEffect(
     useCallback(() => {
       fetchTasks();
+      const interval = setInterval(fetchTasks, 5000);
+      return () => clearInterval(interval);
     }, [])
   );
 
