@@ -1,4 +1,5 @@
-import { Platform, View, TouchableOpacity, StyleSheet, Animated, useRef, useEffect } from "react-native";
+import { useEffect, useRef } from "react";
+import { Platform, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
