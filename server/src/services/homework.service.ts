@@ -205,5 +205,16 @@ export async function getStudentProgress(
       status: s.status,
       taskCount: s.tasks.length,
     })),
+    tasks: sessions.flatMap((s) =>
+      s.tasks.map((t) => ({
+        id: t.id,
+        description: t.description,
+        subject: t.subject,
+        type: t.type,
+        status: t.status,
+        sessionDate: s.date,
+        sessionId: s.id,
+      }))
+    ),
   };
 }

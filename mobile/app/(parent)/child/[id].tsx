@@ -246,39 +246,49 @@ export default function ChildProgressScreen() {
           </>
         )}
 
-        {data?.recentSessions && data.recentSessions.length > 0 && (
+        {data?.tasks && data.tasks.length > 0 && (
           <>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Sessions</Text>
-            {data.recentSessions.map((s: any) => (
-              <TouchableOpacity
-                key={s.id}
-                style={[styles.sessionRow, { backgroundColor: colors.card }]}
-                onPress={() => router.push(`/(parent)/sessions/${s.id}`)}
-              >
-                <Text style={[styles.sessionDate, { color: colors.text }]}>
-                  {new Date(s.date).toLocaleDateString()}
-                </Text>
-                <Text style={[styles.sessionTasks, { color: colors.textSecondary }]}>{s.taskCount} tasks</Text>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    s.status === "COMPLETED"
-                      ? { backgroundColor: colors.success + "22" }
-                      : { backgroundColor: colors.warning + "22" },
-                  ]}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Tasks</Text>
+            {data.tasks
+              .sort((a: any, b: any) => new Date(b.sessionDate).getTime() - new Date(a.sessionDate).getTime())
+              .map((t: any) => (
+                <TouchableOpacity
+                  key={t.id}
+                  style={[styles.taskRow, { backgroundColor: colors.card }]}
+                  onPress={() => router.push(`/(parent)/sessions/${t.sessionId}`)}
                 >
-                  <Text
+                  <View style={styles.taskLeft}>
+                    <View style={[styles.taskSubjectBadge, { backgroundColor: colors.primary + "18" }]}>
+                      <Text style={[styles.taskSubjectText, { color: colors.primary }]} numberOfLines={1}>
+                        {t.subject || "Task"}
+                      </Text>
+                    </View>
+                    <View style={styles.taskInfo}>
+                      <Text style={[styles.taskDesc, { color: colors.text }]} numberOfLines={1}>
+                        {t.description}
+                      </Text>
+                      <Text style={[styles.taskDate, { color: colors.textSecondary }]}>
+                        {new Date(t.sessionDate).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  </View>
+                  <View
                     style={[
-                      styles.statusText,
-                      { color: s.status === "COMPLETED" ? colors.success : colors.warning },
+                      styles.statusBadge,
+                      { backgroundColor: t.status === "COMPLETED" ? colors.success + "22" : colors.warning + "22" },
                     ]}
                   >
-                    {s.status}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-            ))}
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: t.status === "COMPLETED" ? colors.success : colors.warning },
+                      ]}
+                    >
+                      {t.status === "COMPLETED" ? "Done" : "Pending"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
           </>
         )}
       </ScrollView>
@@ -336,15 +346,25 @@ const styles = StyleSheet.create({
   },
   subjectFill: { height: "100%", borderRadius: 4 },
   subjectStat: { width: 50, textAlign: "right", fontSize: 13 },
-  sessionRow: {
+  taskRow: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
-    borderRadius: 8,
+    justifyContent: "space-between",
+    padding: 14,
+    borderRadius: 10,
     marginBottom: 8,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  sessionDate: { flex: 1, fontSize: 14 },
-  sessionTasks: { fontSize: 14, marginRight: 12 },
+  taskLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  taskSubjectBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  taskSubjectText: { fontSize: 11, fontWeight: "700", maxWidth: 60 },
+  taskInfo: { flex: 1 },
+  taskDesc: { fontSize: 14, fontWeight: "500" },
+  taskDate: { fontSize: 12, marginTop: 2 },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20 },
   statusText: { fontSize: 12, fontWeight: "600" },
 });
