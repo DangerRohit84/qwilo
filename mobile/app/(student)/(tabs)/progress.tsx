@@ -236,31 +236,6 @@ export default function ProgressScreen() {
           <Text style={styles.emptyText}>No data for this period</Text>
         )}
 
-        <Text style={styles.sectionTitle}>Sessions</Text>
-        {data?.recentSessions && data.recentSessions.length > 0 ? (
-          data.recentSessions.map((s) => (
-            <View key={s.id} style={styles.sessionRow}>
-              <View style={styles.sessionLeft}>
-                <Ionicons
-                  name={
-                    s.status === "COMPLETED"
-                      ? "checkmark-circle"
-                      : "time-outline"
-                  }
-                  size={20}
-                  color={s.status === "COMPLETED" ? "#10B981" : "#F59E0B"}
-                />
-                <Text style={styles.sessionDate}>
-                  {new Date(s.date).toLocaleDateString()}
-                </Text>
-              </View>
-              <Text style={styles.sessionTasks}>{s.taskCount} tasks</Text>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.emptyText}>No sessions in this period</Text>
-        )}
-
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
