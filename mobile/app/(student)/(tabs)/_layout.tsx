@@ -1,13 +1,27 @@
-import { Platform, View, TouchableOpacity, StyleSheet } from "react-native";
+import { Platform, View, TouchableOpacity, StyleSheet, Animated, useRef, useEffect } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
 
 export default function TabsLayout() {
   const { theme, toggle, colors } = useTheme();
+  const bgAnim = useRef(new Animated.Value(theme === "dark" ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(bgAnim, {
+      toValue: theme === "dark" ? 1 : 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  }, [theme]);
+
+  const bgColor = bgAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["#F9FAFB", "#0F172A"],
+  });
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <Animated.View style={{ flex: 1, backgroundColor: bgColor }}>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -56,13 +70,26 @@ export default function TabsLayout() {
         style={[styles.themeToggle, { backgroundColor: colors.card }]}
         onPress={toggle}
       >
-        <Ionicons
-          name={theme === "dark" ? "sunny" : "moon"}
-          size={22}
-          color={colors.text}
-        />
+        <Animated.View
+          style={{
+            transform: [
+              {
+                rotate: bgAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ["0deg", "360deg"],
+                }),
+              },
+            ],
+          }}
+        >
+          <Ionicons
+            name={theme === "dark" ? "sunny" : "moon"}
+            size={22}
+            color={colors.text}
+          />
+        </Animated.View>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 }
 
