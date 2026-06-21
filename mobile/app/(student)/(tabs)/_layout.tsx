@@ -1,27 +1,65 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   Platform,
   TouchableOpacity,
   StyleSheet,
   Animated,
+  Dimensions,
+  View,
 } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
 
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
+
 export default function TabsLayout() {
   const { theme, toggle, colors } = useTheme();
+  const toggleRef = useRef<TouchableOpacity>(null);
+  const scaleAnim = useRef(new Animated.Value(0)).current;
   const bgAnim = useRef(new Animated.Value(theme === "dark" ? 1 : 0)).current;
+  const [btnPos, setBtnPos] = useState({ x: 0, y: 0, size: 40 });
+  const [showRing, setShowRing] = useState(false);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      toggleRef.current?.measureInWindow((x, y, w, h) => {
+        if (x || y) setBtnPos({ x: x + w / 2, y: y + h / 2, size: Math.max(w, h) });
+      });
+    }, 200);
+    return () => clearTimeout(id);
+  }, []);
 
   function handleToggle() {
-    const isDark = theme === "dark";
-    const target = isDark ? 0 : 1;
+    const cx = btnPos.x;
+    const cy = btnPos.y;
+    const maxDist = Math.max(
+      Math.sqrt(cx * cx + cy * cy),
+      Math.sqrt((SCREEN_W - cx) * (SCREEN_W - cx) + cy * cy),
+      Math.sqrt(cx * cx + (SCREEN_H - cy) * (SCREEN_H - cy)),
+      Math.sqrt((SCREEN_W - cx) * (SCREEN_W - cx) + (SCREEN_H - cy) * (SCREEN_H - cy))
+    );
+    const maxScale = (maxDist * 2) / btnPos.size;
 
-    Animated.timing(bgAnim, {
-      toValue: target,
-      duration: 400,
-      useNativeDriver: false,
-    }).start(() => toggle());
+    const target = theme === "dark" ? 0 : 1;
+    setShowRing(true);
+    scaleAnim.setValue(0);
+
+    Animated.parallel([
+      Animated.timing(scaleAnim, {
+        toValue: maxScale,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bgAnim, {
+        toValue: target,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+    ]).start(() => {
+      toggle();
+      setShowRing(false);
+    });
   }
 
   const bgColor = bgAnim.interpolate({
@@ -76,19 +114,18 @@ export default function TabsLayout() {
       </Tabs>
 
       <TouchableOpacity
+        ref={toggleRef}
         style={[styles.themeToggle, { backgroundColor: colors.card }]}
         onPress={handleToggle}
       >
         <Animated.View
           style={{
-            transform: [
-              {
-                rotate: bgAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ["0deg", "360deg"],
-                }),
-              },
-            ],
+            transform: [{
+              rotate: bgAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: ["0deg", "360deg"],
+              }),
+            }],
           }}
         >
           <Ionicons
@@ -98,6 +135,24 @@ export default function TabsLayout() {
           />
         </Animated.View>
       </TouchableOpacity>
+
+      {showRing && (
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            left: btnPos.x - btnPos.size / 2,
+            top: btnPos.y - btnPos.size / 2,
+            width: btnPos.size,
+            height: btnPos.size,
+            borderRadius: btnPos.size / 2,
+            borderWidth: 3,
+            borderColor: theme === "dark" ? "#F9FAFB" : "#0F172A",
+            backgroundColor: "transparent",
+            transform: [{ scale: scaleAnim }],
+          }}
+        />
+      )}
     </Animated.View>
   );
 }
