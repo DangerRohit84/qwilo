@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -48,6 +48,8 @@ export default function ProgressScreen() {
   const [preset, setPreset] = useState<Preset>("all");
   const [showCalendar, setShowCalendar] = useState(false);
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const selectedRef = useRef<string | null>(null);
 
   const fetchProgress = useCallback(
     async (startDate?: Date, endDate?: Date) => {
@@ -68,10 +70,17 @@ export default function ProgressScreen() {
           marks[dateStr] = {
             marked: true,
             dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
-            selected: true,
-            selectedColor: "#EEF2FF",
           };
         });
+
+        if (selectedRef.current) {
+          marks[selectedRef.current] = {
+            ...marks[selectedRef.current],
+            selected: true,
+            selectedColor: "#4F46E5",
+          };
+        }
+
         setMarkedDates(marks);
       } catch (err) {
         console.log("Progress fetch error:", err);
@@ -90,17 +99,17 @@ export default function ProgressScreen() {
   );
 
   function applyPreset(p: Preset) {
+    setSelectedDate(null);
+    selectedRef.current = null;
     setPreset(p);
   }
 
   function onDayPress(day: { dateString: string }) {
+    setSelectedDate(day.dateString);
+    selectedRef.current = day.dateString;
     const start = new Date(day.dateString + "T00:00:00.000Z");
     const end = new Date(day.dateString + "T23:59:59.999Z");
     fetchProgress(start, end);
-    setMarkedDates((prev) => ({
-      ...prev,
-      [day.dateString]: { selected: true, selectedColor: "#4F46E5" },
-    }));
   }
 
   const presets: { key: Preset; label: string }[] = [
