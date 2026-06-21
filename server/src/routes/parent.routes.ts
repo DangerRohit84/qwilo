@@ -72,13 +72,18 @@ router.get("/children", async (req: AuthRequest, res: Response) => {
 
 router.get("/children/:id/progress", async (req: AuthRequest, res: Response) => {
   try {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
     const link = await prisma.studentParent.findFirst({
       where: { parentId: req.user!.id, studentId: req.params.id as string },
     });
     if (!link) return res.status(403).json({ error: "Not your child" });
 
     const { getStudentProgress } = await import("../services/homework.service");
-    const progress = await getStudentProgress(req.params.id as string);
+    const progress = await getStudentProgress(
+      req.params.id as string,
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined
+    );
     res.json(progress);
   } catch (err: any) {
     res.status(400).json({ error: err.message });

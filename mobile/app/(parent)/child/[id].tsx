@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,25 +9,116 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Calendar } from "react-native-calendars";
 import api from "../../../services/api";
-import { StudentProgress } from "../../../types";
 import { useTheme } from "../../../contexts/ThemeContext";
+
+type Preset = "today" | "week" | "month" | "all";
+
+function getPresetRange(preset: Preset) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  switch (preset) {
+    case "today":
+      return {
+        startDate: new Date(Date.UTC(y, m, d)),
+        endDate: new Date(Date.UTC(y, m, d, 23, 59, 59, 999)),
+      };
+    case "week": {
+      const day = now.getDay();
+      const start = new Date(Date.UTC(y, m, d - (day === 0 ? 6 : day - 1)));
+      const end = new Date(Date.UTC(y, m, d + (day === 0 ? 0 : 7 - day), 23, 59, 59, 999));
+      return { startDate: start, endDate: end };
+    }
+    case "month":
+      return {
+        startDate: new Date(Date.UTC(y, m, 1)),
+        endDate: new Date(Date.UTC(y, m + 1, 0, 23, 59, 59, 999)),
+      };
+    default:
+      return { startDate: undefined, endDate: undefined };
+  }
+}
 
 export default function ChildProgressScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { id } = useLocalSearchParams();
-  const [data, setData] = useState<StudentProgress | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [preset, setPreset] = useState<Preset>("all");
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const selectedRef = useRef<string | null>(null);
+
+  const fetchProgress = useCallback(
+    async (startDate?: Date, endDate?: Date) => {
+      setLoading(true);
+      try {
+        const params: any = {};
+        if (startDate) params.startDate = startDate.toISOString();
+        if (endDate) params.endDate = endDate.toISOString();
+        const { data: result } = await api.get(`/parent/children/${id}/progress`, { params });
+        setData(result);
+        setLoading(false);
+
+        const marks: Record<string, any> = {};
+        (result.recentSessions || []).forEach((s: any) => {
+          const dateStr = s.date.split("T")[0];
+          marks[dateStr] = {
+            marked: true,
+            dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
+          };
+        });
+
+        if (selectedRef.current) {
+          marks[selectedRef.current] = {
+            ...marks[selectedRef.current],
+            selected: true,
+            selectedColor: "#4F46E5",
+          };
+        }
+
+        setMarkedDates(marks);
+      } catch (err) {
+        console.error("Failed to fetch child progress");
+        setLoading(false);
+      }
+    },
+    [id]
+  );
 
   useEffect(() => {
-    api.get(`/parent/children/${id}/progress`).then(({ data }) => {
-      setData(data);
-      setLoading(false);
-    });
-  }, [id]);
+    fetchProgress();
+  }, []);
 
-  if (loading) {
+  function applyPreset(p: Preset) {
+    setPreset(p);
+    setSelectedDate(null);
+    selectedRef.current = null;
+    const range = getPresetRange(p);
+    fetchProgress(range.startDate, range.endDate);
+  }
+
+  function onDayPress(day: { dateString: string }) {
+    setSelectedDate(day.dateString);
+    selectedRef.current = day.dateString;
+    const start = new Date(day.dateString + "T00:00:00.000Z");
+    const end = new Date(day.dateString + "T23:59:59.999Z");
+    fetchProgress(start, end);
+  }
+
+  const presets: { key: Preset; label: string }[] = [
+    { key: "today", label: "Today" },
+    { key: "week", label: "This Week" },
+    { key: "month", label: "This Month" },
+    { key: "all", label: "All Time" },
+  ];
+
+  if (loading && !data) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -42,89 +133,154 @@ export default function ChildProgressScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Progress</Text>
-        <TouchableOpacity
-          onPress={() => router.push(`/(parent)/sessions/${id}`)}
-        >
-          <Ionicons name="calendar" size={24} color={colors.primary} />
-        </TouchableOpacity>
+        <View style={{ width: 28 }} />
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.cards}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.presetRow}>
+          {presets.map((p) => (
+            <TouchableOpacity
+              key={p.key}
+              style={[
+                styles.presetBtn,
+                { backgroundColor: colors.card, borderColor: colors.border },
+                preset === p.key && {
+                  backgroundColor: "#4F46E5",
+                  borderColor: "#4F46E5",
+                },
+              ]}
+              onPress={() => applyPreset(p.key)}
+            >
+              <Text
+                style={[
+                  styles.presetText,
+                  { color: colors.textSecondary },
+                  preset === p.key && { color: "#fff" },
+                ]}
+              >
+                {p.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.calendarToggle, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => setShowCalendar(!showCalendar)}
+        >
+          <Ionicons name="calendar" size={20} color={colors.primary} />
+          <Text style={[styles.calendarToggleText, { color: colors.textSecondary }]}>
+            {selectedDate
+              ? new Date(selectedDate + "T00:00:00").toLocaleDateString()
+              : "Select a date"}
+          </Text>
+          <Ionicons
+            name={showCalendar ? "chevron-up" : "chevron-down"}
+            size={20}
+            color={colors.textMuted}
+          />
+        </TouchableOpacity>
+
+        {showCalendar && (
+          <View style={[styles.calendarWrap, { backgroundColor: colors.card }]}>
+            <Calendar
+              theme={{
+                backgroundColor: "transparent",
+                calendarBackground: "transparent",
+                dayTextColor: colors.text,
+                monthTextColor: colors.text,
+                arrowColor: colors.primary,
+                todayTextColor: colors.primary,
+                textDisabledColor: colors.textMuted,
+              }}
+              markedDates={markedDates}
+              onDayPress={onDayPress}
+            />
+          </View>
+        )}
+
+        <View style={styles.cardsRow}>
           <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <Text style={[styles.cardValue, { color: colors.primary }]}>{data?.completionRate}%</Text>
+            <Text style={[styles.cardValue, { color: colors.primary }]}>{data?.completionRate || 0}%</Text>
             <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Completion</Text>
           </View>
           <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <Text style={[styles.cardValue, { color: colors.primary }]}>{data?.accuracy}%</Text>
+            <Text style={[styles.cardValue, { color: colors.success }]}>{data?.accuracy || 0}%</Text>
             <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Accuracy</Text>
           </View>
         </View>
 
-        <View style={styles.cards}>
-          <View style={[styles.cardSmall, { backgroundColor: colors.card }]}>
-            <Text style={[styles.cardValueSmall, { color: colors.text }]}>{data?.completedTasks}</Text>
-            <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>/{data?.totalTasks} Tasks</Text>
+        <View style={styles.cardsRow}>
+          <View style={[styles.cardMini, { backgroundColor: colors.card }]}>
+            <Text style={[styles.miniVal, { color: colors.text }]}>{data?.completedTasks || 0}</Text>
+            <Text style={[styles.miniLabel, { color: colors.textSecondary }]}>Tasks Done</Text>
           </View>
-          <View style={[styles.cardSmall, { backgroundColor: colors.card }]}>
-            <Text style={[styles.cardValueSmall, { color: colors.text }]}>{data?.correctAnswers}</Text>
-            <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>/{data?.totalQuestions} Correct</Text>
+          <View style={[styles.cardMini, { backgroundColor: colors.card }]}>
+            <Text style={[styles.miniVal, { color: colors.text }]}>{data?.correctAnswers || 0}</Text>
+            <Text style={[styles.miniLabel, { color: colors.textSecondary }]}>Correct</Text>
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>By Subject</Text>
-        {data?.subjectBreakdown &&
-          Object.entries(data.subjectBreakdown).map(([subject, stats]) => (
-            <View key={subject} style={styles.subjectRow}>
-              <Text style={[styles.subjectName, { color: colors.text }]}>{subject}</Text>
-              <View style={[styles.subjectBar, { backgroundColor: colors.inputBg }]}>
+        {data?.subjectBreakdown && Object.keys(data.subjectBreakdown).length > 0 && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>By Subject</Text>
+            {Object.entries(data.subjectBreakdown).map(([subject, stats]: any) => (
+              <View key={subject} style={styles.subjectRow}>
+                <Text style={[styles.subjectName, { color: colors.text }]}>{subject}</Text>
+                <View style={[styles.subjectBar, { backgroundColor: colors.inputBg }]}>
+                  <View
+                    style={[
+                      styles.subjectFill,
+                      {
+                        width: `${stats.total > 0 ? (stats.completed / stats.total) * 100 : 0}%`,
+                        backgroundColor: colors.primary,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={[styles.subjectStat, { color: colors.textSecondary }]}>
+                  {stats.completed}/{stats.total}
+                </Text>
+              </View>
+            ))}
+          </>
+        )}
+
+        {data?.recentSessions && data.recentSessions.length > 0 && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Sessions</Text>
+            {data.recentSessions.map((s: any) => (
+              <TouchableOpacity
+                key={s.id}
+                style={[styles.sessionRow, { backgroundColor: colors.card }]}
+                onPress={() => router.push(`/(parent)/sessions/${s.id}`)}
+              >
+                <Text style={[styles.sessionDate, { color: colors.text }]}>
+                  {new Date(s.date).toLocaleDateString()}
+                </Text>
+                <Text style={[styles.sessionTasks, { color: colors.textSecondary }]}>{s.taskCount} tasks</Text>
                 <View
                   style={[
-                    styles.subjectFill,
-                    {
-                      width: `${stats.total > 0 ? (stats.completed / stats.total) * 100 : 0}%`,
-                      backgroundColor: colors.primary,
-                    },
+                    styles.statusBadge,
+                    s.status === "COMPLETED"
+                      ? { backgroundColor: colors.success + "22" }
+                      : { backgroundColor: colors.warning + "22" },
                   ]}
-                />
-              </View>
-              <Text style={[styles.subjectStat, { color: colors.textSecondary }]}>
-                {stats.completed}/{stats.total}
-              </Text>
-            </View>
-          ))}
-
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Activity</Text>
-        {data?.recentSessions.map((s) => (
-          <TouchableOpacity
-            key={s.id}
-            style={[styles.sessionRow, { backgroundColor: colors.card }]}
-            onPress={() => router.push(`/(parent)/sessions/${s.id}`)}
-          >
-            <Text style={[styles.sessionDate, { color: colors.text }]}>
-              {new Date(s.date).toLocaleDateString()}
-            </Text>
-            <Text style={[styles.sessionTasks, { color: colors.textSecondary }]}>{s.taskCount} tasks</Text>
-            <View
-              style={[
-                styles.statusBadge,
-                s.status === "COMPLETED"
-                  ? { backgroundColor: colors.success + "22" }
-                  : { backgroundColor: colors.warning + "22" },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.statusText,
-                  { color: s.status === "COMPLETED" ? colors.success : colors.warning },
-                ]}
-              >
-                {s.status}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-          </TouchableOpacity>
-        ))}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: s.status === "COMPLETED" ? colors.success : colors.warning },
+                    ]}
+                  >
+                    {s.status}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -142,29 +298,29 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 28 },
   title: { fontSize: 20, fontWeight: "700" },
-  content: { flex: 1, padding: 24 },
-  cards: { flexDirection: "row", gap: 12, marginBottom: 12 },
-  card: {
-    flex: 1,
-    padding: 20,
-    borderRadius: 12,
+  content: { padding: 20, paddingBottom: 40 },
+  presetRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
+  presetBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, alignItems: "center" },
+  presetText: { fontSize: 13, fontWeight: "600" },
+  calendarToggle: {
+    flexDirection: "row",
     alignItems: "center",
-  },
-  cardValue: { fontSize: 32, fontWeight: "700" },
-  cardLabel: { fontSize: 14, marginTop: 4 },
-  cardSmall: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  cardValueSmall: { fontSize: 24, fontWeight: "700" },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginTop: 20,
+    gap: 8,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
     marginBottom: 12,
   },
+  calendarToggleText: { flex: 1, fontSize: 14, fontWeight: "500" },
+  calendarWrap: { borderRadius: 12, overflow: "hidden", marginBottom: 16 },
+  cardsRow: { flexDirection: "row", gap: 12, marginBottom: 12 },
+  card: { flex: 1, padding: 20, borderRadius: 12, alignItems: "center" },
+  cardValue: { fontSize: 32, fontWeight: "700" },
+  cardLabel: { fontSize: 14, marginTop: 4 },
+  cardMini: { flex: 1, padding: 14, borderRadius: 12, alignItems: "center" },
+  miniVal: { fontSize: 20, fontWeight: "700" },
+  miniLabel: { fontSize: 11, fontWeight: "600" },
+  sectionTitle: { fontSize: 18, fontWeight: "700", marginTop: 20, marginBottom: 12 },
   subjectRow: {
     flexDirection: "row",
     alignItems: "center",
