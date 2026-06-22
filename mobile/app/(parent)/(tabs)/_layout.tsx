@@ -24,11 +24,7 @@ export default function TabsLayout() {
             paddingBottom: 8,
             paddingTop: 8,
             height: 64,
-            elevation: 10,
-            shadowColor: theme === "dark" ? "#3CD2CE" : "#13376D",
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: theme === "dark" ? 0.25 : 0.18,
-            shadowRadius: 16,
+            elevation: 0,
           },
           tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
         }}
