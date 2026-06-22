@@ -5,23 +5,12 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert as RNAlert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Image,
 } from "react-native";
-
-const Alert = {
-  alert: (title: string, msg: string) => {
-    if (Platform.OS === "web") {
-      window.alert(`${title}: ${msg}`);
-    } else {
-      RNAlert.alert(title, msg);
-    }
-  },
-};
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { login, register } from "../../services/auth";
@@ -33,6 +22,7 @@ export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -42,12 +32,13 @@ export default function AuthScreen() {
   });
 
   async function handleSubmit() {
+    setError("");
     if (!form.email || !form.password || (!isLogin && !form.name)) {
-      Alert.alert("Error", "Please fill all required fields");
+      setError("Please fill all required fields");
       return;
     }
     if (!isLogin && form.role === "STUDENT" && !form.parentEmail) {
-      Alert.alert("Error", "Please enter your parent's email");
+      setError("Please enter your parent's email");
       return;
     }
     setLoading(true);
@@ -66,9 +57,7 @@ export default function AuthScreen() {
         router.replace(result.user.role === "PARENT" ? "/(parent)" : "/(student)");
       }
     } catch (err: any) {
-      const msg =
-        err.response?.data?.error || err.message || "Something went wrong";
-      Alert.alert("Error", msg);
+      setError(err.response?.data?.error || err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -92,7 +81,7 @@ export default function AuthScreen() {
               placeholder="Full Name"
               placeholderTextColor={colors.textMuted}
               value={form.name}
-              onChangeText={(t) => setForm({ ...form, name: t })}
+              onChangeText={(t) => { setForm({ ...form, name: t }); setError(""); }}
             />
             <View style={styles.roleRow}>
               <TouchableOpacity
@@ -101,7 +90,7 @@ export default function AuthScreen() {
                   { backgroundColor: colors.card, borderColor: colors.border },
                   form.role === "STUDENT" && { borderColor: colors.primary, backgroundColor: colors.inputBg },
                 ]}
-                onPress={() => setForm({ ...form, role: "STUDENT" })}
+                onPress={() => { setForm({ ...form, role: "STUDENT" }); setError(""); }}
               >
                 <Text
                   style={[
@@ -119,7 +108,7 @@ export default function AuthScreen() {
                   { backgroundColor: colors.card, borderColor: colors.border },
                   form.role === "PARENT" && { borderColor: colors.primary, backgroundColor: colors.inputBg },
                 ]}
-                onPress={() => setForm({ ...form, role: "PARENT" })}
+                onPress={() => { setForm({ ...form, role: "PARENT" }); setError(""); }}
               >
                 <Text
                   style={[
@@ -139,7 +128,7 @@ export default function AuthScreen() {
                 placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 value={form.parentEmail}
-                onChangeText={(t) => setForm({ ...form, parentEmail: t })}
+                onChangeText={(t) => { setForm({ ...form, parentEmail: t }); setError(""); }}
               />
             )}
           </>
@@ -152,7 +141,7 @@ export default function AuthScreen() {
           keyboardType="email-address"
           autoCapitalize="none"
           value={form.email}
-          onChangeText={(t) => setForm({ ...form, email: t })}
+          onChangeText={(t) => { setForm({ ...form, email: t }); setError(""); }}
         />
         <View style={styles.pwWrap}>
           <TextInput
@@ -161,7 +150,7 @@ export default function AuthScreen() {
             placeholderTextColor={colors.textMuted}
             secureTextEntry={!showPassword}
             value={form.password}
-            onChangeText={(t) => setForm({ ...form, password: t })}
+            onChangeText={(t) => { setForm({ ...form, password: t }); setError(""); }}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
             <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color={colors.textMuted} />
@@ -181,8 +170,9 @@ export default function AuthScreen() {
             </Text>
           )}
         </TouchableOpacity>
+        {error ? <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text> : null}
 
-        <TouchableOpacity onPress={() => { setIsLogin(!isLogin); setForm((f) => ({ ...f, name: "", role: "STUDENT", parentEmail: "" })); }}>
+        <TouchableOpacity onPress={() => { setError(""); setIsLogin(!isLogin); setForm((f) => ({ ...f, name: "", role: "STUDENT", parentEmail: "" })); }}>
           <Text style={[styles.switchText, { color: colors.primary }]}>
             {isLogin
               ? "Don't have an account? Register"
@@ -254,6 +244,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   btnText: { color: "#fff", fontSize: 18, fontWeight: "600" },
+  errorText: { textAlign: "center", marginTop: 12, fontSize: 14 },
   switchText: {
     textAlign: "center",
     marginTop: 16,
