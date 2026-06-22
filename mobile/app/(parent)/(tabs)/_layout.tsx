@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
 
 export default function TabsLayout() {
-  const { colors } = useTheme();
+  const { theme, colors } = useTheme();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -20,15 +20,15 @@ export default function TabsLayout() {
             right: 20,
             backgroundColor: colors.tabBar,
             borderTopColor: "transparent",
-            borderRadius: 30,
+            borderRadius: 28,
             paddingBottom: 8,
             paddingTop: 8,
             height: 64,
-            elevation: 8,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.15,
-            shadowRadius: 12,
+            elevation: 10,
+            shadowColor: theme === "dark" ? "#818CF8" : "#4F46E5",
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: theme === "dark" ? 0.25 : 0.18,
+            shadowRadius: 16,
           },
           tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
         }}

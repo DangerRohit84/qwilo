@@ -4,35 +4,35 @@ import { getStoredData, storeData } from "../services/auth";
 type Theme = "light" | "dark";
 
 export const lightColors = {
-  bg: "#F9FAFB",
+  bg: "#F5F3FF",
   card: "#fff",
-  text: "#111827",
-  textSecondary: "#6B7280",
-  textMuted: "#9CA3AF",
-  border: "#E5E7EB",
+  text: "#1E1B4B",
+  textSecondary: "#4338CA",
+  textMuted: "#A5B4FC",
+  border: "#E0E7FF",
   primary: "#4F46E5",
   success: "#10B981",
   warning: "#F59E0B",
   danger: "#EF4444",
   tabBar: "#fff",
-  tabBorder: "#E5E7EB",
+  tabBorder: "#E0E7FF",
   inputBg: "#fff",
 };
 
 export const darkColors = {
-  bg: "#0F172A",
-  card: "#1E293B",
-  text: "#F1F5F9",
-  textSecondary: "#94A3B8",
-  textMuted: "#64748B",
-  border: "#334155",
-  primary: "#4F46E5",
+  bg: "#0E0C1A",
+  card: "#1C1936",
+  text: "#EEF2FF",
+  textSecondary: "#A5B4FC",
+  textMuted: "#6366F1",
+  border: "#2D2A50",
+  primary: "#818CF8",
   success: "#34D399",
   warning: "#FBBF24",
   danger: "#DC2626",
-  tabBar: "#1E293B",
-  tabBorder: "#334155",
-  inputBg: "#334155",
+  tabBar: "#1C1936",
+  tabBorder: "#2D2A50",
+  inputBg: "#2D2A50",
 };
 
 const ThemeContext = createContext<{

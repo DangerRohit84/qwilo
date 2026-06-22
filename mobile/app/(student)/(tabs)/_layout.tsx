@@ -1,11 +1,25 @@
-import { useRef } from "react";
-import { Platform, TouchableOpacity, StyleSheet, View } from "react-native";
+import { useRef, useEffect } from "react";
+import { Platform, TouchableOpacity, StyleSheet, View, Animated } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
 
 export default function TabsLayout() {
   const { theme, toggle, colors } = useTheme();
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(rotateAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -21,15 +35,15 @@ export default function TabsLayout() {
             right: 20,
             backgroundColor: colors.tabBar,
             borderTopColor: "transparent",
-            borderRadius: 30,
+            borderRadius: 28,
             paddingBottom: 8,
             paddingTop: 8,
             height: 64,
-            elevation: 8,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.15,
-            shadowRadius: 12,
+            elevation: 10,
+            shadowColor: theme === "dark" ? "#818CF8" : "#4F46E5",
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: theme === "dark" ? 0.25 : 0.18,
+            shadowRadius: 16,
           },
           tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
         }}
@@ -64,13 +78,14 @@ export default function TabsLayout() {
       </Tabs>
 
       <TouchableOpacity
-        style={[styles.themeToggle, { backgroundColor: colors.card }]}
+        style={[styles.themeToggle, { backgroundColor: colors.card, borderColor: colors.border }]}
         onPress={toggle}
+        activeOpacity={0.7}
       >
         <Ionicons
           name={theme === "dark" ? "sunny" : "moon"}
-          size={22}
-          color={colors.text}
+          size={20}
+          color={colors.primary}
         />
       </TouchableOpacity>
     </View>
@@ -82,15 +97,16 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: Platform.OS === "ios" ? 54 : 30,
     right: 14,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
     elevation: 4,
-    shadowColor: "#000",
+    shadowColor: "#4F46E5",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
   },
 });
