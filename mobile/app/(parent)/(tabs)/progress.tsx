@@ -16,26 +16,25 @@ type Preset = "today" | "week" | "month" | "all";
 
 function getPresetRange(preset: Preset) {
   const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const d = now.getDate();
+  const todayUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
   switch (preset) {
     case "today":
       return {
-        startDate: new Date(Date.UTC(y, m, d)),
-        endDate: new Date(Date.UTC(y, m, d, 23, 59, 59, 999)),
+        startDate: todayUTC,
+        endDate: new Date(todayUTC.getTime() + 86400000 - 1),
       };
     case "week": {
       const day = now.getDay();
-      const start = new Date(Date.UTC(y, m, d - (day === 0 ? 6 : day - 1)));
-      const end = new Date(Date.UTC(y, m, d + (day === 0 ? 0 : 7 - day), 23, 59, 59, 999));
-      return { startDate: start, endDate: end };
+      const mondayOffset = day === 0 ? 6 : day - 1;
+      const monday = new Date(todayUTC.getTime() - mondayOffset * 86400000);
+      const sunday = new Date(monday.getTime() + 6 * 86400000 + 86400000 - 1);
+      return { startDate: monday, endDate: sunday };
     }
-    case "month":
-      return {
-        startDate: new Date(Date.UTC(y, m, 1)),
-        endDate: new Date(Date.UTC(y, m + 1, 0, 23, 59, 59, 999)),
-      };
+    case "month": {
+      const first = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
+      const last = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
+      return { startDate: first, endDate: last };
+    }
     default:
       return { startDate: undefined, endDate: undefined };
   }
