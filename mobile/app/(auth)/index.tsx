@@ -12,6 +12,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { login, register } from "../../services/auth";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -20,6 +21,7 @@ export default function AuthScreen() {
   const { colors } = useTheme();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -140,14 +142,19 @@ export default function AuthScreen() {
           value={form.email}
           onChangeText={(t) => setForm({ ...form, email: t })}
         />
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
-          placeholder="Password"
-          placeholderTextColor={colors.textMuted}
-          secureTextEntry
-          value={form.password}
-          onChangeText={(t) => setForm({ ...form, password: t })}
-        />
+        <View style={styles.pwWrap}>
+          <TextInput
+            style={[styles.pwInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
+            placeholder="Password"
+            placeholderTextColor={colors.textMuted}
+            secureTextEntry={!showPassword}
+            value={form.password}
+            onChangeText={(t) => setForm({ ...form, password: t })}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+            <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={[styles.btn, { backgroundColor: colors.primary }]}
@@ -192,6 +199,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     marginBottom: 32,
+  },
+  pwWrap: { position: "relative", marginBottom: 12 },
+  pwInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    paddingRight: 48,
+    fontSize: 16,
+  },
+  eyeBtn: {
+    position: "absolute",
+    right: 14,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
   },
   input: {
     borderWidth: 1,
