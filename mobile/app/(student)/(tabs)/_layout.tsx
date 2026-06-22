@@ -49,8 +49,8 @@ export default function TabsLayout() {
           name="index"
           options={{
             title: "Home",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home" size={size} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="home" size={20} color={color} />
             ),
           }}
         />
@@ -58,8 +58,8 @@ export default function TabsLayout() {
           name="progress"
           options={{
             title: "Progress",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="analytics" size={size} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="analytics" size={20} color={color} />
             ),
           }}
         />
@@ -67,8 +67,8 @@ export default function TabsLayout() {
           name="profile"
           options={{
             title: "Profile",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person" size={size} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="person" size={20} color={color} />
             ),
           }}
         />
