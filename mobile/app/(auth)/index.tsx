@@ -134,6 +134,7 @@ export default function AuthScreen() {
           </>
         )}
 
+        {error ? <Text style={[styles.errorText, { color: colors.danger, marginBottom: 8 }]}>{error}</Text> : null}
         <TextInput
           style={[styles.input, { backgroundColor: colors.inputBg, borderColor: error ? colors.danger : colors.border, color: colors.text }]}
           placeholder="Email"
@@ -170,7 +171,6 @@ export default function AuthScreen() {
             </Text>
           )}
         </TouchableOpacity>
-        {error ? <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text> : null}
 
         <TouchableOpacity onPress={() => { setError(""); setIsLogin(!isLogin); setForm((f) => ({ ...f, name: "", role: "STUDENT", parentEmail: "" })); }}>
           <Text style={[styles.switchText, { color: colors.primary }]}>
