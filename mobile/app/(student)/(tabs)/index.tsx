@@ -112,9 +112,7 @@ export default function StudentDashboard() {
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <View style={[styles.logoBox, { backgroundColor: colors.primary }]}>
-            <Image source={require("../../../assets/logo.png")} style={{ width: 22, height: 22, resizeMode: "contain" }} />
-          </View>
+          <Image source={require("../../../assets/logo.png")} style={{ width: 28, height: 28, resizeMode: "contain" }} />
           <Text style={[styles.logoText, { color: colors.text }]}>Qwilo</Text>
         </View>
         <Text style={[styles.greeting, { color: colors.text }]}>
@@ -189,7 +187,6 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8 },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  logoBox: { width: 34, height: 34, borderRadius: 10, justifyContent: "center", alignItems: "center" },
   logoText: { fontSize: 20, fontWeight: "700", letterSpacing: 1 },
   greeting: { fontSize: 28, fontWeight: "800" },
   date: { fontSize: 14, marginTop: 4 },

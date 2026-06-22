@@ -59,9 +59,7 @@ export default function ParentDashboard() {
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <View style={[styles.logoBox, { backgroundColor: colors.primary }]}>
-            <Image source={require("../../../assets/logo.png")} style={{ width: 20, height: 20, resizeMode: "contain" }} />
-          </View>
+          <Image source={require("../../../assets/logo.png")} style={{ width: 28, height: 28, resizeMode: "contain" }} />
           <Text style={[styles.logoText, { color: colors.text }]}>Qwilo</Text>
         </View>
         <View style={styles.headerContent}>
@@ -206,7 +204,6 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8 },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  logoBox: { width: 32, height: 32, borderRadius: 9, justifyContent: "center", alignItems: "center" },
   logoText: { fontSize: 18, fontWeight: "700", letterSpacing: 1 },
   headerContent: {},
   greeting: { fontSize: 26, fontWeight: "800" },
