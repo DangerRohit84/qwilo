@@ -1,24 +1,41 @@
 {
   "expo": {
-    "name": "Homework Tracker",
-    "slug": "homework-tracker",
+    "name": "Qwilo",
+    "slug": "qwilo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "scheme": "homework-tracker",
+    "icon": "./assets/logo.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "qwilo",
     "splash": {
-      "backgroundColor": "#4F46E5"
+      "image": "./assets/logo_with_name_qwilo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.homeworktracker.app"
+      "bundleIdentifier": "com.qwilo.app"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#4F46E5"
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#FFFFFF"
       },
-      "package": "com.homeworktracker.app"
+      "package": "com.qwilo.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
+    },
+    "extra": {
+      "apiUrl": "http://192.168.1.5:4000/api",
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "59fc43d2-bbdc-45f8-9a6d-b52c63612be3"
+      }
     },
     "plugins": [
       "expo-router",
@@ -33,6 +50,7 @@
         }
       ],
       "expo-asset"
-    ]
+    ],
+    "owner": "danger_rohit_84"
   }
 }
