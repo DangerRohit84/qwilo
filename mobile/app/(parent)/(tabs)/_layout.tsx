@@ -12,7 +12,7 @@ export default function TabsLayout() {
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textMuted,
+          tabBarInactiveTintColor: colors.textSecondary,
           tabBarStyle: {
             position: "absolute",
             bottom: 20,
@@ -26,7 +26,7 @@ export default function TabsLayout() {
             height: 64,
             elevation: 0,
           },
-          tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
+          tabBarLabelStyle: { fontSize: 13, fontWeight: "600" },
         }}
       >
         <Tabs.Screen
