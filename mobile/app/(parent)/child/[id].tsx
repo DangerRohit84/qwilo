@@ -48,7 +48,7 @@ export default function ChildProgressScreen() {
   const { id } = useLocalSearchParams();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [preset, setPreset] = useState<Preset>("all");
+  const [preset, setPreset] = useState<Preset>("today");
   const [showCalendar, setShowCalendar] = useState(false);
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -92,7 +92,8 @@ export default function ChildProgressScreen() {
   );
 
   useEffect(() => {
-    fetchProgress();
+    const range = getPresetRange(preset);
+    fetchProgress(range.startDate, range.endDate);
   }, []);
 
   function applyPreset(p: Preset) {
