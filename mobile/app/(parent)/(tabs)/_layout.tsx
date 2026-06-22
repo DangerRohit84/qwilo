@@ -11,6 +11,7 @@ export default function TabsLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
+          tabBarShowLabel: true,
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.textSecondary,
           tabBarStyle: {
@@ -33,6 +34,7 @@ export default function TabsLayout() {
           name="index"
           options={{
             title: "Home",
+            tabBarLabel: "Home",
             tabBarIcon: ({ color }) => (
               <Ionicons name="home" size={20} color={color} />
             ),
@@ -42,6 +44,7 @@ export default function TabsLayout() {
           name="progress"
           options={{
             title: "Progress",
+            tabBarLabel: "Progress",
             tabBarIcon: ({ color }) => (
               <Ionicons name="analytics" size={20} color={color} />
             ),
@@ -51,6 +54,7 @@ export default function TabsLayout() {
           name="profile"
           options={{
             title: "Profile",
+            tabBarLabel: "Profile",
             tabBarIcon: ({ color }) => (
               <Ionicons name="person" size={20} color={color} />
             ),
