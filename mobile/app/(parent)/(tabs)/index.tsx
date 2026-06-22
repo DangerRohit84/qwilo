@@ -58,7 +58,7 @@ export default function ParentDashboard() {
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <View style={styles.logoBox}>
+          <View style={[styles.logoBox, { backgroundColor: colors.primary }]}>
             <Ionicons name="book" size={20} color="#fff" />
           </View>
           <Text style={[styles.logoText, { color: colors.text }]}>Qwilo</Text>
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8 },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  logoBox: { width: 32, height: 32, borderRadius: 9, backgroundColor: "#4F46E5", justifyContent: "center", alignItems: "center" },
+  logoBox: { width: 32, height: 32, borderRadius: 9, backgroundColor: "#13376D", justifyContent: "center", alignItems: "center" },
   logoText: { fontSize: 18, fontWeight: "700", letterSpacing: 1 },
   headerContent: {},
   greeting: { fontSize: 26, fontWeight: "800" },
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     alignItems: "center",
     elevation: 2,
-    shadowColor: "#4F46E5",
+    shadowColor: "#13376D",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     padding: 18,
     marginBottom: 14,
     elevation: 3,
-    shadowColor: "#4F46E5",
+    shadowColor: "#13376D",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
     shadowRadius: 10,

@@ -38,7 +38,7 @@ export default function ParentLayout() {
   if (!ready) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color="#13376D" />
       </View>
     );
   }

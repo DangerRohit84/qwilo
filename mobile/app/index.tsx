@@ -39,9 +39,9 @@ export default function SplashScreen() {
   }, []);
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0F172A" }}>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0A1428" }}>
       <Animated.View style={{ alignItems: "center", opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
-        <View style={{ width: 100, height: 100, borderRadius: 24, backgroundColor: "#4F46E5", justifyContent: "center", alignItems: "center", marginBottom: 24 }}>
+        <View style={{ width: 100, height: 100, borderRadius: 24, backgroundColor: "#13376D", justifyContent: "center", alignItems: "center", marginBottom: 24 }}>
           <Ionicons name="book" size={48} color="#FFF" />
         </View>
         <Text style={{ fontSize: 36, fontWeight: "700", color: "#F1F5F9", letterSpacing: 2 }}>Qwilo</Text>

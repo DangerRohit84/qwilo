@@ -90,7 +90,7 @@ export default function ProgressScreen() {
           marks[selectedRef.current] = {
             ...marks[selectedRef.current],
             selected: true,
-            selectedColor: "#4F46E5",
+            selectedColor: "#13376D",
           };
         }
 
@@ -153,7 +153,7 @@ export default function ProgressScreen() {
                 styles.presetBtn,
                 { backgroundColor: colors.card, borderColor: colors.border },
                 preset === p.key && {
-                  backgroundColor: theme === "dark" ? "#4F46E5" : colors.primary,
+                  backgroundColor: colors.primary,
                   borderColor: colors.primary,
                 },
               ]}

@@ -94,7 +94,7 @@ export default function ParentProgressScreen() {
               style={[
                 styles.presetBtn,
                 { backgroundColor: colors.card, borderColor: colors.border },
-                preset === p.key && { backgroundColor: "#4F46E5", borderColor: "#4F46E5" },
+                preset === p.key && { backgroundColor: colors.primary, borderColor: colors.primary },
               ]}
               onPress={() => { setPreset(p.key); fetchChildren(p.key); }}
             >
@@ -123,7 +123,7 @@ export default function ParentProgressScreen() {
               style={[styles.card, { backgroundColor: colors.card }]}
               onPress={() => router.push(`/(parent)/child/${child.id}`)}
             >
-              <View style={[styles.avatar, { backgroundColor: "#4F46E5" }]}>
+              <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
                 <Text style={styles.avatarText}>{child.name.charAt(0).toUpperCase()}</Text>
               </View>
               <View style={styles.info}>

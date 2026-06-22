@@ -78,7 +78,7 @@ export default function ChildProgressScreen() {
           marks[selectedRef.current] = {
             ...marks[selectedRef.current],
             selected: true,
-            selectedColor: "#4F46E5",
+            selectedColor: "#13376D",
           };
         }
 
@@ -146,8 +146,8 @@ export default function ChildProgressScreen() {
                 styles.presetBtn,
                 { backgroundColor: colors.card, borderColor: colors.border },
                 preset === p.key && {
-                  backgroundColor: "#4F46E5",
-                  borderColor: "#4F46E5",
+                  backgroundColor: "#13376D",
+                  borderColor: "#13376D",
                 },
               ]}
               onPress={() => applyPreset(p.key)}

@@ -111,7 +111,7 @@ export default function StudentDashboard() {
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <View style={styles.logoBox}>
+          <View style={[styles.logoBox, { backgroundColor: colors.primary }]}>
             <Ionicons name="book" size={22} color="#fff" />
           </View>
           <Text style={[styles.logoText, { color: colors.text }]}>Qwilo</Text>
@@ -142,7 +142,7 @@ export default function StudentDashboard() {
       </View>
 
       <TouchableOpacity
-        style={styles.uploadBtn}
+        style={[styles.uploadBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
         onPress={() => router.push("/(student)/homework-upload")}
         activeOpacity={0.85}
       >
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8 },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  logoBox: { width: 34, height: 34, borderRadius: 10, backgroundColor: "#4F46E5", justifyContent: "center", alignItems: "center" },
+  logoBox: { width: 34, height: 34, borderRadius: 10, backgroundColor: "#13376D", justifyContent: "center", alignItems: "center" },
   logoText: { fontSize: 20, fontWeight: "700", letterSpacing: 1 },
   greeting: { fontSize: 28, fontWeight: "800" },
   date: { fontSize: 14, marginTop: 4 },
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: "center",
     elevation: 2,
-    shadowColor: "#4F46E5",
+    shadowColor: "#13376D",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -220,9 +220,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     gap: 10,
     marginBottom: 24,
-    backgroundColor: "#4F46E5",
+    backgroundColor: "#13376D",
     elevation: 4,
-    shadowColor: "#4F46E5",
+
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 14,
     elevation: 2,
-    shadowColor: "#4F46E5",
+    shadowColor: "#13376D",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
