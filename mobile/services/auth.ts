@@ -15,6 +15,15 @@ const storage = Platform.OS === "web" ? {
   async removeItem(key: string) { const { deleteItemAsync } = await import("expo-secure-store"); return deleteItemAsync(key); },
 };
 
+async function persistAuth(data: AuthResponse) {
+  try {
+    await storage.setItem(TOKEN_KEY, data.token);
+    await storage.setItem(USER_KEY, JSON.stringify(data.user));
+  } catch {
+    // storage unavailable — auth still valid in memory for this session
+  }
+}
+
 export async function login(
   email: string,
   password: string
@@ -23,8 +32,7 @@ export async function login(
     email,
     password,
   });
-  await storage.setItem(TOKEN_KEY, data.token);
-  await storage.setItem(USER_KEY, JSON.stringify(data.user));
+  await persistAuth(data);
   return data;
 }
 
@@ -42,8 +50,7 @@ export async function register(
     role,
     parentEmail,
   });
-  await storage.setItem(TOKEN_KEY, data.token);
-  await storage.setItem(USER_KEY, JSON.stringify(data.user));
+  await persistAuth(data);
   return data;
 }
 

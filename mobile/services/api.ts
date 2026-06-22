@@ -14,6 +14,8 @@ async function storageGet(key: string) {
   return getItemAsync(key);
 }
 
+const USER_KEY = "auth_user";
+
 async function storageRemove(key: string) {
   if (Platform.OS === "web") webStorage.removeItem(key);
   else { const { deleteItemAsync } = await import("expo-secure-store"); await deleteItemAsync(key); }
@@ -39,6 +41,7 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       await storageRemove("auth_token");
+      await storageRemove(USER_KEY);
     }
     return Promise.reject(error);
   }

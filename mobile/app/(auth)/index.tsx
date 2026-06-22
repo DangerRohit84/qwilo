@@ -43,17 +43,18 @@ export default function AuthScreen() {
     setLoading(true);
     try {
       if (isLogin) {
-        await login(form.email, form.password);
+        const result = await login(form.email, form.password);
+        router.replace(result.user.role === "PARENT" ? "/(parent)" : "/(student)");
       } else {
-        await register(
+        const result = await register(
           form.email,
           form.password,
           form.name,
           form.role,
           form.parentEmail || undefined
         );
+        router.replace(result.user.role === "PARENT" ? "/(parent)" : "/(student)");
       }
-      router.replace(form.role === "PARENT" ? "/(parent)" : "/(student)");
     } catch (err: any) {
       const msg =
         err.response?.data?.error || err.message || "Something went wrong";
@@ -171,7 +172,7 @@ export default function AuthScreen() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+        <TouchableOpacity onPress={() => { setIsLogin(!isLogin); setForm((f) => ({ ...f, name: "", role: "STUDENT", parentEmail: "" })); }}>
           <Text style={[styles.switchText, { color: colors.primary }]}>
             {isLogin
               ? "Don't have an account? Register"
