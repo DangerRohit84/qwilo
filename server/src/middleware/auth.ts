@@ -1,8 +1,14 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-export interface AuthRequest extends Request {
+export interface AuthRequest {
   user?: { id: string; email: string; role: string };
+  headers: { authorization?: string };
+  body: any;
+  params: Record<string, string>;
+  query: Record<string, string>;
+  file?: any;
+  files?: any;
 }
 
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {

@@ -137,7 +137,7 @@ router.post(
   upload.array("images", 10),
   async (req: AuthRequest, res: Response) => {
     try {
-      const files = req.files as Express.Multer.File[];
+      const files = req.files as { buffer: Buffer; mimetype: string }[];
       if (!files || files.length === 0) {
         return res.status(400).json({ error: "At least one image required" });
       }

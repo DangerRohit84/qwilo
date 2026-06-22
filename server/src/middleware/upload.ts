@@ -1,4 +1,4 @@
-import multer, { FileFilterCallback } from "multer";
+import multer from "multer";
 import { Request } from "express";
 
 const storage = multer.memoryStorage();
@@ -6,7 +6,7 @@ const storage = multer.memoryStorage();
 const fileFilter = (
   _req: Request,
   file: Express.Multer.File,
-  cb: FileFilterCallback
+  cb: multer.FileFilterCallback
 ) => {
   const allowed = ["image/jpeg", "image/png", "image/webp", "audio/webm", "audio/mp4", "audio/mpeg", "audio/wav", "audio/ogg"];
   if (allowed.includes(file.mimetype)) {
