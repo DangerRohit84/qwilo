@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -58,10 +59,7 @@ export default function ParentDashboard() {
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <View style={[styles.logoBox, { backgroundColor: colors.primary }]}>
-            <Ionicons name="book" size={20} color="#fff" />
-          </View>
-          <Text style={[styles.logoText, { color: colors.text }]}>Qwilo</Text>
+          <Image source={require("../../../assets/logo_with_name_qwilo.png")} style={{ width: 120, height: 40, resizeMode: "contain" }} />
         </View>
         <View style={styles.headerContent}>
           <Text style={[styles.greeting, { color: colors.text }]}>
@@ -204,9 +202,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 8 },
-  headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  logoBox: { width: 32, height: 32, borderRadius: 9, backgroundColor: "#13376D", justifyContent: "center", alignItems: "center" },
-  logoText: { fontSize: 18, fontWeight: "700", letterSpacing: 1 },
+  headerRow: { marginBottom: 16 },
   headerContent: {},
   greeting: { fontSize: 26, fontWeight: "800" },
   subtitle: { fontSize: 14, marginTop: 2 },

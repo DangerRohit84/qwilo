@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
-import { View, Animated, Text } from "react-native";
+import { View, Animated, Text, Image } from "react-native";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { getStoredUser } from "../services/auth";
 
 export default function SplashScreen() {
@@ -41,10 +40,7 @@ export default function SplashScreen() {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0A1428" }}>
       <Animated.View style={{ alignItems: "center", opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
-        <View style={{ width: 100, height: 100, borderRadius: 24, backgroundColor: "#13376D", justifyContent: "center", alignItems: "center", marginBottom: 24 }}>
-          <Ionicons name="book" size={48} color="#FFF" />
-        </View>
-        <Text style={{ fontSize: 36, fontWeight: "700", color: "#F1F5F9", letterSpacing: 2 }}>Qwilo</Text>
+        <Image source={require("../assets/logo_with_name_qwilo.png")} style={{ width: 220, height: 80, resizeMode: "contain", marginBottom: 16 }} />
         <Text style={{ fontSize: 14, color: "#64748B", marginTop: 8 }}>Homework, simplified.</Text>
       </Animated.View>
     </View>

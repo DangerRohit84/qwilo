@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -68,7 +69,7 @@ export default function AuthScreen() {
       style={[styles.container, { backgroundColor: colors.bg }]}
     >
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={[styles.title, { color: colors.primary }]}>Qwilo</Text>
+        <Image source={require("../../assets/logo_with_name_qwilo.png")} style={{ width: 160, height: 54, resizeMode: "contain", alignSelf: "center", marginBottom: 8 }} />
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           {isLogin ? "Welcome back!" : "Start your learning journey"}
         </Text>
