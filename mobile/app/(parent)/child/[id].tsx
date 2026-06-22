@@ -192,8 +192,7 @@ export default function ChildProgressScreen() {
                 textSectionTitleColor: colors.textSecondary,
                 selectedDayBackgroundColor: colors.primary,
                 selectedDayTextColor: "#fff",
-                todayTextColor: "#fff",
-                todayBackgroundColor: colors.primary,
+                todayTextColor: colors.primary,
                 arrowColor: colors.primary,
               }}
               markedDates={markedDates}
