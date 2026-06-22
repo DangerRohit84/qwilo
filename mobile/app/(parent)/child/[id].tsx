@@ -77,7 +77,6 @@ export default function ChildProgressScreen() {
           marks[selectedRef.current] = {
             ...marks[selectedRef.current],
             selected: true,
-            selectedColor: "#13376D",
           };
         }
 
@@ -185,13 +184,17 @@ export default function ChildProgressScreen() {
           <View style={[styles.calendarWrap, { backgroundColor: colors.card }]}>
             <Calendar
               theme={{
-                backgroundColor: "transparent",
-                calendarBackground: "transparent",
+                backgroundColor: colors.card,
+                calendarBackground: colors.card,
                 dayTextColor: colors.text,
                 monthTextColor: colors.text,
-                arrowColor: colors.primary,
-                todayTextColor: colors.primary,
                 textDisabledColor: colors.textMuted,
+                textSectionTitleColor: colors.textSecondary,
+                selectedDayBackgroundColor: colors.primary,
+                selectedDayTextColor: "#fff",
+                todayTextColor: "#fff",
+                todayBackgroundColor: colors.primary,
+                arrowColor: colors.primary,
               }}
               markedDates={markedDates}
               onDayPress={onDayPress}

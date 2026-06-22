@@ -89,7 +89,6 @@ export default function ProgressScreen() {
           marks[selectedRef.current] = {
             ...marks[selectedRef.current],
             selected: true,
-            selectedColor: "#13376D",
           };
         }
 
@@ -193,16 +192,19 @@ export default function ProgressScreen() {
               onDayPress={onDayPress}
               markedDates={markedDates}
               theme={{
-                selectedDayBackgroundColor: colors.primary,
-                todayTextColor: colors.primary,
-                arrowColor: colors.primary,
-                textMonthFontWeight: "700",
-                textDayFontSize: 14,
                 backgroundColor: colors.card,
                 calendarBackground: colors.card,
                 dayTextColor: colors.text,
-                textDisabledColor: colors.textMuted,
                 monthTextColor: colors.text,
+                textDisabledColor: colors.textMuted,
+                textSectionTitleColor: colors.textSecondary,
+                selectedDayBackgroundColor: colors.primary,
+                selectedDayTextColor: "#fff",
+                todayTextColor: "#fff",
+                todayBackgroundColor: colors.primary,
+                arrowColor: colors.primary,
+                textMonthFontWeight: "700",
+                textDayFontSize: 14,
               }}
             />
           </View>
