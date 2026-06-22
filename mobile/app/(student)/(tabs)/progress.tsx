@@ -115,6 +115,8 @@ export default function ProgressScreen() {
     setSelectedDate(null);
     selectedRef.current = null;
     setPreset(p);
+    const range = getPresetRange(p);
+    fetchProgress(range.startDate, range.endDate);
   }
 
   function onDayPress(day: { dateString: string }) {
