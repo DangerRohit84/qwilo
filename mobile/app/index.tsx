@@ -38,7 +38,7 @@ export default function SplashScreen() {
   }, []);
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0A1428" }}>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#FFFFFF" }}>
       <Animated.View style={{ alignItems: "center", opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
         <Image source={require("../assets/logo_with_name_qwilo.png")} style={{ width: 220, height: 80, resizeMode: "contain", marginBottom: 16 }} />
         <Text style={{ fontSize: 14, color: "#64748B", marginTop: 8 }}>Homework, simplified.</Text>
