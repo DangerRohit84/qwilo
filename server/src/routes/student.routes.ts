@@ -85,10 +85,15 @@ router.get(
 
 router.get("/tasks", async (req: AuthRequest, res: Response) => {
   try {
-    const { startDate, endDate } = req.query as {
+    let { startDate, endDate } = req.query as {
       startDate?: string;
       endDate?: string;
     };
+    if (!startDate && !endDate) {
+      const now = new Date();
+      startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())).toISOString();
+      endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)).toISOString();
+    }
     const tasks = await homeworkService.getStudentTasks(
       req.user!.id,
       startDate,
