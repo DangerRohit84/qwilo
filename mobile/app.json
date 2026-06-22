@@ -4,7 +4,7 @@
     "slug": "qwilo",
     "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/logo.png",
+    "icon": "./assets/icon_1024.png",
     "userInterfaceStyle": "automatic",
     "scheme": "qwilo",
     "splash": {
@@ -17,6 +17,10 @@
       "bundleIdentifier": "com.qwilo.app"
     },
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/foreground.png",
+        "backgroundColor": "#FFFFFF"
+      },
       "package": "com.qwilo.app",
       "permissions": [
         "android.permission.CAMERA",
@@ -30,7 +34,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "59fc43d2-bbdc-45f8-9a6d-b52c63612be3"
+        "projectId": "8138dd0b-e399-42b1-89ef-a3b2b5021e74"
       }
     },
     "plugins": [
