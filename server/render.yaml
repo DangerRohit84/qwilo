@@ -2,7 +2,7 @@ services:
   - type: web
     name: qwilo-api
     env: node
-    buildCommand: npm install && npm run build && npx prisma db push
+    buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: DATABASE_URL
