@@ -113,7 +113,7 @@ export default function StudentDashboard() {
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View style={[styles.logoBox, { backgroundColor: colors.primary }]}>
-            <Image source={require("../../../assets/logo.png")} style={{ width: 22, height: 22, resizeMode: "contain", tintColor: "#fff" }} />
+            <Image source={require("../../../assets/logo.png")} style={{ width: 22, height: 22, resizeMode: "contain" }} />
           </View>
           <Text style={[styles.logoText, { color: colors.text }]}>Qwilo</Text>
         </View>

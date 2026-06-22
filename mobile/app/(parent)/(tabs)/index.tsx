@@ -60,7 +60,7 @@ export default function ParentDashboard() {
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View style={[styles.logoBox, { backgroundColor: colors.primary }]}>
-            <Image source={require("../../../assets/logo.png")} style={{ width: 20, height: 20, resizeMode: "contain", tintColor: "#fff" }} />
+            <Image source={require("../../../assets/logo.png")} style={{ width: 20, height: 20, resizeMode: "contain" }} />
           </View>
           <Text style={[styles.logoText, { color: colors.text }]}>Qwilo</Text>
         </View>
