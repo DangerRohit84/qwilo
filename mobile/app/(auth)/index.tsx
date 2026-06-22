@@ -154,7 +154,7 @@ export default function AuthScreen() {
             onChangeText={(t) => { setForm({ ...form, password: t }); setError(""); }}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-            <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color={colors.textSecondary} />
+            <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -212,10 +212,13 @@ const styles = StyleSheet.create({
   },
   eyeBtn: {
     position: "absolute",
-    right: 14,
-    top: 0,
-    bottom: 0,
+    right: 10,
+    top: 6,
+    bottom: 6,
     justifyContent: "center",
+    alignItems: "center",
+    width: 40,
+    zIndex: 10,
   },
   input: {
     borderWidth: 1,
