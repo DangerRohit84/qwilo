@@ -43,7 +43,7 @@ function getPresetRange(preset: Preset) {
 
 export default function ChildProgressScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { theme, colors } = useTheme();
   const { id } = useLocalSearchParams();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -182,7 +182,7 @@ export default function ChildProgressScreen() {
 
         {showCalendar && (
           <View style={[styles.calendarWrap, { backgroundColor: colors.card }]}>
-            <Calendar
+            <Calendar key={theme}
               theme={{
                 backgroundColor: colors.card,
                 calendarBackground: colors.card,

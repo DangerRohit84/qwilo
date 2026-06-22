@@ -188,7 +188,7 @@ export default function ProgressScreen() {
 
         {showCalendar && (
           <View style={[styles.calendarWrap, { backgroundColor: colors.card }]}>
-            <Calendar
+            <Calendar key={theme}
               onDayPress={onDayPress}
               markedDates={markedDates}
               theme={{
