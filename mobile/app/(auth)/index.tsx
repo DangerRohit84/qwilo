@@ -135,7 +135,7 @@ export default function AuthScreen() {
         )}
 
         <TextInput
-          style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
+          style={[styles.input, { backgroundColor: colors.inputBg, borderColor: error ? colors.danger : colors.border, color: colors.text }]}
           placeholder="Email"
           placeholderTextColor={colors.textMuted}
           keyboardType="email-address"
@@ -145,7 +145,7 @@ export default function AuthScreen() {
         />
         <View style={styles.pwWrap}>
           <TextInput
-            style={[styles.pwInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
+            style={[styles.pwInput, { backgroundColor: colors.inputBg, borderColor: error ? colors.danger : colors.border, color: colors.text }]}
             placeholder="Password"
             placeholderTextColor={colors.textMuted}
             secureTextEntry={!showPassword}
