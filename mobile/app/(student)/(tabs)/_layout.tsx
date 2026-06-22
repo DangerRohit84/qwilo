@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { Platform, TouchableOpacity, StyleSheet, View, Animated } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,13 +8,14 @@ export default function TabsLayout() {
   const { theme, toggle, colors } = useTheme();
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
+  function handleToggle() {
     Animated.timing(rotateAnim, {
-      toValue: 1,
-      duration: 800,
+      toValue: rotateAnim.__getValue() + 1,
+      duration: 500,
       useNativeDriver: true,
     }).start();
-  }, []);
+    toggle();
+  }
 
   const spin = rotateAnim.interpolate({
     inputRange: [0, 1],
@@ -75,14 +76,16 @@ export default function TabsLayout() {
 
       <TouchableOpacity
         style={[styles.themeToggle, { backgroundColor: colors.card, borderColor: colors.border }]}
-        onPress={toggle}
+        onPress={handleToggle}
         activeOpacity={0.7}
       >
-        <Ionicons
-          name={theme === "dark" ? "sunny" : "moon"}
-          size={20}
-          color={colors.primary}
-        />
+        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+          <Ionicons
+            name={theme === "dark" ? "sunny" : "moon"}
+            size={20}
+            color={colors.primary}
+          />
+        </Animated.View>
       </TouchableOpacity>
     </View>
   );
