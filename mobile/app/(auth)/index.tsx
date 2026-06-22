@@ -5,13 +5,23 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  Alert as RNAlert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Image,
 } from "react-native";
+
+const Alert = {
+  alert: (title: string, msg: string) => {
+    if (Platform.OS === "web") {
+      window.alert(`${title}: ${msg}`);
+    } else {
+      RNAlert.alert(title, msg);
+    }
+  },
+};
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { login, register } from "../../services/auth";
