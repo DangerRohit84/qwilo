@@ -28,6 +28,35 @@ function getAccuracyColor(accuracy: number): string {
   return "#EF4444";
 }
 
+type Preset = "today" | "week" | "month" | "all";
+
+function getPresetRange(preset: Preset) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  switch (preset) {
+    case "today":
+      return {
+        startDate: new Date(Date.UTC(y, m, d)),
+        endDate: new Date(Date.UTC(y, m, d, 23, 59, 59, 999)),
+      };
+    case "week": {
+      const day = now.getDay();
+      const start = new Date(Date.UTC(y, m, d - (day === 0 ? 6 : day - 1)));
+      const end = new Date(Date.UTC(y, m, d + (day === 0 ? 0 : 7 - day), 23, 59, 59, 999));
+      return { startDate: start, endDate: end };
+    }
+    case "month":
+      return {
+        startDate: new Date(Date.UTC(y, m, 1)),
+        endDate: new Date(Date.UTC(y, m + 1, 0, 23, 59, 59, 999)),
+      };
+    default:
+      return { startDate: undefined, endDate: undefined };
+  }
+}
+
 export default function ParentDashboard() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -36,15 +65,35 @@ export default function ParentDashboard() {
   const [aggregated, setAggregated] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showLogout, setShowLogout] = useState(false);
+  const [preset, setPreset] = useState<Preset>("today");
+
+  async function fetchProgress(p: Preset) {
+    setLoading(true);
+    const range = getPresetRange(p);
+    const params: any = {};
+    if (range.startDate) params.startDate = range.startDate.toISOString();
+    if (range.endDate) params.endDate = range.endDate.toISOString();
+    try {
+      const { data } = await api.get("/parent/progress", { params });
+      setChildren(data.children || []);
+      setAggregated(data.aggregated || null);
+    } catch (err) {
+      console.error("Failed to fetch progress");
+    }
+    setLoading(false);
+  }
 
   useEffect(() => {
     getStoredUser().then(setUser);
-    api.get("/parent/progress").then(({ data }) => {
-      setChildren(data.children || []);
-      setAggregated(data.aggregated || null);
-      setLoading(false);
-    });
+    fetchProgress("today");
   }, []);
+
+  const presets: { key: Preset; label: string }[] = [
+    { key: "today", label: "Today" },
+    { key: "week", label: "This Week" },
+    { key: "month", label: "This Month" },
+    { key: "all", label: "All Time" },
+  ];
 
   if (loading) {
     return (
@@ -111,6 +160,29 @@ export default function ParentDashboard() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+          <View style={styles.presetRow}>
+            {presets.map((p) => (
+              <TouchableOpacity
+                key={p.key}
+                style={[
+                  styles.presetBtn,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  preset === p.key && { backgroundColor: "#4F46E5", borderColor: "#4F46E5" },
+                ]}
+                onPress={() => { setPreset(p.key); fetchProgress(p.key); }}
+              >
+                <Text
+                  style={[
+                    styles.presetText,
+                    { color: colors.textSecondary },
+                    preset === p.key && { color: "#fff" },
+                  ]}
+                >
+                  {p.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           {children.map((child) => {
             const level = performanceLevel(child.accuracy);
             const accColor = getAccuracyColor(child.accuracy);
@@ -232,6 +304,9 @@ const styles = StyleSheet.create({
   aggValue: { fontSize: 18, fontWeight: "700" },
   aggLabel: { fontSize: 10, marginTop: 2 },
   aggDivider: { width: 1, height: 32, backgroundColor: "#D1D5DB", opacity: 0.4 },
+  presetRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
+  presetBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, alignItems: "center" },
+  presetText: { fontSize: 13, fontWeight: "600" },
   emptyCenter: {
     flex: 1,
     justifyContent: "center",
