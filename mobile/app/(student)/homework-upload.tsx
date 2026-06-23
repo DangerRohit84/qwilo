@@ -23,24 +23,28 @@ export default function HomeworkUploadScreen() {
   const [loading, setLoading] = useState(false);
 
   async function pickImage() {
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-      allowsEditing: true,
-    });
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        quality: 0.8,
+      });
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (err: any) {
+      Alert.alert("Camera Error", "Could not open camera. Please check camera permissions in Settings.");
     }
   }
 
   async function pickFromGallery() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-      allowsEditing: true,
-    });
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        quality: 0.8,
+      });
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (err: any) {
+      Alert.alert("Gallery Error", "Could not open gallery. Please check storage permissions in Settings.");
     }
   }
 

@@ -34,16 +34,19 @@ export default function TaskDetailScreen() {
   }, [id]);
 
   async function pickWorkImage() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-      allowsMultipleSelection: true,
-    });
-    if (!result.canceled) {
-      setWorkImages((prev) => [
-        ...prev,
-        ...result.assets.map((a) => a.uri),
-      ]);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        quality: 0.8,
+        allowsMultipleSelection: true,
+      });
+      if (!result.canceled) {
+        setWorkImages((prev) => [
+          ...prev,
+          ...result.assets.map((a) => a.uri),
+        ]);
+      }
+    } catch (err: any) {
+      Alert.alert("Gallery Error", "Could not open gallery. Please check storage permissions in Settings.");
     }
   }
 
