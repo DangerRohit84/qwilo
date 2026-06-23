@@ -68,11 +68,16 @@ export async function getNextQuestion(taskId: string, studentId: string) {
   used.push(selected.type);
   if (used.length > 3) used.shift();
 
+  const totalCount = questions.length;
+  const answeredCount = totalCount - unanswered.length;
+
   return {
     id: selected.id,
     questionText: selected.questionText,
     type: selected.type,
     options: selected.type === "MCQ" ? shuffleArray(selected.options as string[] || []) : undefined,
+    currentIndex: answeredCount + 1,
+    totalCount,
   };
 }
 

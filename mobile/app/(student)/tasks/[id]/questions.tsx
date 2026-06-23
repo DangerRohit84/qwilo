@@ -28,6 +28,10 @@ export default function QuestionsScreen() {
   const [loading, setLoading] = useState(true);
   const [recording, setRecording] = useState(false);
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [voiceSubmitted, setVoiceSubmitted] = useState(false);
+  const [submittingAnswer, setSubmittingAnswer] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
 
   useEffect(() => {
@@ -39,6 +43,7 @@ export default function QuestionsScreen() {
     for (let i = 0; i < 30; i++) {
       const loaded = await fetchNextQuestion();
       if (loaded) return;
+      if (done) return;
       await new Promise((r) => setTimeout(r, 2000));
     }
     setLoading(false);
@@ -50,14 +55,19 @@ export default function QuestionsScreen() {
     setAnswered(false);
     setResult(null);
     setRecordedUri(null);
+    setVoiceSubmitted(false);
     try {
       const { data } = await api.get(
         `/student/tasks/${taskId}/questions/next`
       );
       if (data.done) {
+        setDone(true);
+        setLoading(false);
         return false;
       } else {
         setQuestion(data);
+        setCurrentIndex(data.currentIndex || 1);
+        setTotalQuestions(data.totalCount || data.totalQuestions || 0);
         if (data.type === "VOICE") {
           speakQuestion(data.questionText);
         }
@@ -100,7 +110,6 @@ export default function QuestionsScreen() {
         await recordingRef.current.stopAndUnloadAsync();
         const uri = recordingRef.current.getURI();
         setRecordedUri(uri);
-        await submitVoiceAnswer(uri);
       }
     } catch {
       Alert.alert("Error", "Failed to stop recording");
@@ -123,6 +132,7 @@ export default function QuestionsScreen() {
 
   async function submitVoiceAnswer(uri: string | null) {
     if (!uri) return;
+    setSubmittingAnswer(true);
     try {
       const formData = new FormData();
       if (Platform.OS === "web") {
@@ -145,9 +155,12 @@ export default function QuestionsScreen() {
       );
       setResult(data);
       setAnswered(true);
+      setVoiceSubmitted(true);
     } catch (err: any) {
       console.log("Voice answer error:", err.response?.status, err.response?.data);
       Alert.alert("Error", err.response?.data?.error || "Failed to submit voice answer");
+    } finally {
+      setSubmittingAnswer(false);
     }
   }
 
@@ -173,8 +186,10 @@ export default function QuestionsScreen() {
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <Ionicons name="checkmark-done-circle" size={64} color={colors.success} />
         <Text style={[styles.doneTitle, { color: colors.text }]}>All Questions Answered!</Text>
-        <Text style={[styles.doneSub, { color: colors.textSecondary }]}>Great job completing your homework</Text>
-        <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={() => router.replace("/(student)/(tabs)")}>code: correct_answer
+        <Text style={[styles.doneSub, { color: colors.textSecondary }]}>
+          {totalQuestions > 0 ? `Completed all ${totalQuestions} questions` : "Great job completing your homework"}
+        </Text>
+        <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={() => router.replace("/(student)/(tabs)")}>
           <Text style={styles.doneBtnText}>Back to Dashboard</Text>
         </TouchableOpacity>
       </View>
@@ -187,7 +202,14 @@ export default function QuestionsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Question</Text>
+        <View>
+          <Text style={[styles.title, { color: colors.text }]}>Question</Text>
+          {totalQuestions > 0 && (
+            <Text style={[styles.counter, { color: colors.textSecondary }]}>
+              {currentIndex} of {totalQuestions}
+            </Text>
+          )}
+        </View>
         <Text style={[styles.badge, { color: colors.primary, backgroundColor: colors.inputBg }]}>
           {question?.type === "MCQ" ? "Multiple Choice" : "Voice Answer"}
         </Text>
@@ -245,7 +267,7 @@ export default function QuestionsScreen() {
             <Text style={[styles.replayText, { color: colors.primary }]}>Listen Again</Text>
           </TouchableOpacity>
 
-          {!recordedUri && (
+          {!recordedUri && !voiceSubmitted && (
             <TouchableOpacity
               style={[
                 styles.recordBtn,
@@ -263,6 +285,32 @@ export default function QuestionsScreen() {
                 {recording ? "Stop Recording" : "Tap to Speak Answer"}
               </Text>
             </TouchableOpacity>
+          )}
+
+          {recordedUri && !voiceSubmitted && !submittingAnswer && (
+            <View style={styles.voiceActions}>
+              <TouchableOpacity
+                style={[styles.voiceActionBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
+                onPress={() => { setRecordedUri(null); startRecording(); }}
+              >
+                <Ionicons name="refresh" size={20} color={colors.text} />
+                <Text style={[styles.voiceActionText, { color: colors.text }]}>Re-record</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.voiceActionBtn, styles.submitActionBtn, { backgroundColor: colors.primary }]}
+                onPress={() => submitVoiceAnswer(recordedUri)}
+              >
+                <Ionicons name="send" size={20} color="#fff" />
+                <Text style={styles.submitActionText}>Submit Answer</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {submittingAnswer && (
+            <View style={{ alignItems: "center", padding: 20 }}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[styles.replayText, { color: colors.textSecondary, marginTop: 12 }]}>Evaluating your answer...</Text>
+            </View>
           )}
         </View>
       )}
@@ -357,6 +405,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   optionText: { fontSize: 16, flex: 1 },
+  counter: { fontSize: 13, marginTop: 2 },
   voiceSection: { alignItems: "center", gap: 20, marginBottom: 24 },
   replayBtn: {
     flexDirection: "row",
@@ -379,6 +428,18 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 8,
   },
+  voiceActions: { flexDirection: "row", gap: 12, marginTop: 8 },
+  voiceActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  submitActionBtn: { borderWidth: 0 },
+  submitActionText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   resultBox: {
     flexDirection: "row",
     alignItems: "center",

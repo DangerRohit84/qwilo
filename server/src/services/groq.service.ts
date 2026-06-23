@@ -98,11 +98,17 @@ export async function generateQuestions(
     messages: [
       {
         role: "system",
-        content: `You are an educational AI. Generate exactly 5 questions based on the student's work. 
-- 3 should be MCQ (multiple choice with 4 options)
-- 2 should be VOICE (open-ended questions for spoken response)
+        content: `You are an educational AI that creates assessment questions based on a student's actual homework. 
 
-Return ONLY a JSON array with objects: { type: "MCQ"|"VOICE", questionText: string, options?: string[], correctAnswer: string }
+Requirements:
+- Generate exactly 5 questions STRICTLY based on the provided content
+- 3 MCQ (multiple choice with exactly 4 options each, only one correct)
+- 2 VOICE (open-ended questions for spoken response)
+- Questions must test understanding of the SPECIFIC topics, concepts, and material from the student's work
+- Correct answers must be accurate and directly from the content
+- For VOICE questions, provide the expected key points the student should mention
+
+Return ONLY a valid JSON object with a "questions" array. Each item: { type: "MCQ"|"VOICE", questionText: string, options?: string[], correctAnswer: string }
 No markdown, no explanation.`,
       },
       {
@@ -112,7 +118,7 @@ Subject: ${subject}
 Description: ${taskDescription}
 Analysis of student work: ${analysis}
 
-Generate 5 questions (3 MCQ + 2 VOICE).`,
+IMPORTANT: Generate 5 questions (3 MCQ + 2 VOICE) that are DIRECTLY based on the content described above. Each question should test understanding of the specific topics covered. For MCQ questions, provide 4 plausible options. For VOICE questions, specify the expected correct answer content.`,
       },
     ],
     response_format: { type: "json_object" },

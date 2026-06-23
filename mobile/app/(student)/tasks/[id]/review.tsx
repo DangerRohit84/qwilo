@@ -92,8 +92,8 @@ export default function ReviewScreen() {
                 <View style={styles.voiceResult}>
                   <Text style={[styles.label, { color: colors.textSecondary }]}>Your answer:</Text>
                   <Text style={[styles.voiceAnswer, { color: colors.text }]}>{q.studentAnswer || "No answer"}</Text>
-                  <Text style={[styles.label, { color: colors.textSecondary }]}>Correct answer:</Text>
-                  <Text style={[styles.voiceCorrect, { color: colors.success }]}>{q.correctAnswer}</Text>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Expected answer:</Text>
+                  <Text style={[styles.voiceCorrect, { color: colors.success }]}>{q.correctAnswer || "N/A"}</Text>
                 </View>
               )}
 
@@ -107,6 +107,11 @@ export default function ReviewScreen() {
                   <Text style={[styles.scoreText, { color: q.isCorrect ? colors.success : colors.danger }]}>
                     {q.isCorrect ? "Correct" : "Incorrect"} — Score: {q.score}/100
                   </Text>
+                  {q.correctAnswer && (
+                    <Text style={[styles.scoreCorrect, { color: colors.success }]}>
+                      Expected: {q.correctAnswer}
+                    </Text>
+                  )}
                 </View>
               )}
             </View>
@@ -168,4 +173,5 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   scoreText: { fontSize: 14, fontWeight: "600" },
+  scoreCorrect: { fontSize: 12, fontWeight: "600", marginLeft: "auto" },
 });

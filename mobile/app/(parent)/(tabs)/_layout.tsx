@@ -21,11 +21,13 @@ export default function TabsLayout() {
             right: 20,
             backgroundColor: colors.tabBar,
             borderTopColor: "transparent",
+            borderTopWidth: 0,
             borderRadius: 28,
             paddingBottom: 8,
             paddingTop: 8,
             height: 64,
             elevation: 0,
+            shadowOpacity: 0,
           },
           tabBarLabelStyle: { fontSize: 13, fontWeight: "600" },
         }}

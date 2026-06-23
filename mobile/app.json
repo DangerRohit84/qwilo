@@ -8,8 +8,6 @@
     "userInterfaceStyle": "automatic",
     "scheme": "qwilo",
     "splash": {
-      "image": "./assets/logo_with_name_qwilo.png",
-      "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
     "ios": {
