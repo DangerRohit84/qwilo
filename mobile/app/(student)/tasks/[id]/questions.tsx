@@ -22,15 +22,14 @@ export default function QuestionsScreen() {
   const { colors } = useTheme();
   const [question, setQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [answered, setAnswered] = useState(false);
-  const [result, setResult] = useState<AnswerResult | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
+  const [started, setStarted] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
-  const [voiceSubmitted, setVoiceSubmitted] = useState(false);
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
 
@@ -42,7 +41,11 @@ export default function QuestionsScreen() {
   async function loadQuestionWithRetry() {
     for (let i = 0; i < 30; i++) {
       const loaded = await fetchNextQuestion();
-      if (loaded) return;
+      if (loaded) {
+        setReady(true);
+        setLoading(false);
+        return;
+      }
       if (done) return;
       await new Promise((r) => setTimeout(r, 2000));
     }
@@ -52,10 +55,7 @@ export default function QuestionsScreen() {
   async function fetchNextQuestion(): Promise<boolean> {
     setLoading(true);
     setSelectedAnswer(null);
-    setAnswered(false);
-    setResult(null);
     setRecordedUri(null);
-    setVoiceSubmitted(false);
     try {
       const { data } = await api.get(
         `/student/tasks/${taskId}/questions/next`
@@ -118,15 +118,18 @@ export default function QuestionsScreen() {
 
   async function submitMCQAnswer(answer: string) {
     setSelectedAnswer(answer);
-    setAnswered(true);
+    setSubmittingAnswer(true);
     try {
-      const { data } = await api.post<AnswerResult>(
+      await api.post<AnswerResult>(
         `/student/questions/${question!.id}/answer`,
         { answerText: answer }
       );
-      setResult(data);
+      const hasNext = await fetchNextQuestion();
+      if (!hasNext) setDone(true);
     } catch {
       Alert.alert("Error", "Failed to submit answer");
+    } finally {
+      setSubmittingAnswer(false);
     }
   }
 
@@ -149,28 +152,18 @@ export default function QuestionsScreen() {
         } as any);
       }
 
-      const { data } = await api.post<AnswerResult>(
+      await api.post<AnswerResult>(
         `/student/questions/${question!.id}/answer-voice`,
         formData
       );
-      setResult(data);
-      setAnswered(true);
-      setVoiceSubmitted(true);
+      const hasNext = await fetchNextQuestion();
+      if (!hasNext) setDone(true);
     } catch (err: any) {
       console.log("Voice answer error:", err.response?.status, err.response?.data);
       Alert.alert("Error", err.response?.data?.error || "Failed to submit voice answer");
     } finally {
       setSubmittingAnswer(false);
     }
-  }
-
-  async function nextQuestion() {
-    if (done) {
-      router.replace("/(student)/(tabs)");
-      return;
-    }
-    const hasNext = await fetchNextQuestion();
-    if (!hasNext) setDone(true);
   }
 
   if (loading) {
@@ -181,23 +174,51 @@ export default function QuestionsScreen() {
     );
   }
 
+  if (ready && !started) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <Ionicons name="help-circle" size={64} color={colors.primary} />
+        <Text style={[styles.readyTitle, { color: colors.text }]}>Quiz Ready!</Text>
+        <Text style={[styles.readySub, { color: colors.textSecondary }]}>
+          {totalQuestions > 0
+            ? `${totalQuestions} questions to answer`
+            : "Test your knowledge"}
+        </Text>
+        <TouchableOpacity
+          style={[styles.startBtn, { backgroundColor: colors.primary }]}
+          onPress={() => setStarted(true)}
+        >
+          <Ionicons name="play" size={20} color="#fff" />
+          <Text style={styles.startBtnText}>Start Quiz</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   if (done) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <Ionicons name="checkmark-done-circle" size={64} color={colors.success} />
         <Text style={[styles.doneTitle, { color: colors.text }]}>All Questions Answered!</Text>
         <Text style={[styles.doneSub, { color: colors.textSecondary }]}>
-          {totalQuestions > 0 ? `Completed all ${totalQuestions} questions` : "Great job completing your homework"}
+          {totalQuestions > 0 ? `Completed all ${totalQuestions} questions` : "Great job!"}
         </Text>
-        <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={() => router.replace("/(student)/(tabs)")}>
-          <Text style={styles.doneBtnText}>Back to Dashboard</Text>
+        <TouchableOpacity
+          style={[styles.reviewDoneBtn, { backgroundColor: colors.primary }]}
+          onPress={() => router.push(`/(student)/tasks/${taskId}/review`)}
+        >
+          <Ionicons name="eye" size={20} color="#fff" />
+          <Text style={styles.startBtnText}>Review Answers</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.dashboardBtn, { borderColor: colors.border }]}
+          onPress={() => router.replace("/(student)/(tabs)")}
+        >
+          <Text style={[styles.dashboardBtnText, { color: colors.textSecondary }]}>Back to Dashboard</Text>
         </TouchableOpacity>
       </View>
     );
   }
-
-  const isCorrect = result?.isCorrect;
-  const score = result?.score;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -223,8 +244,6 @@ export default function QuestionsScreen() {
         <View style={styles.options}>
           {question.options?.map((opt, i) => {
             const isSelected = selectedAnswer === opt;
-            const isRight = answered && isCorrect && isSelected;
-            const isWrong = answered && !isCorrect && isSelected;
             return (
               <TouchableOpacity
                 key={i}
@@ -232,11 +251,9 @@ export default function QuestionsScreen() {
                   styles.option,
                   { backgroundColor: colors.card, borderColor: colors.border },
                   isSelected && { borderColor: colors.primary },
-                  isRight && { borderColor: colors.success, backgroundColor: "#F0FDF4" },
-                  isWrong && { borderColor: colors.danger, backgroundColor: "#FEF2F2" },
                 ]}
-                onPress={() => !answered && submitMCQAnswer(opt)}
-                disabled={answered}
+                onPress={() => !submittingAnswer && submitMCQAnswer(opt)}
+                disabled={submittingAnswer}
               >
                 <Text
                   style={[
@@ -247,11 +264,8 @@ export default function QuestionsScreen() {
                 >
                   {opt}
                 </Text>
-                {isRight && (
-                  <Ionicons name="checkmark" size={20} color={colors.success} />
-                )}
-                {isWrong && (
-                  <Ionicons name="close" size={20} color={colors.danger} />
+                {submittingAnswer && isSelected && (
+                  <ActivityIndicator size="small" color={colors.primary} />
                 )}
               </TouchableOpacity>
             );
@@ -267,7 +281,7 @@ export default function QuestionsScreen() {
             <Text style={[styles.replayText, { color: colors.primary }]}>Listen Again</Text>
           </TouchableOpacity>
 
-          {!recordedUri && !voiceSubmitted && (
+          {!recordedUri && (
             <TouchableOpacity
               style={[
                 styles.recordBtn,
@@ -287,7 +301,7 @@ export default function QuestionsScreen() {
             </TouchableOpacity>
           )}
 
-          {recordedUri && !voiceSubmitted && !submittingAnswer && (
+          {recordedUri && !submittingAnswer && (
             <View style={styles.voiceActions}>
               <TouchableOpacity
                 style={[styles.voiceActionBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
@@ -309,58 +323,10 @@ export default function QuestionsScreen() {
           {submittingAnswer && (
             <View style={{ alignItems: "center", padding: 20 }}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={[styles.replayText, { color: colors.textSecondary, marginTop: 12 }]}>Evaluating your answer...</Text>
+              <Text style={[styles.replayText, { color: colors.textSecondary, marginTop: 12 }]}>Submitting...</Text>
             </View>
           )}
         </View>
-      )}
-
-      {answered && result && (
-        <View
-          style={[
-            styles.resultBox,
-            isCorrect ? { backgroundColor: "#F0FDF4" } : { backgroundColor: "#FEF2F2" },
-          ]}
-        >
-          <Ionicons
-            name={isCorrect ? "happy-outline" : "sad-outline"}
-            size={24}
-            color={isCorrect ? colors.success : colors.danger}
-          />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.resultTitle, { color: isCorrect ? colors.success : colors.danger }]}>
-              {isCorrect ? "Correct!" : "Not quite"}
-            </Text>
-            {question?.type !== "MCQ" && (
-              <Text style={[styles.resultScore, { color: colors.textSecondary }]}>Score: {score}/100</Text>
-            )}
-            {result.correctAnswer && (
-              <Text style={[styles.correctAnswerText, { color: colors.success }]}>
-                Answer: {result.correctAnswer}
-              </Text>
-            )}
-          </View>
-        </View>
-      )}
-
-      {answered && result?.explanation && (
-        <View style={[styles.explanationBox, { backgroundColor: colors.inputBg }]}>
-          <Text style={[styles.explanationTitle, { color: colors.primary }]}>
-            {question?.type === "MCQ" ? "Explanation" : "How to Improve"}
-          </Text>
-          {question?.type !== "MCQ" && result.correctAnswer && (
-            <Text style={[styles.explanationSub, { color: colors.success }]}>Correct answer: {result.correctAnswer}</Text>
-          )}
-          <Text style={[styles.explanationText, { color: colors.textSecondary }]}>{result.explanation}</Text>
-        </View>
-      )}
-
-      {answered && (
-        <TouchableOpacity style={[styles.nextBtn, { backgroundColor: colors.primary }]} onPress={nextQuestion}>
-          <Text style={styles.nextBtnText}>
-            {done ? "Finish" : "Next Question"}
-          </Text>
-        </TouchableOpacity>
       )}
     </View>
   );
@@ -382,6 +348,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   title: { fontSize: 24, fontWeight: "700" },
+  counter: { fontSize: 13, marginTop: 2 },
   badge: {
     fontSize: 12,
     fontWeight: "600",
@@ -405,7 +372,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   optionText: { fontSize: 16, flex: 1 },
-  counter: { fontSize: 13, marginTop: 2 },
   voiceSection: { alignItems: "center", gap: 20, marginBottom: 24 },
   replayBtn: {
     flexDirection: "row",
@@ -440,39 +406,34 @@ const styles = StyleSheet.create({
   },
   submitActionBtn: { borderWidth: 0 },
   submitActionText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  resultBox: {
+  readyTitle: { fontSize: 22, fontWeight: "700", marginTop: 16 },
+  readySub: { fontSize: 16, marginTop: 8, marginBottom: 32 },
+  startBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 16,
+    gap: 8,
+    paddingHorizontal: 40,
+    paddingVertical: 16,
     borderRadius: 12,
-    marginBottom: 20,
   },
-  resultTitle: { fontSize: 16, fontWeight: "700" },
-  resultScore: { fontSize: 14, marginTop: 2 },
-  correctAnswerText: { fontSize: 14, fontWeight: "600", marginTop: 4 },
-  explanationBox: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  explanationTitle: { fontSize: 14, fontWeight: "700", marginBottom: 4 },
-  explanationSub: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
-  explanationText: { fontSize: 14, lineHeight: 20 },
-  nextBtn: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  nextBtnText: { color: "#fff", fontSize: 18, fontWeight: "600" },
+  startBtnText: { color: "#fff", fontSize: 18, fontWeight: "600" },
   doneTitle: { fontSize: 22, fontWeight: "700", marginTop: 16 },
   doneSub: { fontSize: 16, marginTop: 8 },
-  doneBtn: {
-    padding: 16,
+  reviewDoneBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 40,
+    paddingVertical: 16,
     borderRadius: 12,
     marginTop: 32,
-    width: "100%",
-    alignItems: "center",
   },
-  doneBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  dashboardBtn: {
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 12,
+  },
+  dashboardBtnText: { fontSize: 16, fontWeight: "600" },
 });

@@ -35,6 +35,10 @@ export default function ReviewScreen() {
     );
   }
 
+  const total = questions.length;
+  const correct = questions.filter(q => q.isCorrect).length;
+  const attempted = questions.filter(q => q.studentAnswer !== null).length;
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={[styles.header, { backgroundColor: colors.card }]}>
@@ -44,9 +48,21 @@ export default function ReviewScreen() {
         <Text style={[styles.title, { color: colors.text }]}>Review Answers</Text>
         <View style={{ width: 28 }} />
       </View>
+
+      {total > 0 && (
+        <View style={[styles.summary, { backgroundColor: colors.card }]}>
+          <Text style={[styles.summaryText, { color: colors.text }]}>
+            {correct}/{total} correct
+          </Text>
+          <Text style={[styles.summarySub, { color: colors.textSecondary }]}>
+            {total - attempted > 0 ? `${total - attempted} unanswered` : ""}
+          </Text>
+        </View>
+      )}
+
       <ScrollView style={styles.list}>
         {questions.length === 0 ? (
-          <Text style={[styles.empty, { color: colors.textMuted }]}>No questions found</Text>
+          <Text style={[styles.empty, { color: colors.textSecondary }]}>No questions found</Text>
         ) : (
           questions.map((q, i) => (
             <View key={q.id} style={[styles.card, { backgroundColor: colors.card }]}>
@@ -107,11 +123,13 @@ export default function ReviewScreen() {
                   <Text style={[styles.scoreText, { color: q.isCorrect ? colors.success : colors.danger }]}>
                     {q.isCorrect ? "Correct" : "Incorrect"} — Score: {q.score}/100
                   </Text>
-                  {q.correctAnswer && (
-                    <Text style={[styles.scoreCorrect, { color: colors.success }]}>
-                      Expected: {q.correctAnswer}
-                    </Text>
-                  )}
+                </View>
+              )}
+
+              {q.studentAnswer === null && (
+                <View style={[styles.unansweredBadge, { backgroundColor: "#FEF2F2" }]}>
+                  <Ionicons name="time-outline" size={16} color={colors.danger} />
+                  <Text style={[styles.unansweredText, { color: colors.danger }]}>Not answered</Text>
                 </View>
               )}
             </View>
@@ -133,6 +151,17 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   title: { fontSize: 20, fontWeight: "700" },
+  summary: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 16,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  summaryText: { fontSize: 18, fontWeight: "700" },
+  summarySub: { fontSize: 14 },
   list: { padding: 16 },
   empty: { textAlign: "center", marginTop: 40, fontSize: 16 },
   card: {
@@ -173,5 +202,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   scoreText: { fontSize: 14, fontWeight: "600" },
-  scoreCorrect: { fontSize: 12, fontWeight: "600", marginLeft: "auto" },
+  unansweredBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+    padding: 8,
+    borderRadius: 8,
+  },
+  unansweredText: { fontSize: 12, fontWeight: "600" },
 });
