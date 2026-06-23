@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 import api from "../../../../services/api";
 import { Task } from "../../../../types";
 import { useTheme } from "../../../../contexts/ThemeContext";
@@ -107,7 +107,7 @@ export default function TaskDetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={[styles.header, { backgroundColor: colors.card }]}>
-        <TouchableOpacity onPress={() => { if (typeof window !== "undefined" && window.history.length > 1) router.back(); else router.push("/(student)"); }}>
+         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={28} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Task Details</Text>

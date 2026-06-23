@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 import api from "../../../../services/api";
 import { ReviewQuestion } from "../../../../types";
 import { useTheme } from "../../../../contexts/ThemeContext";
@@ -38,7 +38,7 @@ export default function ReviewScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={[styles.header, { backgroundColor: colors.card }]}>
-        <TouchableOpacity onPress={() => { if (typeof window !== "undefined" && window.history.length > 1) router.back(); else router.push("/(student)"); }}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={28} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Review Answers</Text>

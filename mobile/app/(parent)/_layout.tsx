@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { View, ActivityIndicator, TouchableOpacity, StyleSheet, Platform, Animated } from "react-native";
 import { Stack, useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { getStoredUser } from "../../services/auth";
 import { useTheme } from "../../contexts/ThemeContext";
 

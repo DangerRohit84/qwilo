@@ -10,7 +10,7 @@ import {
   Image,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 import api from "../../../services/api";
 import { getStoredUser } from "../../../services/auth";
 import { TaskListResponse, User } from "../../../types";

@@ -49,8 +49,7 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for voice answers."
         }
       ],
-      "expo-asset",
-      "expo-font"
+      "expo-asset"
     ],
     "owner": "danger_rohit_84"
   }

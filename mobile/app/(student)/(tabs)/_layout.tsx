@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Platform, TouchableOpacity, StyleSheet, View, Animated } from "react-native";
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useTheme } from "../../../contexts/ThemeContext";
 
 export default function TabsLayout() {

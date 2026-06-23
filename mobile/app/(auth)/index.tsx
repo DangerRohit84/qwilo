@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import {
   Image,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { login, register } from "../../services/auth";
+import api from "../../services/api";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export default function AuthScreen() {
@@ -23,6 +24,10 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    api.get("/health").catch(() => {});
+  }, []);
   const [form, setForm] = useState({
     name: "",
     email: "",
