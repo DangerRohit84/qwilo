@@ -131,7 +131,7 @@ export default function SessionDetailScreen() {
                       <View style={styles.qHeader}>
                         <View style={[styles.qTypeBg, { backgroundColor: colors.primary + "18" }]}>
                           <Text style={[styles.qTypeText, { color: colors.primary }]}>
-                            {q.type === "MCQ" ? "MCQ" : "Voice"}
+                            {q.type === "MCQ" ? "MCQ" : q.type === "TRUE_FALSE" ? "True/False" : q.type === "FILL_BLANK" ? "Fill Blank" : q.type === "ONE_WORD" ? "One Word" : q.type === "SHORT_ANSWER" ? "Short Answer" : "Voice"}
                           </Text>
                         </View>
                         <Text style={[styles.qQuestion, { color: colors.text }]}>{q.questionText}</Text>
@@ -173,6 +173,47 @@ export default function SessionDetailScreen() {
                           <Ionicons name="mic" size={16} color={colors.textSecondary} />
                           <Text style={[styles.voiceText, { color: colors.textSecondary }]} numberOfLines={2}>
                             {ansText || "No transcription"}
+                          </Text>
+                          <View style={[styles.scoreBadge, { backgroundColor: answer.isCorrect ? colors.success + "22" : colors.danger + "22" }]}>
+                            <Text style={{ color: answer.isCorrect ? colors.success : colors.danger, fontSize: 12, fontWeight: "700" }}>
+                              {answer.score}
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+
+                      {q.type === "TRUE_FALSE" && answer && (
+                        <View style={styles.voiceRow}>
+                          <Ionicons name={ansText?.toLowerCase() === "true" ? "checkmark-circle" : "close-circle"} size={16} color={answer.isCorrect ? colors.success : colors.danger} />
+                          <Text style={[styles.voiceText, { color: colors.text }]}>
+                            Student: {ansText || "No answer"} | Correct: {q.correctAnswer}
+                          </Text>
+                        </View>
+                      )}
+
+                      {q.type === "FILL_BLANK" && answer && (
+                        <View style={styles.voiceRow}>
+                          <Ionicons name="pencil" size={16} color={colors.textSecondary} />
+                          <Text style={[styles.voiceText, { color: colors.text }]}>
+                            Student: {ansText || "No answer"} | Correct: {q.correctAnswer}
+                          </Text>
+                        </View>
+                      )}
+
+                      {q.type === "ONE_WORD" && answer && (
+                        <View style={styles.voiceRow}>
+                          <Ionicons name="text" size={16} color={colors.textSecondary} />
+                          <Text style={[styles.voiceText, { color: colors.text }]}>
+                            Student: {ansText || "No answer"} | Correct: {q.correctAnswer}
+                          </Text>
+                        </View>
+                      )}
+
+                      {q.type === "SHORT_ANSWER" && answer && (
+                        <View style={styles.voiceRow}>
+                          <Ionicons name="document-text" size={16} color={colors.textSecondary} />
+                          <Text style={[styles.voiceText, { color: colors.textSecondary }]} numberOfLines={3}>
+                            {ansText || "No answer"}
                           </Text>
                           <View style={[styles.scoreBadge, { backgroundColor: answer.isCorrect ? colors.success + "22" : colors.danger + "22" }]}>
                             <Text style={{ color: answer.isCorrect ? colors.success : colors.danger, fontSize: 12, fontWeight: "700" }}>

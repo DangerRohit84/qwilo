@@ -245,7 +245,26 @@ router.get(
           });
         }
 
-        if (answer && (q.type === "SHORT_ANSWER" || q.type === "VOICE") && score === 0 && !isCorrect && answer.answerText) {
+        if (answer && q.type === "VOICE" && score === 0 && !isCorrect && answer.answerText && !feedback) {
+          try {
+            const result = await groqService.evaluateVoiceAnswer(
+              q.questionText,
+              q.correctAnswer,
+              answer.answerText
+            );
+            isCorrect = result.isCorrect;
+            score = result.score;
+            feedback = result.feedback;
+            await prisma.answer.update({
+              where: { id: answer.id },
+              data: { isCorrect: result.isCorrect, score: result.score, feedback: result.feedback },
+            });
+          } catch {
+            feedback = "Could not evaluate.";
+          }
+        }
+
+        if (answer && q.type === "SHORT_ANSWER" && score === 0 && !isCorrect && answer.answerText && !feedback) {
           try {
             const result = await groqService.evaluateShortAnswer(
               q.questionText,

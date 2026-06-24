@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -67,7 +67,6 @@ export default function ChildProgressScreen() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const selectedRef = useRef<string | null>(null);
 
   function getTodayStr() {
     const now = new Date();
@@ -106,7 +105,6 @@ export default function ChildProgressScreen() {
         const end = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
         setData(computeStats(filterTasksByDate(result.tasks || [], start, end)));
         setSelectedDate(todayStr);
-        selectedRef.current = todayStr;
       } catch (err) {
         console.error("Failed to fetch child progress");
       } finally {
@@ -141,7 +139,6 @@ export default function ChildProgressScreen() {
 
   function onDayPress(day: { dateString: string }) {
     setSelectedDate(day.dateString);
-    selectedRef.current = day.dateString;
     updateMarkedDates(day.dateString);
     const start = new Date(day.dateString + "T00:00:00.000Z");
     const end = new Date(day.dateString + "T23:59:59.999Z");
@@ -150,7 +147,6 @@ export default function ChildProgressScreen() {
 
   function onMonthPress() {
     setSelectedDate(null);
-    selectedRef.current = null;
     updateMarkedDates(null);
     setData(computeStats(allTasks));
   }

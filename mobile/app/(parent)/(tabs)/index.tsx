@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -42,7 +42,6 @@ export default function ParentDashboard() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const selectedRef = useRef<string | null>(null);
 
   function getTodayStr() {
     const now = new Date();
@@ -131,7 +130,6 @@ export default function ParentDashboard() {
     getStoredUser().then(setUser).catch(() => {});
     const todayStr = getTodayStr();
     setSelectedDate(todayStr);
-    selectedRef.current = todayStr;
     fetchProgress();
   }, []);
 
@@ -148,7 +146,6 @@ export default function ParentDashboard() {
 
   function onDayPress(day: { dateString: string }) {
     setSelectedDate(day.dateString);
-    selectedRef.current = day.dateString;
     updateMarks(day.dateString);
     const filtered = filterByDate(allChildren, day.dateString);
     setChildren(filtered);
@@ -157,7 +154,6 @@ export default function ParentDashboard() {
 
   function onMonthPress() {
     setSelectedDate(null);
-    selectedRef.current = null;
     updateMarks(null);
     setChildren(allChildren);
     setAggregated(computeAgg(allChildren));

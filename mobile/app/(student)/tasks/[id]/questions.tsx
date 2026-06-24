@@ -208,9 +208,14 @@ export default function QuestionsScreen() {
     const parts = text.split("___");
     return (
       <Text style={[styles.questionText, { color: colors.text }]}>
-        {parts[0]}
-        <Text style={[styles.blankHighlight, { borderColor: colors.primary, color: colors.primary }]}>_____</Text>
-        {parts[1] || ""}
+        {parts.map((part, i) => (
+          <Text key={i}>
+            {part}
+            {i < parts.length - 1 && (
+              <Text style={[styles.blankHighlight, { borderColor: colors.primary, color: colors.primary }]}>_____</Text>
+            )}
+          </Text>
+        ))}
       </Text>
     );
   }

@@ -54,6 +54,14 @@ export default function TaskDetailScreen() {
     }
   }
 
+  function showAddPhotoAlert() {
+    Alert.alert("Add Photo", "Choose source", [
+      { text: "Camera", onPress: () => pickWorkImage(true) },
+      { text: "Gallery", onPress: () => pickWorkImage(false) },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  }
+
   function removeImage(index: number) {
     setWorkImages((prev) => prev.filter((_, i) => i !== index));
   }
@@ -124,13 +132,7 @@ export default function TaskDetailScreen() {
         <Text style={[styles.title, { color: colors.text }]}>Task Details</Text>
         {task?.status === "PENDING" && (
           <TouchableOpacity
-            onPress={() => {
-              Alert.alert("Add Photo", "Choose source", [
-                { text: "Camera", onPress: () => pickWorkImage(true) },
-                { text: "Gallery", onPress: () => pickWorkImage(false) },
-                { text: "Cancel", style: "cancel" },
-              ]);
-            }}
+            onPress={showAddPhotoAlert}
             style={{ width: 44, height: 44, justifyContent: "center", alignItems: "center" }}
           >
             <Ionicons name="add-circle" size={28} color={colors.primary} />
@@ -151,13 +153,7 @@ export default function TaskDetailScreen() {
             <Text style={[styles.sectionLabel, { color: colors.text }]}>Upload Your Work</Text>
             <TouchableOpacity
               style={[styles.addImageBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => {
-                Alert.alert("Add Photo", "Choose source", [
-                  { text: "Camera", onPress: () => pickWorkImage(true) },
-                  { text: "Gallery", onPress: () => pickWorkImage(false) },
-                  { text: "Cancel", style: "cancel" },
-                ]);
-              }}
+              onPress={showAddPhotoAlert}
             >
               <Ionicons name="add-circle" size={32} color={colors.primary} />
               <Text style={[styles.addImageText, { color: colors.primary }]}>Add Photos</Text>

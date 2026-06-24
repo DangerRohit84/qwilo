@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -23,7 +23,6 @@ export default function ProgressScreen() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const selectedRef = useRef<string | null>(null);
 
   function getTodayStr() {
     const now = new Date();
@@ -78,7 +77,6 @@ export default function ProgressScreen() {
       const todayStr = getTodayStr();
       updateMarkedDates(todayStr, all);
       setSelectedDate(todayStr);
-      selectedRef.current = todayStr;
       setTasks(filterByDate(all, todayStr));
     } catch (err) {
       console.log("Progress fetch error:", err);
@@ -126,14 +124,12 @@ export default function ProgressScreen() {
 
   function onDayPress(day: { dateString: string }) {
     setSelectedDate(day.dateString);
-    selectedRef.current = day.dateString;
     updateMarkedDates(day.dateString, allTasks);
     setTasks(filterByDate(allTasks, day.dateString));
   }
 
   function onMonthPress() {
     setSelectedDate(null);
-    selectedRef.current = null;
     updateMarkedDates(null, allTasks);
     setTasks(allTasks);
   }
