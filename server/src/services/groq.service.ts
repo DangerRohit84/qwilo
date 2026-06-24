@@ -121,6 +121,9 @@ Available question types — use ONLY the ones that fit the content:
 Rules:
 - Analyze the homework and pick the MOST APPROPRIATE type for each concept
 - Don't force a type if it doesn't suit the content — skip it
+- **CRITICAL — Script-based type restriction**:
+  - If the homework is in a NON-LATIN script language (Hindi, Telugu, Tamil, Kannada, Malayalam, Bengali, Gujarati, Marathi, Odia, Punjabi, Assamese, Sanskrit, Urdu, etc.), you MUST ONLY use: MCQ, TRUE_FALSE, and VOICE. Do NOT use FILL_BLANK, ONE_WORD, or SHORT_ANSWER because students cannot easily type these scripts on a phone keyboard.
+  - If the homework is in English or other Latin-script languages (French, Spanish, German, etc.), you may use ALL 6 types freely.
 - Math homework → more FILL_BLANK (formulas), ONE_WORD (numbers), TRUE_FALSE
 - Science → more MCQ (concepts), TRUE_FALSE (facts), FILL_BLANK (terms)
 - Language/History → more VOICE (explanations), SHORT_ANSWER (descriptions), MCQ (comprehension)
