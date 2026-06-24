@@ -41,10 +41,56 @@ function getPresetRange(preset: Preset) {
   }
 }
 
+function filterTasksByDate(tasks: any[], startDate?: Date, endDate?: Date) {
+  if (!startDate || !endDate) return tasks;
+  const start = startDate.getTime();
+  const end = endDate.getTime();
+  return tasks.filter((t) => {
+    const d = new Date(t.sessionDate).getTime();
+    return d >= start && d <= end;
+  });
+}
+
+function computeStats(tasks: any[]) {
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => t.status === "COMPLETED").length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  let totalQuestions = 0;
+  let correctAnswers = 0;
+  const subjectBreakdown: Record<string, { total: number; completed: number }> = {};
+
+  for (const t of tasks) {
+    const subj = t.subject || "Other";
+    if (!subjectBreakdown[subj]) subjectBreakdown[subj] = { total: 0, completed: 0 };
+    subjectBreakdown[subj].total++;
+    if (t.status === "COMPLETED") subjectBreakdown[subj].completed++;
+
+    for (const q of t.questions || []) {
+      totalQuestions++;
+      const a = q.answers?.[0];
+      if (a?.isCorrect) correctAnswers++;
+    }
+  }
+
+  return {
+    totalTasks,
+    completedTasks,
+    completionRate,
+    totalQuestions,
+    correctAnswers,
+    accuracy: totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
+    subjectBreakdown,
+    tasks,
+  };
+}
+
 export default function ChildProgressScreen() {
   const router = useRouter();
   const { theme, colors } = useTheme();
   const { id } = useLocalSearchParams();
+  const [allTasks, setAllTasks] = useState<any[]>([]);
+  const [allSessions, setAllSessions] = useState<any[]>([]);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [preset, setPreset] = useState<Preset>("today");
@@ -53,16 +99,12 @@ export default function ChildProgressScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const selectedRef = useRef<string | null>(null);
 
-  const fetchProgress = useCallback(
-    async (startDate?: Date, endDate?: Date) => {
-      setLoading(true);
+  useEffect(() => {
+    (async () => {
       try {
-        const params: any = {};
-        if (startDate) params.startDate = startDate.toISOString();
-        if (endDate) params.endDate = endDate.toISOString();
-        const { data: result } = await api.get(`/parent/children/${id}/progress`, { params });
-        setData(result);
-        setLoading(false);
+        const { data: result } = await api.get(`/parent/children/${id}/progress`);
+        setAllTasks(result.tasks || []);
+        setAllSessions(result.recentSessions || []);
 
         const marks: Record<string, any> = {};
         (result.recentSessions || []).forEach((s: any) => {
@@ -72,34 +114,24 @@ export default function ChildProgressScreen() {
             dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
           };
         });
-
-        if (selectedRef.current) {
-          marks[selectedRef.current] = {
-            ...marks[selectedRef.current],
-            selected: true,
-          };
-        }
-
         setMarkedDates(marks);
+
+        const range = getPresetRange("today");
+        setData(computeStats(filterTasksByDate(result.tasks || [], range.startDate, range.endDate)));
       } catch (err) {
         console.error("Failed to fetch child progress");
+      } finally {
         setLoading(false);
       }
-    },
-    [id]
-  );
-
-  useEffect(() => {
-    const range = getPresetRange(preset);
-    fetchProgress(range.startDate, range.endDate);
-  }, []);
+    })();
+  }, [id]);
 
   function applyPreset(p: Preset) {
     setPreset(p);
     setSelectedDate(null);
     selectedRef.current = null;
     const range = getPresetRange(p);
-    fetchProgress(range.startDate, range.endDate);
+    setData(computeStats(filterTasksByDate(allTasks, range.startDate, range.endDate)));
   }
 
   function onDayPress(day: { dateString: string }) {
@@ -107,7 +139,7 @@ export default function ChildProgressScreen() {
     selectedRef.current = day.dateString;
     const start = new Date(day.dateString + "T00:00:00.000Z");
     const end = new Date(day.dateString + "T23:59:59.999Z");
-    fetchProgress(start, end);
+    setData(computeStats(filterTasksByDate(allTasks, start, end)));
   }
 
   const presets: { key: Preset; label: string }[] = [
@@ -117,7 +149,7 @@ export default function ChildProgressScreen() {
     { key: "all", label: "All Time" },
   ];
 
-  if (loading && !data) {
+  if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <ActivityIndicator size="large" color={colors.primary} />
