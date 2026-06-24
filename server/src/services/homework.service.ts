@@ -21,6 +21,7 @@ export async function uploadHomeworkImage(
 }
 
 export async function processHomework(sessionId: string) {
+  console.log(`[processHomework] Starting for session ${sessionId}`);
   const session = await prisma.homeworkSession.findUnique({
     where: { id: sessionId },
   });
@@ -31,11 +32,16 @@ export async function processHomework(sessionId: string) {
     data: { status: "PROCESSING" },
   });
 
+  console.log(`[processHomework] Running OCR for session ${sessionId}`);
   const ocrText = await groqService.ocrHomeworkImage(session.homeworkImageUrl);
+  console.log(`[processHomework] OCR result length: ${ocrText.length}`);
 
+  console.log(`[processHomework] Parsing tasks for session ${sessionId}`);
   const tasks = await groqService.parseTasksFromOcr(ocrText);
+  console.log(`[processHomework] Parsed ${tasks.length} tasks`);
 
   if (!tasks || tasks.length === 0) {
+    console.log(`[processHomework] No tasks found, marking FAILED for session ${sessionId}`);
     await prisma.homeworkSession.update({
       where: { id: sessionId },
       data: { rawOcrText: ocrText, status: "FAILED" },
@@ -43,25 +49,27 @@ export async function processHomework(sessionId: string) {
     return { sessionId, ocrText, tasks: [] };
   }
 
-  const createdTasks: any[] = [];
-  for (let i = 0; i < tasks.length; i++) {
-    const task = await prisma.task.create({
-      data: {
-        sessionId,
-        type: tasks[i].type,
-        subject: tasks[i].subject,
-        description: tasks[i].description,
-        orderIndex: i,
-      },
-    });
-    createdTasks.push(task);
-  }
+  console.log(`[processHomework] Creating ${tasks.length} tasks for session ${sessionId}`);
+  const createdTasks = await prisma.$transaction(
+    tasks.map((t, i) =>
+      prisma.task.create({
+        data: {
+          sessionId,
+          type: t.type || "OTHER",
+          subject: t.subject || "General",
+          description: t.description || "Homework task",
+          orderIndex: i,
+        },
+      })
+    )
+  );
 
   await prisma.homeworkSession.update({
     where: { id: sessionId },
     data: { rawOcrText: ocrText, status: "COMPLETED" },
   });
 
+  console.log(`[processHomework] Done! Created ${createdTasks.length} tasks for session ${sessionId}`);
   return { sessionId, ocrText, tasks: createdTasks };
 }
 
