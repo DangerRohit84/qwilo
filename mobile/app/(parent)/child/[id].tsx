@@ -13,34 +13,6 @@ import { Calendar } from "react-native-calendars";
 import api from "../../../services/api";
 import { useTheme } from "../../../contexts/ThemeContext";
 
-type Preset = "today" | "week" | "month" | "all";
-
-function getPresetRange(preset: Preset) {
-  const now = new Date();
-  const todayUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  switch (preset) {
-    case "today":
-      return {
-        startDate: todayUTC,
-        endDate: new Date(todayUTC.getTime() + 86400000 - 1),
-      };
-    case "week": {
-      const day = now.getDay();
-      const mondayOffset = day === 0 ? 6 : day - 1;
-      const monday = new Date(todayUTC.getTime() - mondayOffset * 86400000);
-      const sunday = new Date(monday.getTime() + 6 * 86400000 + 86400000 - 1);
-      return { startDate: monday, endDate: sunday };
-    }
-    case "month": {
-      const first = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
-      const last = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
-      return { startDate: first, endDate: last };
-    }
-    default:
-      return { startDate: undefined, endDate: undefined };
-  }
-}
-
 function filterTasksByDate(tasks: any[], startDate?: Date, endDate?: Date) {
   if (!startDate || !endDate) return tasks;
   const start = startDate.getTime();
@@ -93,7 +65,6 @@ export default function ChildProgressScreen() {
   const [allSessions, setAllSessions] = useState<any[]>([]);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [preset, setPreset] = useState<Preset>("today");
   const [showCalendar, setShowCalendar] = useState(false);
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -116,8 +87,7 @@ export default function ChildProgressScreen() {
         });
         setMarkedDates(marks);
 
-        const range = getPresetRange("today");
-        setData(computeStats(filterTasksByDate(result.tasks || [], range.startDate, range.endDate)));
+        setData(computeStats(result.tasks || []));
       } catch (err) {
         console.error("Failed to fetch child progress");
       } finally {
@@ -125,14 +95,6 @@ export default function ChildProgressScreen() {
       }
     })();
   }, [id]);
-
-  function applyPreset(p: Preset) {
-    setPreset(p);
-    setSelectedDate(null);
-    selectedRef.current = null;
-    const range = getPresetRange(p);
-    setData(computeStats(filterTasksByDate(allTasks, range.startDate, range.endDate)));
-  }
 
   function onDayPress(day: { dateString: string }) {
     setSelectedDate(day.dateString);
@@ -142,12 +104,11 @@ export default function ChildProgressScreen() {
     setData(computeStats(filterTasksByDate(allTasks, start, end)));
   }
 
-  const presets: { key: Preset; label: string }[] = [
-    { key: "today", label: "Today" },
-    { key: "week", label: "This Week" },
-    { key: "month", label: "This Month" },
-    { key: "all", label: "All Time" },
-  ];
+  function onMonthPress() {
+    setSelectedDate(null);
+    selectedRef.current = null;
+    setData(computeStats(allTasks));
+  }
 
   if (loading) {
     return (
@@ -168,33 +129,6 @@ export default function ChildProgressScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.presetRow}>
-          {presets.map((p) => (
-            <TouchableOpacity
-              key={p.key}
-              style={[
-                styles.presetBtn,
-                { backgroundColor: colors.card, borderColor: colors.border },
-                preset === p.key && {
-                  backgroundColor: "#13376D",
-                  borderColor: "#13376D",
-                },
-              ]}
-              onPress={() => applyPreset(p.key)}
-            >
-              <Text
-                style={[
-                  styles.presetText,
-                  { color: colors.textSecondary },
-                  preset === p.key && { color: "#fff" },
-                ]}
-              >
-                {p.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
         <TouchableOpacity
           style={[styles.calendarToggle, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => setShowCalendar(!showCalendar)}
@@ -229,6 +163,7 @@ export default function ChildProgressScreen() {
               }}
               markedDates={markedDates}
               onDayPress={onDayPress}
+              onMonthChange={onMonthPress}
             />
           </View>
         )}
@@ -343,9 +278,6 @@ const styles = StyleSheet.create({
   backBtn: { width: 28 },
   title: { fontSize: 20, fontWeight: "700" },
   content: { padding: 20, paddingBottom: 40 },
-  presetRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
-  presetBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, alignItems: "center" },
-  presetText: { fontSize: 13, fontWeight: "600" },
   calendarToggle: {
     flexDirection: "row",
     alignItems: "center",

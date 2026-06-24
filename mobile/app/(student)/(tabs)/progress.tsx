@@ -14,123 +14,69 @@ import api from "../../../services/api";
 import { StudentProgress } from "../../../types";
 import { useTheme } from "../../../contexts/ThemeContext";
 
-type Preset = "today" | "week" | "month" | "all";
-
-function getPresetRange(preset: Preset) {
-  const now = new Date();
-  const todayUTC = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  switch (preset) {
-    case "today":
-      return {
-        startDate: todayUTC,
-        endDate: new Date(todayUTC.getTime() + 86400000 - 1),
-      };
-    case "week": {
-      const day = now.getDay();
-      const mondayOffset = day === 0 ? 6 : day - 1;
-      const monday = new Date(todayUTC.getTime() - mondayOffset * 86400000);
-      const sunday = new Date(monday.getTime() + 6 * 86400000 + 86400000 - 1);
-      return { startDate: monday, endDate: sunday };
-    }
-    case "month": {
-      const first = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
-      const last = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
-      return { startDate: first, endDate: last };
-    }
-    default:
-      return { startDate: undefined, endDate: undefined };
-  }
-}
-
 export default function ProgressScreen() {
   const router = useRouter();
   const { theme, colors } = useTheme();
   const [data, setData] = useState<StudentProgress | null>(null);
+  const [allTasks, setAllTasks] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [preset, setPreset] = useState<Preset>("today");
   const [showCalendar, setShowCalendar] = useState(false);
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const selectedRef = useRef<string | null>(null);
 
-  const fetchProgress = useCallback(
-    async (startDate?: Date, endDate?: Date) => {
-      setLoading(true);
-      try {
-        const params: any = {};
-        if (startDate) params.startDate = startDate.toISOString();
-        if (endDate) params.endDate = endDate.toISOString();
-        const { data: result } = await api.get<StudentProgress>(
-          "/student/history",
-          { params }
-        );
-        setData(result);
+  const fetchProgress = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: result } = await api.get<StudentProgress>("/student/history");
+      setData(result);
 
-        const { data: tasksRes } = await api.get("/student/tasks", { params });
-        const all =
-          tasksRes?.completed?.concat(tasksRes?.pending || []) || [];
-        all.sort(
-          (a: any, b: any) =>
-            new Date(b.sessionDate).getTime() - new Date(a.sessionDate).getTime()
-        );
-        setTasks(all);
+      const { data: tasksRes } = await api.get("/student/tasks");
+      const all =
+        tasksRes?.completed?.concat(tasksRes?.pending || []) || [];
+      all.sort(
+        (a: any, b: any) =>
+          new Date(b.sessionDate).getTime() - new Date(a.sessionDate).getTime()
+      );
+      setAllTasks(all);
+      setTasks(all);
 
-        const marks: Record<string, any> = {};
-        result.recentSessions.forEach((s) => {
-          const dateStr = s.date.split("T")[0];
-          marks[dateStr] = {
-            marked: true,
-            dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
-          };
-        });
+      const marks: Record<string, any> = {};
+      result.recentSessions.forEach((s) => {
+        const dateStr = s.date.split("T")[0];
+        marks[dateStr] = {
+          marked: true,
+          dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
+        };
+      });
 
-        if (selectedRef.current) {
-          marks[selectedRef.current] = {
-            ...marks[selectedRef.current],
-            selected: true,
-          };
-        }
+      setMarkedDates(marks);
+    } catch (err) {
+      console.log("Progress fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-        setMarkedDates(marks);
-      } catch (err) {
-        console.log("Progress fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      const range = getPresetRange(preset);
-      fetchProgress(range.startDate, range.endDate);
-    }, [preset])
-  );
-
-  function applyPreset(p: Preset) {
-    setSelectedDate(null);
-    selectedRef.current = null;
-    setPreset(p);
-    const range = getPresetRange(p);
-    fetchProgress(range.startDate, range.endDate);
-  }
+  useFocusEffect(useCallback(() => { fetchProgress(); }, []));
 
   function onDayPress(day: { dateString: string }) {
     setSelectedDate(day.dateString);
     selectedRef.current = day.dateString;
-    const start = new Date(day.dateString + "T00:00:00.000Z");
-    const end = new Date(day.dateString + "T23:59:59.999Z");
-    fetchProgress(start, end);
+    const start = new Date(day.dateString + "T00:00:00.000Z").getTime();
+    const end = new Date(day.dateString + "T23:59:59.999Z").getTime();
+    setTasks(allTasks.filter((t) => {
+      const d = new Date(t.sessionDate).getTime();
+      return d >= start && d <= end;
+    }));
   }
 
-  const presets: { key: Preset; label: string }[] = [
-    { key: "today", label: "Today" },
-    { key: "week", label: "This Week" },
-    { key: "month", label: "This Month" },
-    { key: "all", label: "All Time" },
-  ];
+  function onMonthPress() {
+    setSelectedDate(null);
+    selectedRef.current = null;
+    setTasks(allTasks);
+  }
 
   if (loading && !data) {
     return (
@@ -145,33 +91,6 @@ export default function ProgressScreen() {
       <ScrollView style={[styles.scroll, { backgroundColor: colors.bg }]} contentContainerStyle={{ paddingBottom: 90 }} showsVerticalScrollIndicator={false}>
         <Text style={[styles.title, { color: colors.text }]}>My Progress</Text>
 
-        <View style={styles.presetRow}>
-          {presets.map((p) => (
-            <TouchableOpacity
-              key={p.key}
-              style={[
-                styles.presetBtn,
-                { backgroundColor: colors.card, borderColor: colors.border },
-                preset === p.key && {
-                  backgroundColor: colors.primary,
-                  borderColor: colors.primary,
-                },
-              ]}
-              onPress={() => applyPreset(p.key)}
-            >
-              <Text
-                style={[
-                  styles.presetText,
-                  { color: colors.textSecondary },
-                  preset === p.key && { color: "#fff" },
-                ]}
-              >
-                {p.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
         <TouchableOpacity
           style={styles.calendarToggle}
           onPress={() => setShowCalendar(!showCalendar)}
@@ -182,7 +101,9 @@ export default function ProgressScreen() {
             color={colors.primary}
           />
           <Text style={[styles.calendarToggleText, { color: colors.primary }]}>
-            {showCalendar ? "Hide Calendar" : "Pick a Date"}
+            {selectedDate
+              ? new Date(selectedDate + "T00:00:00").toLocaleDateString()
+              : "Pick a Date"}
           </Text>
         </TouchableOpacity>
 
@@ -190,6 +111,7 @@ export default function ProgressScreen() {
           <View style={[styles.calendarWrap, { backgroundColor: colors.card }]}>
             <Calendar key={theme}
               onDayPress={onDayPress}
+              onMonthChange={onMonthPress}
               markedDates={markedDates}
               theme={{
                 backgroundColor: colors.card,
@@ -328,14 +250,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginBottom: 20,
   },
-  presetRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
-  presetBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  presetText: { fontSize: 13, fontWeight: "600" },
   calendarToggle: {
     flexDirection: "row",
     alignItems: "center",
