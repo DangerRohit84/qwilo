@@ -22,6 +22,7 @@ export async function generateAndSaveQuestions(taskId: string) {
 
   const saved: any[] = [];
   for (const q of questions) {
+    if (!q.questionText || !q.correctAnswer || !q.type) continue;
     const savedQ = await prisma.question.create({
       data: {
         taskId,
