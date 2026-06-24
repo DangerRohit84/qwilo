@@ -32,6 +32,7 @@ export default function QuestionsScreen() {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
+  const doneRef = useRef(false);
 
   useEffect(() => {
     Audio.requestPermissionsAsync();
@@ -41,13 +42,13 @@ export default function QuestionsScreen() {
   async function loadQuestionWithRetry() {
     setLoading(true);
     for (let i = 0; i < 30; i++) {
-      const loaded = await fetchNextQuestion();
-      if (loaded) {
-        setReady(true);
+      if (doneRef.current) {
         setLoading(false);
         return;
       }
-      if (done) {
+      const loaded = await fetchNextQuestion();
+      if (loaded) {
+        setReady(true);
         setLoading(false);
         return;
       }
@@ -67,6 +68,7 @@ export default function QuestionsScreen() {
         return false;
       }
       if (data.done) {
+        doneRef.current = true;
         setDone(true);
         return false;
       } else {
@@ -130,7 +132,10 @@ export default function QuestionsScreen() {
         { answerText: answer }
       );
       const hasNext = await fetchNextQuestion();
-      if (!hasNext) setDone(true);
+      if (!hasNext) {
+        setQuestion(null);
+        setDone(true);
+      }
     } catch {
       Alert.alert("Error", "Failed to submit answer");
     } finally {
@@ -162,7 +167,10 @@ export default function QuestionsScreen() {
         formData
       );
       const hasNext = await fetchNextQuestion();
-      if (!hasNext) setDone(true);
+      if (!hasNext) {
+        setQuestion(null);
+        setDone(true);
+      }
     } catch (err: any) {
       console.log("Voice answer error:", err.response?.status, err.response?.data);
       Alert.alert("Error", err.response?.data?.error || "Failed to submit voice answer");
@@ -221,6 +229,14 @@ export default function QuestionsScreen() {
         >
           <Text style={[styles.dashboardBtnText, { color: colors.textSecondary }]}>Back to Dashboard</Text>
         </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!question) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
