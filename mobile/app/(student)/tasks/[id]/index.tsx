@@ -29,6 +29,9 @@ export default function TaskDetailScreen() {
   useEffect(() => {
     api.get(`/student/tasks/${id}`).then(({ data }) => {
       setTask(data);
+    }).catch(() => {
+      Alert.alert("Error", "Failed to load task");
+    }).finally(() => {
       setLoading(false);
     });
   }, [id]);

@@ -42,6 +42,15 @@ router.post(
   async (req: AuthRequest, res: Response) => {
     try {
       const sessionId = req.params.id as string;
+      const session = await prisma.homeworkSession.findUnique({
+        where: { id: sessionId },
+      });
+      if (!session || session.studentId !== req.user!.id) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      if (session.status !== "PENDING") {
+        return res.status(400).json({ error: "Session already processing" });
+      }
       await prisma.homeworkSession.update({
         where: { id: sessionId },
         data: { status: "PROCESSING" },
@@ -206,6 +215,9 @@ router.get(
       if (!question) {
         return res.json({ done: true, message: "All questions answered!" });
       }
+      if ((question as any).ready === false) {
+        return res.json({ ready: false });
+      }
       res.json(question);
     } catch (err: any) {
       res.status(400).json({ error: err.message });
@@ -230,7 +242,7 @@ router.post(
       });
 
       if (result.answer.isCorrect && question) {
-        const task = await (await import("../utils/prisma")).default.task.findUnique({
+        const task = await prisma.task.findUnique({
           where: { id: question.taskId },
         });
         if (task && task.status === "COMPLETED") {

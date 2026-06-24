@@ -48,6 +48,7 @@ export async function getNextQuestion(taskId: string, studentId: string) {
     (q) => !q.answers || q.answers.length === 0
   );
 
+  if (questions.length === 0) return { ready: false } as any;
   if (unanswered.length === 0) return null;
 
   const key = `${taskId}-${studentId}`;
@@ -62,7 +63,7 @@ export async function getNextQuestion(taskId: string, studentId: string) {
 
   const pool = available.length > 0 ? available : unanswered;
 
-  const shuffled = pool.sort(() => Math.random() - 0.5);
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
   const selected = shuffled[0];
 
   used.push(selected.type);

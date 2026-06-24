@@ -52,6 +52,7 @@ export interface Question {
     answerText?: string;
     score: number;
     isCorrect: boolean;
+    feedback?: string;
   }[];
 }
 

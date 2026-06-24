@@ -35,6 +35,14 @@ export async function processHomework(sessionId: string) {
 
   const tasks = await groqService.parseTasksFromOcr(ocrText);
 
+  if (!tasks || tasks.length === 0) {
+    await prisma.homeworkSession.update({
+      where: { id: sessionId },
+      data: { rawOcrText: ocrText, status: "FAILED" },
+    });
+    return { sessionId, ocrText, tasks: [] };
+  }
+
   const createdTasks: any[] = [];
   for (let i = 0; i < tasks.length; i++) {
     const task = await prisma.task.create({

@@ -39,6 +39,7 @@ export default function QuestionsScreen() {
   }, []);
 
   async function loadQuestionWithRetry() {
+    setLoading(true);
     for (let i = 0; i < 30; i++) {
       const loaded = await fetchNextQuestion();
       if (loaded) {
@@ -46,23 +47,27 @@ export default function QuestionsScreen() {
         setLoading(false);
         return;
       }
-      if (done) return;
+      if (done) {
+        setLoading(false);
+        return;
+      }
       await new Promise((r) => setTimeout(r, 2000));
     }
     setLoading(false);
   }
 
   async function fetchNextQuestion(): Promise<boolean> {
-    setLoading(true);
     setSelectedAnswer(null);
     setRecordedUri(null);
     try {
       const { data } = await api.get(
         `/student/tasks/${taskId}/questions/next`
       );
+      if (data.ready === false) {
+        return false;
+      }
       if (data.done) {
         setDone(true);
-        setLoading(false);
         return false;
       } else {
         setQuestion(data);
@@ -404,6 +409,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
+  voiceActionText: { fontSize: 15, fontWeight: "600" },
   submitActionBtn: { borderWidth: 0 },
   submitActionText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   readyTitle: { fontSize: 22, fontWeight: "700", marginTop: 16 },

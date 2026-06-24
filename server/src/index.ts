@@ -28,6 +28,11 @@ app.use((_req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
+app.use((err: any, _req: any, res: any, _next: any) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

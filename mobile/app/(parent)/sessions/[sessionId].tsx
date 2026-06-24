@@ -24,6 +24,7 @@ export default function SessionDetailScreen() {
   useEffect(() => {
     api.get(`/parent/sessions/${sessionId}`).then(({ data }) => {
       setSession(data);
+    }).catch(() => {}).finally(() => {
       setLoading(false);
     });
   }, [sessionId]);
@@ -124,7 +125,7 @@ export default function SessionDetailScreen() {
                 </Text>
                 {task.questions.map((q) => {
                   const answer = q.answers?.[0];
-                  const ansText = answer?.answerText || answer?.answer;
+                  const ansText = answer?.answerText || (answer as any)?.answer;
                   return (
                     <View key={q.id} style={[styles.qCard, { backgroundColor: colors.bg }]}>
                       <View style={styles.qHeader}>
@@ -145,7 +146,8 @@ export default function SessionDetailScreen() {
 
                       {q.type === "MCQ" && q.options && typeof q.options === "object" && (
                         <View style={styles.optionsWrap}>
-                          {Object.entries(q.options as Record<string, string>).map(([key, val]) => {
+                          {["A", "B", "C", "D"].map((key, idx) => {
+                            const val = Array.isArray(q.options) ? (q.options as string[])[idx] : (q.options as unknown as Record<string, string>)?.[key];
                             const isStudentAnswer = ansText === key || ansText === val;
                             let bg = "transparent";
                             let border = colors.border;
@@ -166,7 +168,7 @@ export default function SessionDetailScreen() {
                         </View>
                       )}
 
-                      {(q.type === "VOICE" || q.type === "Voice") && answer && (
+                      {(q.type === "VOICE" || (q.type as string).toLowerCase() === "voice") && answer && (
                         <View style={styles.voiceRow}>
                           <Ionicons name="mic" size={16} color={colors.textSecondary} />
                           <Text style={[styles.voiceText, { color: colors.textSecondary }]} numberOfLines={2}>

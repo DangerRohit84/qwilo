@@ -43,6 +43,9 @@ export default function ParentDashboard() {
     api.get("/parent/progress").then(({ data }) => {
       setChildren(data.children || []);
       setAggregated(data.aggregated || null);
+    }).catch(() => {
+      setLoading(false);
+    }).finally(() => {
       setLoading(false);
     });
   }, []);
