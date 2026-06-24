@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
+import { Calendar } from "react-native-calendars";
 import api from "../../../services/api";
 import { logout, getStoredUser } from "../../../services/auth";
 import { User } from "../../../types";
@@ -31,24 +32,74 @@ function getAccuracyColor(accuracy: number): string {
 
 export default function ParentDashboard() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { theme, colors } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [children, setChildren] = useState<any[]>([]);
   const [aggregated, setAggregated] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showLogout, setShowLogout] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const selectedRef = useRef<string | null>(null);
+
+  function getTodayStr() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }
+
+  const fetchProgress = useCallback(async (startDate?: string, endDate?: string) => {
+    try {
+      const params: any = {};
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+      const { data } = await api.get("/parent/progress", { params });
+      setChildren(data.children || []);
+      setAggregated(data.aggregated || null);
+
+      const marks: Record<string, any> = {};
+      (data.recentSessions || []).forEach((s: any) => {
+        const dateStr = s.date.split("T")[0];
+        marks[dateStr] = {
+          marked: true,
+          dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
+        };
+      });
+      if (selectedRef.current) {
+        marks[selectedRef.current] = {
+          ...marks[selectedRef.current],
+          selected: true,
+          selectedColor: colors.primary,
+        };
+      }
+      setMarkedDates(marks);
+    } catch (err) {
+      console.error("Failed to fetch progress");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     getStoredUser().then(setUser).catch(() => {});
-    api.get("/parent/progress").then(({ data }) => {
-      setChildren(data.children || []);
-      setAggregated(data.aggregated || null);
-    }).catch(() => {
-      setLoading(false);
-    }).finally(() => {
-      setLoading(false);
-    });
+    fetchProgress();
   }, []);
+
+  function onDayPress(day: { dateString: string }) {
+    setSelectedDate(day.dateString);
+    selectedRef.current = day.dateString;
+    setLoading(true);
+    const start = new Date(day.dateString + "T00:00:00.000Z").toISOString();
+    const end = new Date(day.dateString + "T23:59:59.999Z").toISOString();
+    fetchProgress(start, end);
+  }
+
+  function onMonthPress() {
+    setSelectedDate(null);
+    selectedRef.current = null;
+    setLoading(true);
+    fetchProgress();
+  }
 
   if (loading) {
     return (
@@ -105,6 +156,44 @@ export default function ParentDashboard() {
         }}
         onCancel={() => setShowLogout(false)}
       />
+
+      <TouchableOpacity
+        style={[styles.calendarToggle, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onPress={() => setShowCalendar(!showCalendar)}
+      >
+        <Ionicons name="calendar" size={18} color={colors.primary} />
+        <Text style={[styles.calendarToggleText, { color: colors.textSecondary }]}>
+          {selectedDate
+            ? new Date(selectedDate + "T00:00:00").toLocaleDateString()
+            : new Date().toLocaleDateString()}
+        </Text>
+        <Ionicons name={showCalendar ? "chevron-up" : "chevron-down"} size={18} color={colors.textMuted} />
+      </TouchableOpacity>
+
+      {showCalendar && (
+        <View style={[styles.calendarWrap, { backgroundColor: colors.card }]}>
+          <Calendar key={theme}
+            current={getTodayStr()}
+            markedDates={markedDates}
+            onDayPress={onDayPress}
+            onMonthChange={onMonthPress}
+            theme={{
+              backgroundColor: colors.card,
+              calendarBackground: colors.card,
+              dayTextColor: colors.text,
+              monthTextColor: colors.text,
+              textDisabledColor: colors.textMuted,
+              textSectionTitleColor: colors.textSecondary,
+              selectedDayBackgroundColor: colors.primary,
+              selectedDayTextColor: "#fff",
+              todayTextColor: colors.primary,
+              arrowColor: colors.primary,
+              textMonthFontWeight: "700",
+              textDayFontSize: 14,
+            }}
+          />
+        </View>
+      )}
 
       {children.length === 0 ? (
         <View style={styles.emptyCenter}>
@@ -229,6 +318,18 @@ const styles = StyleSheet.create({
   aggLabel: { fontSize: 10, marginTop: 2, fontWeight: "500" },
   aggDiv: { width: 1, height: 28, backgroundColor: "#E0E7FF" },
   emptyCenter: { flex: 1, justifyContent: "center", alignItems: "center", paddingBottom: 80 },
+  calendarToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 20,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  calendarToggleText: { flex: 1, fontSize: 14, fontWeight: "500" },
+  calendarWrap: { marginHorizontal: 20, borderRadius: 12, overflow: "hidden", marginBottom: 12 },
   emptyIconWrap: { width: 64, height: 64, borderRadius: 20, justifyContent: "center", alignItems: "center", elevation: 2, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 4 },
   emptyText: { fontSize: 15, marginTop: 16 },
   card: {
