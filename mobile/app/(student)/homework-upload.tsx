@@ -26,6 +26,7 @@ export default function HomeworkUploadScreen() {
     try {
       const result = await ImagePicker.launchCameraAsync({
         quality: 0.8,
+        allowsEditing: true,
       });
       if (!result.canceled) {
         setImage(result.assets[0].uri);
@@ -39,6 +40,7 @@ export default function HomeworkUploadScreen() {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         quality: 0.8,
+        allowsEditing: true,
       });
       if (!result.canceled) {
         setImage(result.assets[0].uri);

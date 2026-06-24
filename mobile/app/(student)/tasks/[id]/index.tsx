@@ -45,7 +45,7 @@ export default function TaskDetailScreen() {
         Alert.alert("Permission Required", "Camera access is needed. Please enable it in Settings.");
         return;
       }
-      const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+      const result = await ImagePicker.launchCameraAsync({ quality: 0.8, allowsEditing: true });
       if (!result.canceled) {
         setWorkImages((prev) => [...prev, ...result.assets.map((a) => a.uri)]);
       }
@@ -63,7 +63,7 @@ export default function TaskDetailScreen() {
       }
       const result = await ImagePicker.launchImageLibraryAsync({
         quality: 0.8,
-        allowsMultipleSelection: true,
+        allowsEditing: true,
       });
       if (!result.canceled) {
         setWorkImages((prev) => [...prev, ...result.assets.map((a) => a.uri)]);
