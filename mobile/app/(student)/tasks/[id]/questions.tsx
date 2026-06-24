@@ -9,6 +9,8 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
+  Animated,
+  Easing,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Speech from "expo-speech";
@@ -37,6 +39,40 @@ export default function QuestionsScreen() {
   const [loadError, setLoadError] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const doneRef = useRef(false);
+
+  const BAR_COUNT = 5;
+  const barAnimations = useRef(
+    Array.from({ length: BAR_COUNT }, () => new Animated.Value(0.3))
+  ).current;
+  const waveLoopRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  function startWaveAnimation() {
+    const animations = barAnimations.map((anim, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 300 + i * 50,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: false,
+          }),
+          Animated.timing(anim, {
+            toValue: 0.3,
+            duration: 300 + i * 50,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: false,
+          }),
+        ])
+      )
+    );
+    waveLoopRef.current = Animated.parallel(animations);
+    waveLoopRef.current.start();
+  }
+
+  function stopWaveAnimation() {
+    waveLoopRef.current?.stop();
+    barAnimations.forEach((anim) => anim.setValue(0.3));
+  }
 
   useEffect(() => {
     Audio.requestPermissionsAsync();
@@ -112,6 +148,7 @@ export default function QuestionsScreen() {
       await recording.startAsync();
       recordingRef.current = recording;
       setRecording(true);
+      startWaveAnimation();
     } catch {
       Alert.alert("Error", "Failed to start recording");
     }
@@ -120,6 +157,7 @@ export default function QuestionsScreen() {
   async function stopRecording() {
     try {
       setRecording(false);
+      stopWaveAnimation();
       if (recordingRef.current) {
         await recordingRef.current.stopAndUnloadAsync();
         const uri = recordingRef.current.getURI();
@@ -438,23 +476,47 @@ export default function QuestionsScreen() {
           </TouchableOpacity>
 
           {!recordedUri && (
-            <TouchableOpacity
-              style={[
-                styles.recordBtn,
-                { backgroundColor: colors.primary },
-                recording && styles.recordingActive,
-              ]}
-              onPress={recording ? stopRecording : startRecording}
-            >
-              <Ionicons
-                name={recording ? "stop-circle" : "mic"}
-                size={48}
-                color="#fff"
-              />
-              <Text style={styles.recordText}>
-                {recording ? "Stop Recording" : "Tap to Speak Answer"}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.recordRow}>
+              <TouchableOpacity
+                style={[
+                  styles.recordBtnSmall,
+                  { backgroundColor: recording ? "#EF4444" : colors.primary },
+                ]}
+                onPress={recording ? stopRecording : startRecording}
+              >
+                <Ionicons
+                  name={recording ? "stop" : "mic"}
+                  size={24}
+                  color="#fff"
+                />
+              </TouchableOpacity>
+
+              {recording && (
+                <View style={styles.waveContainer}>
+                  {barAnimations.map((anim, i) => (
+                    <Animated.View
+                      key={i}
+                      style={[
+                        styles.waveBar,
+                        {
+                          backgroundColor: colors.primary,
+                          height: anim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [8, 32],
+                          }),
+                        },
+                      ]}
+                    />
+                  ))}
+                </View>
+              )}
+
+              {!recording && (
+                <Text style={[styles.recordHint, { color: colors.textMuted }]}>
+                  Tap to record your answer
+                </Text>
+              )}
+            </View>
           )}
 
           {recordedUri && !submittingAnswer && (
@@ -534,7 +596,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   optionText: { fontSize: 16, flex: 1 },
-  voiceSection: { alignItems: "center", gap: 20, marginBottom: 24 },
+  voiceSection: { alignItems: "center", gap: 16, marginBottom: 24 },
   replayBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -542,19 +604,31 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   replayText: { fontSize: 16, fontWeight: "600" },
-  recordBtn: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+  recordRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  recordBtnSmall: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
-  recordingActive: { backgroundColor: "#EF4444" },
-  recordText: {
-    color: "#fff",
+  waveContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    height: 40,
+  },
+  waveBar: {
+    width: 5,
+    borderRadius: 3,
+  },
+  recordHint: {
     fontSize: 14,
-    fontWeight: "600",
-    marginTop: 8,
+    fontWeight: "500",
   },
   voiceActions: { flexDirection: "row", gap: 12, marginTop: 8 },
   voiceActionBtn: {
