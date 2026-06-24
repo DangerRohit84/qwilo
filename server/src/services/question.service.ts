@@ -101,27 +101,9 @@ export async function submitAnswer(
   if (question.type === "MCQ") {
     isCorrect = answerText?.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
     score = isCorrect ? 100 : 0;
-    if (!isCorrect) {
-      try {
-        const res = await groqService.explainCorrectAnswer(
-          question.questionText,
-          question.correctAnswer,
-          answerText || ""
-        );
-        explanation = res.explanation;
-      } catch {
-        explanation = `The correct answer is: ${question.correctAnswer}`;
-      }
-    }
-  } else {
-    const result = await groqService.evaluateVoiceAnswer(
-      question.questionText,
-      question.correctAnswer,
-      answerText || ""
-    );
-    isCorrect = result.isCorrect;
-    score = result.score;
-    explanation = result.feedback;
+    explanation = isCorrect
+      ? "Correct!"
+      : `The correct answer is: ${question.correctAnswer}`;
   }
 
   const answer = await prisma.answer.create({
@@ -135,6 +117,23 @@ export async function submitAnswer(
       feedback: explanation,
     },
   });
+
+  if (question.type === "VOICE" && answerText) {
+    groqService.evaluateVoiceAnswer(
+      question.questionText,
+      question.correctAnswer,
+      answerText
+    ).then(async (result) => {
+      await prisma.answer.update({
+        where: { id: answer.id },
+        data: {
+          isCorrect: result.isCorrect,
+          score: result.score,
+          feedback: result.feedback,
+        },
+      });
+    }).catch(() => {});
+  }
 
   const questionCount = await prisma.question.count({
     where: { taskId: question.taskId },
