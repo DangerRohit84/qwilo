@@ -112,8 +112,8 @@ export async function getStudentTasks(
     }))
   );
 
-  const pending = allTasks.filter((t) => t.status === "PENDING");
-  const completed = allTasks.filter((t) => t.status !== "PENDING");
+  const pending = allTasks.filter((t) => t.status === "PENDING" || t.status === "SUBMITTED");
+  const completed = allTasks.filter((t) => t.status === "COMPLETED");
 
   return { pending, completed };
 }
@@ -189,7 +189,7 @@ export async function getStudentProgress(
   const totalTasks = sessions.flatMap((s) => s.tasks);
 
   const completedTasks = totalTasks.filter(
-    (t) => t.status === "COMPLETED" || t.status === "SUBMITTED"
+    (t) => t.status === "COMPLETED"
   );
   const completionRate = totalTasks.length
     ? Math.round((completedTasks.length / totalTasks.length) * 100)
@@ -210,7 +210,7 @@ export async function getStudentProgress(
     if (!subjectBreakdown[subj])
       subjectBreakdown[subj] = { total: 0, completed: 0 };
     subjectBreakdown[subj].total++;
-    if (t.status === "COMPLETED" || t.status === "SUBMITTED")
+    if (t.status === "COMPLETED")
       subjectBreakdown[subj].completed++;
   }
 

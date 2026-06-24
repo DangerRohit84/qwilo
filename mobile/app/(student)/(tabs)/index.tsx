@@ -66,6 +66,7 @@ export default function StudentDashboard() {
 
   function renderTask(item: any) {
     const isPending = item.status === "PENDING";
+    const isSubmitted = item.status === "SUBMITTED";
     return (
       <TouchableOpacity
         style={[
@@ -76,20 +77,20 @@ export default function StudentDashboard() {
         onPress={() => router.push(`/(student)/tasks/${item.id}`)}
         activeOpacity={0.7}
       >
-        <View style={[styles.taskIconWrap, { backgroundColor: isPending ? "#EEF2FF" : "#ECFDF5" }]}>
+        <View style={[styles.taskIconWrap, { backgroundColor: isPending ? "#EEF2FF" : isSubmitted ? "#FFF7ED" : "#ECFDF5" }]}>
           <Ionicons
             name={typeIcon(item.type)}
             size={20}
-            color={isPending ? colors.primary : colors.success}
+            color={isPending ? colors.primary : isSubmitted ? "#F59E0B" : colors.success}
           />
         </View>
         <View style={styles.taskInfo}>
           <View style={styles.taskTop}>
             <Text style={[styles.taskSubject, { color: colors.text }]}>{item.subject || "Task"}</Text>
-            <View style={[styles.taskStatusDot, { backgroundColor: isPending ? colors.warning : colors.success }]} />
+            <View style={[styles.taskStatusDot, { backgroundColor: isPending ? colors.warning : isSubmitted ? "#F59E0B" : colors.success }]} />
           </View>
           <Text style={[styles.taskDesc, { color: colors.textSecondary }]} numberOfLines={1}>
-            {item.description}
+            {isSubmitted ? "Quiz pending — tap to answer questions" : item.description}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />

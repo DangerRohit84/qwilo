@@ -157,13 +157,21 @@ export default function TaskDetailScreen() {
             </TouchableOpacity>
           </>
         ) : task.status === "SUBMITTED" ? (
-          <TouchableOpacity
-            style={[styles.questionBtn, { backgroundColor: colors.primary }]}
-            onPress={() => router.push(`/(student)/tasks/${id}/questions`)}
-          >
-            <Ionicons name="help-circle" size={24} color="#fff" />
-            <Text style={styles.questionBtnText}>Answer Questions</Text>
-          </TouchableOpacity>
+          <>
+            <View style={[styles.submittedInfo, { backgroundColor: "#FFF7ED", borderColor: "#F59E0B" }]}>
+              <Ionicons name="time-outline" size={20} color="#F59E0B" />
+              <Text style={[styles.submittedInfoText, { color: "#92400E" }]}>
+                Work uploaded — answer the quiz to complete this task
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.questionBtn, { backgroundColor: colors.primary }]}
+              onPress={() => router.push(`/(student)/tasks/${id}/questions`)}
+            >
+              <Ionicons name="help-circle" size={24} color="#fff" />
+              <Text style={styles.questionBtnText}>Answer Questions</Text>
+            </TouchableOpacity>
+          </>
         ) : task.status === "COMPLETED" ? (
           <View style={styles.completedBox}>
             <Ionicons name="checkmark-circle" size={48} color={colors.success} />
@@ -251,6 +259,16 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   questionBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  submittedInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  submittedInfoText: { fontSize: 14, fontWeight: "500", flex: 1 },
   completedBox: { alignItems: "center", marginTop: 40 },
   completedText: { fontSize: 20, fontWeight: "700", marginTop: 12 },
   reviewBtn: {
