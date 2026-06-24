@@ -118,6 +118,7 @@ export async function submitAnswer(
       where: { id: question.taskId },
       data: { status: "COMPLETED" },
     });
+    recentStyles.delete(`${question.taskId}-${studentId}`);
     evaluateTaskAnswers(question.taskId, studentId).catch(() => {});
   }
 
@@ -146,6 +147,54 @@ async function evaluateTaskAnswers(taskId: string, studentId: string) {
             isCorrect,
             score: isCorrect ? 100 : 0,
             feedback: isCorrect ? "Correct!" : `The correct answer is: ${question.correctAnswer}`,
+          },
+        });
+      } else if (question.type === "TRUE_FALSE") {
+        const isCorrect = answer.answerText?.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
+        await prisma.answer.update({
+          where: { id: answer.id },
+          data: {
+            isCorrect,
+            score: isCorrect ? 100 : 0,
+            feedback: isCorrect ? "Correct!" : `The correct answer is: ${question.correctAnswer}`,
+          },
+        });
+      } else if (question.type === "FILL_BLANK") {
+        const studentVal = (answer.answerText || "").trim().toLowerCase();
+        const correctVal = question.correctAnswer.trim().toLowerCase();
+        const isCorrect = studentVal === correctVal;
+        await prisma.answer.update({
+          where: { id: answer.id },
+          data: {
+            isCorrect,
+            score: isCorrect ? 100 : 0,
+            feedback: isCorrect ? "Correct!" : `The correct answer is: ${question.correctAnswer}`,
+          },
+        });
+      } else if (question.type === "ONE_WORD") {
+        const studentVal = (answer.answerText || "").trim().toLowerCase();
+        const correctVal = question.correctAnswer.trim().toLowerCase();
+        const isCorrect = studentVal === correctVal;
+        await prisma.answer.update({
+          where: { id: answer.id },
+          data: {
+            isCorrect,
+            score: isCorrect ? 100 : 0,
+            feedback: isCorrect ? "Correct!" : `The correct answer is: ${question.correctAnswer}`,
+          },
+        });
+      } else if (question.type === "SHORT_ANSWER" && answer.answerText) {
+        const result = await groqService.evaluateShortAnswer(
+          question.questionText,
+          question.correctAnswer,
+          answer.answerText
+        );
+        await prisma.answer.update({
+          where: { id: answer.id },
+          data: {
+            isCorrect: result.isCorrect,
+            score: result.score,
+            feedback: result.feedback,
           },
         });
       } else if (question.type === "VOICE" && answer.answerText) {

@@ -30,7 +30,9 @@ app.use((_req, res) => {
 
 app.use((err: any, _req: any, res: any, _next: any) => {
   console.error("Unhandled error:", err);
-  res.status(500).json({ error: "Internal server error" });
+  const status = err.statusCode || err.status || 500;
+  const message = err.code === "LIMIT_FILE_SIZE" ? "File too large. Max size is 25MB." : err.message || "Internal server error";
+  res.status(status).json({ error: message });
 });
 
 app.listen(PORT, () => {

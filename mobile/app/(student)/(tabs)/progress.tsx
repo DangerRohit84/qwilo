@@ -24,22 +24,26 @@ export default function ProgressScreen() {
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const selectedRef = useRef<string | null>(null);
-  const [recentSessions, setRecentSessions] = useState<any[]>([]);
 
   function getTodayStr() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   }
 
-  function updateMarkedDates(dateStr: string | null, sessions: any[]) {
+  function updateMarkedDates(dateStr: string | null, taskList: any[]) {
     const marks: Record<string, any> = {};
-    sessions.forEach((s: any) => {
-      const d = s.date.split("T")[0];
-      marks[d] = {
-        marked: true,
-        dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
-      };
-    });
+    for (const t of taskList) {
+      const d = t.sessionDate.split("T")[0];
+      if (!marks[d]) {
+        marks[d] = {
+          marked: true,
+          dotColor: t.status === "COMPLETED" ? "#10B981" : "#F59E0B",
+        };
+      }
+      if (t.status === "COMPLETED") {
+        marks[d].dotColor = "#10B981";
+      }
+    }
     if (dateStr) {
       marks[dateStr] = {
         ...marks[dateStr],
@@ -63,7 +67,6 @@ export default function ProgressScreen() {
     setLoading(true);
     try {
       const { data: result } = await api.get<StudentProgress>("/student/history");
-      setRecentSessions(result.recentSessions || []);
 
       const all = result.tasks || [];
       all.sort(
@@ -73,7 +76,7 @@ export default function ProgressScreen() {
       setAllTasks(all);
 
       const todayStr = getTodayStr();
-      updateMarkedDates(todayStr, result.recentSessions);
+      updateMarkedDates(todayStr, all);
       setSelectedDate(todayStr);
       selectedRef.current = todayStr;
       setTasks(filterByDate(all, todayStr));
@@ -124,14 +127,14 @@ export default function ProgressScreen() {
   function onDayPress(day: { dateString: string }) {
     setSelectedDate(day.dateString);
     selectedRef.current = day.dateString;
-    updateMarkedDates(day.dateString, recentSessions);
+    updateMarkedDates(day.dateString, allTasks);
     setTasks(filterByDate(allTasks, day.dateString));
   }
 
   function onMonthPress() {
     setSelectedDate(null);
     selectedRef.current = null;
-    updateMarkedDates(null, recentSessions);
+    updateMarkedDates(null, allTasks);
     setTasks(allTasks);
   }
 

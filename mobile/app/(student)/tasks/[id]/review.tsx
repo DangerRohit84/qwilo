@@ -70,7 +70,7 @@ export default function ReviewScreen() {
                 <Text style={[styles.qNum, { color: colors.primary }]}>Q{i + 1}</Text>
                 <View style={[styles.badge, { backgroundColor: colors.inputBg }]}>
                   <Text style={[styles.badgeText, { color: colors.primary }]}>
-                    {q.type}
+                    {q.type === "MCQ" ? "MCQ" : q.type === "TRUE_FALSE" ? "True/False" : q.type === "FILL_BLANK" ? "Fill Blank" : q.type === "ONE_WORD" ? "One Word" : q.type === "SHORT_ANSWER" ? "Short Answer" : "Voice"}
                   </Text>
                 </View>
               </View>
@@ -109,6 +109,44 @@ export default function ReviewScreen() {
                   <Text style={[styles.label, { color: colors.textSecondary }]}>Your answer:</Text>
                   <Text style={[styles.voiceAnswer, { color: colors.text }]}>{q.studentAnswer || "No answer"}</Text>
                   <Text style={[styles.label, { color: colors.textSecondary }]}>Expected answer:</Text>
+                  <Text style={[styles.voiceCorrect, { color: colors.success }]}>{q.correctAnswer || "N/A"}</Text>
+                </View>
+              )}
+
+              {q.type === "TRUE_FALSE" && (
+                <View style={styles.voiceResult}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Your answer:</Text>
+                  <Text style={[styles.voiceAnswer, { color: q.studentAnswer?.toLowerCase() === "true" ? colors.success : q.studentAnswer?.toLowerCase() === "false" ? "#EF4444" : colors.text }]}>
+                    {q.studentAnswer || "No answer"}
+                  </Text>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Correct answer:</Text>
+                  <Text style={[styles.voiceCorrect, { color: colors.success }]}>{q.correctAnswer}</Text>
+                </View>
+              )}
+
+              {q.type === "FILL_BLANK" && (
+                <View style={styles.voiceResult}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Your answer:</Text>
+                  <Text style={[styles.voiceAnswer, { color: q.isCorrect ? colors.success : "#EF4444" }]}>{q.studentAnswer || "No answer"}</Text>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Correct answer:</Text>
+                  <Text style={[styles.voiceCorrect, { color: colors.success }]}>{q.correctAnswer}</Text>
+                </View>
+              )}
+
+              {q.type === "ONE_WORD" && (
+                <View style={styles.voiceResult}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Your answer:</Text>
+                  <Text style={[styles.voiceAnswer, { color: q.isCorrect ? colors.success : "#EF4444" }]}>{q.studentAnswer || "No answer"}</Text>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Correct answer:</Text>
+                  <Text style={[styles.voiceCorrect, { color: colors.success }]}>{q.correctAnswer}</Text>
+                </View>
+              )}
+
+              {q.type === "SHORT_ANSWER" && (
+                <View style={styles.voiceResult}>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Your answer:</Text>
+                  <Text style={[styles.voiceAnswer, { color: colors.text }]}>{q.studentAnswer || "No answer"}</Text>
+                  <Text style={[styles.label, { color: colors.textSecondary }]}>Expected key points:</Text>
                   <Text style={[styles.voiceCorrect, { color: colors.success }]}>{q.correctAnswer || "N/A"}</Text>
                 </View>
               )}

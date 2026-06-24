@@ -16,6 +16,7 @@ import { useTheme } from "../../../contexts/ThemeContext";
 export default function ParentProgressScreen() {
   const router = useRouter();
   const { theme, colors } = useTheme();
+  const [allChildren, setAllChildren] = useState<any[]>([]);
   const [children, setChildren] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -28,32 +29,63 @@ export default function ParentProgressScreen() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   }
 
-  const fetchProgress = useCallback(async (startDate?: string, endDate?: string, initialDate?: string) => {
+  function filterByDate(childList: any[], dateStr: string) {
+    const start = new Date(dateStr + "T00:00:00.000Z").getTime();
+    const end = new Date(dateStr + "T23:59:59.999Z").getTime();
+    return childList.map((child: any) => {
+      const tasks = (child.tasks || []).filter((t: any) => {
+        const d = new Date(t.sessionDate).getTime();
+        return d >= start && d <= end;
+      });
+      const completed = tasks.filter((t: any) => t.status === "COMPLETED").length;
+      let totalQ = 0, correctQ = 0;
+      for (const t of tasks) {
+        for (const q of t.questions || []) {
+          totalQ++;
+          const a = q.answers?.[0];
+          if (a?.isCorrect) correctQ++;
+        }
+      }
+      return {
+        ...child,
+        totalTasks: tasks.length,
+        completedTasks: completed,
+        completionRate: tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0,
+        totalQuestions: totalQ,
+        correctAnswers: correctQ,
+        accuracy: totalQ > 0 ? Math.round((correctQ / totalQ) * 100) : 0,
+      };
+    });
+  }
+
+  const fetchProgress = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = {};
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
-      const { data } = await api.get("/parent/progress", { params });
-      setChildren(data.children || []);
+      const { data } = await api.get("/parent/progress");
+      setAllChildren(data.children || []);
 
       const marks: Record<string, any> = {};
-      (data.recentSessions || []).forEach((s: any) => {
-        const dateStr = s.date.split("T")[0];
-        marks[dateStr] = {
-          marked: true,
-          dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
-        };
-      });
-      const highlightDate = initialDate || selectedRef.current;
-      if (highlightDate) {
-        marks[highlightDate] = {
-          ...marks[highlightDate],
-          selected: true,
-          selectedColor: colors.primary,
-        };
+      for (const child of data.children || []) {
+        for (const t of child.tasks || []) {
+          const dateStr = t.sessionDate.split("T")[0];
+          if (!marks[dateStr]) {
+            marks[dateStr] = {
+              marked: true,
+              dotColor: t.status === "COMPLETED" ? "#10B981" : "#F59E0B",
+            };
+          }
+          if (t.status === "COMPLETED") {
+            marks[dateStr].dotColor = "#10B981";
+          }
+        }
       }
+      const todayStr = getTodayStr();
+      marks[todayStr] = { ...marks[todayStr], selected: true, selectedColor: colors.primary };
       setMarkedDates(marks);
+
+      setSelectedDate(todayStr);
+      selectedRef.current = todayStr;
+      setChildren(filterByDate(data.children || [], todayStr));
     } catch (err) {
       console.error("Failed to fetch progress");
     } finally {
@@ -61,27 +93,31 @@ export default function ParentProgressScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    const todayStr = getTodayStr();
-    setSelectedDate(todayStr);
-    selectedRef.current = todayStr;
-    const start = new Date(todayStr + "T00:00:00.000Z").toISOString();
-    const end = new Date(todayStr + "T23:59:59.999Z").toISOString();
-    fetchProgress(start, end, todayStr);
-  }, []);
+  useEffect(() => { fetchProgress(); }, []);
+
+  function updateMarks(dateStr: string | null) {
+    setMarkedDates(prev => {
+      const marks = { ...prev };
+      Object.keys(marks).forEach(k => { marks[k] = { ...marks[k], selected: false }; });
+      if (dateStr) {
+        marks[dateStr] = { ...marks[dateStr], selected: true, selectedColor: colors.primary };
+      }
+      return marks;
+    });
+  }
 
   function onDayPress(day: { dateString: string }) {
     setSelectedDate(day.dateString);
     selectedRef.current = day.dateString;
-    const start = new Date(day.dateString + "T00:00:00.000Z").toISOString();
-    const end = new Date(day.dateString + "T23:59:59.999Z").toISOString();
-    fetchProgress(start, end);
+    updateMarks(day.dateString);
+    setChildren(filterByDate(allChildren, day.dateString));
   }
 
   function onMonthPress() {
     setSelectedDate(null);
     selectedRef.current = null;
-    fetchProgress();
+    updateMarks(null);
+    setChildren(allChildren);
   }
 
   if (loading && children.length === 0) {

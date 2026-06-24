@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Alert,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Speech from "expo-speech";
@@ -31,6 +33,8 @@ export default function QuestionsScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
+  const [textAnswer, setTextAnswer] = useState("");
+  const [loadError, setLoadError] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const doneRef = useRef(false);
 
@@ -41,6 +45,7 @@ export default function QuestionsScreen() {
 
   async function loadQuestionWithRetry() {
     setLoading(true);
+    setLoadError(false);
     for (let i = 0; i < 30; i++) {
       if (doneRef.current) {
         setLoading(false);
@@ -55,6 +60,7 @@ export default function QuestionsScreen() {
       await new Promise((r) => setTimeout(r, 2000));
     }
     setLoading(false);
+    setLoadError(true);
   }
 
   async function fetchNextQuestion(): Promise<boolean> {
@@ -64,6 +70,7 @@ export default function QuestionsScreen() {
       );
       setSelectedAnswer(null);
       setRecordedUri(null);
+      setTextAnswer("");
       if (data.ready === false) {
         return false;
       }
@@ -176,10 +183,68 @@ export default function QuestionsScreen() {
     }
   }
 
+  async function submitTextAnswer(answer: string) {
+    if (!answer.trim()) return;
+    setSelectedAnswer(answer);
+    setSubmittingAnswer(true);
+    const currentQuestion = question;
+    const hasNextPromise = fetchNextQuestion();
+    api.post(
+      `/student/questions/${currentQuestion!.id}/answer`,
+      { answerText: answer.trim() }
+    ).catch(() => {});
+    const hasNext = await hasNextPromise;
+    if (!hasNext) {
+      setQuestion(null);
+      setDone(true);
+    }
+    setSubmittingAnswer(false);
+  }
+
+  function renderQuestionText(text: string) {
+    if (question?.type !== "FILL_BLANK" || !text.includes("___")) {
+      return <Text style={[styles.questionText, { color: colors.text }]}>{text}</Text>;
+    }
+    const parts = text.split("___");
+    return (
+      <Text style={[styles.questionText, { color: colors.text }]}>
+        {parts[0]}
+        <Text style={[styles.blankHighlight, { borderColor: colors.primary, color: colors.primary }]}>_____</Text>
+        {parts[1] || ""}
+      </Text>
+    );
+  }
+
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.readySub, { color: colors.textSecondary, marginTop: 16 }]}>Loading questions...</Text>
+      </View>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <Ionicons name="alert-circle" size={64} color={colors.danger || "#EF4444"} />
+        <Text style={[styles.readyTitle, { color: colors.text }]}>Questions taking too long</Text>
+        <Text style={[styles.readySub, { color: colors.textSecondary, marginBottom: 24 }]}>
+          The AI is still generating questions. Please try again.
+        </Text>
+        <TouchableOpacity
+          style={[styles.startBtn, { backgroundColor: colors.primary }]}
+          onPress={() => { setLoadError(false); loadQuestionWithRetry(); }}
+        >
+          <Ionicons name="refresh" size={20} color="#fff" />
+          <Text style={styles.startBtnText}>Retry</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.dashboardBtn, { borderColor: colors.border, marginTop: 12 }]}
+          onPress={() => router.replace("/(student)/(tabs)")}
+        >
+          <Text style={[styles.dashboardBtnText, { color: colors.textSecondary }]}>Back to Dashboard</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -248,19 +313,20 @@ export default function QuestionsScreen() {
           )}
         </View>
         <Text style={[styles.badge, { color: colors.primary, backgroundColor: colors.inputBg }]}>
-          {question?.type === "MCQ" ? "Multiple Choice" : "Voice Answer"}
+          {question?.type === "MCQ" ? "Multiple Choice" : question?.type === "TRUE_FALSE" ? "True/False" : question?.type === "FILL_BLANK" ? "Fill Blank" : question?.type === "ONE_WORD" ? "One Word" : question?.type === "SHORT_ANSWER" ? "Short Answer" : "Voice Answer"}
         </Text>
       </View>
 
       <View style={[styles.questionBox, { backgroundColor: colors.card }]}>
-        <Text style={[styles.questionText, { color: colors.text }]}>{question?.questionText}</Text>
+        {renderQuestionText(question?.questionText || "")}
       </View>
 
-      {question?.type === "MCQ" ? (
+      {question?.type === "MCQ" && (
         <View style={styles.options}>
           {question.options?.map((opt, i) => {
             const isSelected = selectedAnswer === opt;
-            return (
+
+  return (
               <TouchableOpacity
                 key={i}
                 style={[
@@ -287,7 +353,76 @@ export default function QuestionsScreen() {
             );
           })}
         </View>
-      ) : (
+      )}
+
+      {question?.type === "TRUE_FALSE" && (
+        <View style={styles.tfSection}>
+          <TouchableOpacity
+            style={[styles.tfBtn, { backgroundColor: selectedAnswer === "true" ? colors.primary : colors.card, borderColor: colors.border }]}
+            onPress={() => !submittingAnswer && submitTextAnswer("true")}
+            disabled={submittingAnswer}
+          >
+            <Ionicons name="checkmark-circle" size={32} color={selectedAnswer === "true" ? "#fff" : colors.success} />
+            <Text style={[styles.tfText, { color: selectedAnswer === "true" ? "#fff" : colors.text }]}>True</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tfBtn, { backgroundColor: selectedAnswer === "false" ? "#EF4444" : colors.card, borderColor: colors.border }]}
+            onPress={() => !submittingAnswer && submitTextAnswer("false")}
+            disabled={submittingAnswer}
+          >
+            <Ionicons name="close-circle" size={32} color={selectedAnswer === "false" ? "#fff" : "#EF4444"} />
+            <Text style={[styles.tfText, { color: selectedAnswer === "false" ? "#fff" : colors.text }]}>False</Text>
+          </TouchableOpacity>
+          {submittingAnswer && <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 16 }} />}
+        </View>
+      )}
+
+      {(question?.type === "FILL_BLANK" || question?.type === "ONE_WORD" || question?.type === "SHORT_ANSWER") && (
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <View style={styles.textInputSection}>
+            {question?.type === "SHORT_ANSWER" ? (
+              <TextInput
+                style={[styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+                placeholder="Type your answer..."
+                placeholderTextColor={colors.textMuted}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+                value={textAnswer}
+                onChangeText={setTextAnswer}
+                editable={!submittingAnswer}
+              />
+            ) : (
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+                placeholder={question?.type === "FILL_BLANK" ? "Type the missing word..." : "Type your answer..."}
+                placeholderTextColor={colors.textMuted}
+                value={textAnswer}
+                onChangeText={setTextAnswer}
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!submittingAnswer}
+              />
+            )}
+            <TouchableOpacity
+              style={[styles.submitTextBtn, { backgroundColor: (!textAnswer.trim() || submittingAnswer) ? colors.border : colors.primary }]}
+              onPress={() => submitTextAnswer(textAnswer)}
+              disabled={!textAnswer.trim() || submittingAnswer}
+            >
+              {submittingAnswer ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="send" size={18} color="#fff" />
+                  <Text style={styles.submitTextBtnText}>Submit</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      )}
+
+      {question?.type === "VOICE" && (
         <View style={styles.voiceSection}>
           <TouchableOpacity
             style={styles.replayBtn}
@@ -378,6 +513,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   questionText: { fontSize: 18, lineHeight: 28 },
+  blankHighlight: {
+    borderBottomWidth: 2,
+    fontWeight: "700",
+    fontSize: 20,
+    paddingHorizontal: 4,
+  },
   options: { gap: 10, marginBottom: 24 },
   option: {
     flexDirection: "row",
@@ -453,4 +594,38 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   dashboardBtnText: { fontSize: 16, fontWeight: "600" },
+  tfSection: { flexDirection: "row", gap: 16, marginBottom: 24 },
+  tfBtn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    borderRadius: 16,
+    borderWidth: 2,
+    gap: 8,
+  },
+  tfText: { fontSize: 18, fontWeight: "700" },
+  textInputSection: { gap: 12, marginBottom: 24 },
+  textInput: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    fontSize: 16,
+  },
+  textArea: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    fontSize: 16,
+    minHeight: 120,
+  },
+  submitTextBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    padding: 14,
+    borderRadius: 12,
+  },
+  submitTextBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });

@@ -217,28 +217,51 @@ router.get(
         let score = answer?.score ?? null;
         let feedback = answer?.feedback ?? null;
 
-        if (answer && q.type === "MCQ" && score === 0 && !isCorrect) {
-          const correct = answer.answerText?.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
+        const isExactType = ["MCQ", "TRUE_FALSE", "FILL_BLANK", "ONE_WORD"].includes(q.type);
+
+        if (answer && isExactType && score === 0 && !isCorrect) {
+          const correct = (answer.answerText || "").trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
           isCorrect = correct;
           score = correct ? 100 : 0;
 
-          try {
-            const result = await groqService.explainCorrectAnswer(
-              q.questionText,
-              q.correctAnswer,
-              answer.answerText || ""
-            );
-            feedback = result.explanation;
-          } catch {
-            feedback = correct
-              ? "Correct!"
-              : `The correct answer is: ${q.correctAnswer}`;
+          if (q.type === "MCQ") {
+            try {
+              const result = await groqService.explainCorrectAnswer(
+                q.questionText,
+                q.correctAnswer,
+                answer.answerText || ""
+              );
+              feedback = result.explanation;
+            } catch {
+              feedback = correct ? "Correct!" : `The correct answer is: ${q.correctAnswer}`;
+            }
+          } else {
+            feedback = correct ? "Correct!" : `The correct answer is: ${q.correctAnswer}`;
           }
 
           await prisma.answer.update({
             where: { id: answer.id },
             data: { isCorrect: correct, score, feedback },
           });
+        }
+
+        if (answer && (q.type === "SHORT_ANSWER" || q.type === "VOICE") && score === 0 && !isCorrect && answer.answerText) {
+          try {
+            const result = await groqService.evaluateShortAnswer(
+              q.questionText,
+              q.correctAnswer,
+              answer.answerText
+            );
+            isCorrect = result.isCorrect;
+            score = result.score;
+            feedback = result.feedback;
+            await prisma.answer.update({
+              where: { id: answer.id },
+              data: { isCorrect: result.isCorrect, score: result.score, feedback: result.feedback },
+            });
+          } catch {
+            feedback = "Could not evaluate.";
+          }
         }
 
         results.push({

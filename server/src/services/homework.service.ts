@@ -249,31 +249,29 @@ export async function getStudentProgress(
       status: s.status,
       taskCount: s.tasks.length,
     })),
-    ...(light ? {} : {
-      tasks: sessions.flatMap((s) =>
-        s.tasks.map((t: any) => ({
-          id: t.id,
-          description: t.description,
-          subject: t.subject,
-          type: t.type,
-          status: t.status,
-          sessionDate: s.date,
-          sessionId: s.id,
-          questions: (t.questions || []).map((q: any) => ({
-            id: q.id,
-            questionText: q.questionText,
-            type: q.type,
-            options: q.options,
-            answers: (q.answers || []).map((a: any) => ({
-              id: a.id,
-              answer: a.answerText,
-              isCorrect: a.isCorrect,
-              score: a.score,
-              feedback: a.feedback,
-            })),
+    tasks: sessions.flatMap((s) =>
+      (s.tasks as any[]).map((t) => ({
+        id: t.id,
+        description: t.description,
+        subject: t.subject,
+        type: t.type,
+        status: t.status,
+        sessionDate: s.date,
+        sessionId: s.id,
+        questions: t.questions ? t.questions.map((q: any) => ({
+          id: q.id,
+          questionText: q.questionText,
+          type: q.type,
+          options: q.options,
+          answers: (q.answers || []).map((a: any) => ({
+            id: a.id,
+            answer: a.answerText,
+            isCorrect: a.isCorrect,
+            score: a.score,
+            feedback: a.feedback,
           })),
-        }))
-      ),
-    }),
+        })) : undefined,
+      }))
+    ),
   };
 }

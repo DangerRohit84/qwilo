@@ -45,7 +45,7 @@ export interface Submission {
 export interface Question {
   id: string;
   questionText: string;
-  type: "MCQ" | "VOICE";
+  type: "MCQ" | "TRUE_FALSE" | "FILL_BLANK" | "ONE_WORD" | "SHORT_ANSWER" | "VOICE";
   options?: string[];
   correctAnswer: string;
   answers?: {
@@ -94,7 +94,7 @@ export interface TaskListResponse {
 export interface ReviewQuestion {
   id: string;
   questionText: string;
-  type: "MCQ" | "VOICE";
+  type: "MCQ" | "TRUE_FALSE" | "FILL_BLANK" | "ONE_WORD" | "SHORT_ANSWER" | "VOICE";
   options?: string[];
   correctAnswer: string;
   studentAnswer: string | null;

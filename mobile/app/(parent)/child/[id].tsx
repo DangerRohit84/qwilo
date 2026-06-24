@@ -62,7 +62,6 @@ export default function ChildProgressScreen() {
   const { theme, colors } = useTheme();
   const { id } = useLocalSearchParams();
   const [allTasks, setAllTasks] = useState<any[]>([]);
-  const [allSessions, setAllSessions] = useState<any[]>([]);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -80,17 +79,21 @@ export default function ChildProgressScreen() {
       try {
         const { data: result } = await api.get(`/parent/children/${id}/progress`);
         setAllTasks(result.tasks || []);
-        setAllSessions(result.recentSessions || []);
 
         const todayStr = getTodayStr();
         const marks: Record<string, any> = {};
-        (result.recentSessions || []).forEach((s: any) => {
-          const dateStr = s.date.split("T")[0];
-          marks[dateStr] = {
-            marked: true,
-            dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
-          };
-        });
+        for (const t of result.tasks || []) {
+          const dateStr = t.sessionDate.split("T")[0];
+          if (!marks[dateStr]) {
+            marks[dateStr] = {
+              marked: true,
+              dotColor: t.status === "COMPLETED" ? "#10B981" : "#F59E0B",
+            };
+          }
+          if (t.status === "COMPLETED") {
+            marks[dateStr].dotColor = "#10B981";
+          }
+        }
         marks[todayStr] = {
           ...marks[todayStr],
           selected: true,
@@ -114,13 +117,18 @@ export default function ChildProgressScreen() {
 
   function updateMarkedDates(dateStr: string | null) {
     const marks: Record<string, any> = {};
-    allSessions.forEach((s: any) => {
-      const d = s.date.split("T")[0];
-      marks[d] = {
-        marked: true,
-        dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
-      };
-    });
+    for (const t of allTasks) {
+      const d = t.sessionDate.split("T")[0];
+      if (!marks[d]) {
+        marks[d] = {
+          marked: true,
+          dotColor: t.status === "COMPLETED" ? "#10B981" : "#F59E0B",
+        };
+      }
+      if (t.status === "COMPLETED") {
+        marks[d].dotColor = "#10B981";
+      }
+    }
     if (dateStr) {
       marks[dateStr] = {
         ...marks[dateStr],
