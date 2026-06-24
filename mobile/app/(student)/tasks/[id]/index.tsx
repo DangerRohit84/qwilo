@@ -38,28 +38,39 @@ export default function TaskDetailScreen() {
     });
   }, [id]);
 
-  async function pickWorkImage(useCamera: boolean = false) {
+  async function pickFromCamera() {
     try {
-      const result = useCamera
-        ? await ImagePicker.launchCameraAsync({ quality: 0.8 })
-        : await ImagePicker.launchImageLibraryAsync({ quality: 0.8, allowsMultipleSelection: true });
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Required", "Camera access is needed. Please enable it in Settings.");
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
       if (!result.canceled) {
-        setWorkImages((prev) => [
-          ...prev,
-          ...result.assets.map((a) => a.uri),
-        ]);
+        setWorkImages((prev) => [...prev, ...result.assets.map((a) => a.uri)]);
       }
     } catch (err: any) {
-      Alert.alert("Error", "Could not open camera/gallery. Check permissions in Settings.");
+      Alert.alert("Error", "Could not open camera.");
     }
   }
 
-  function showAddPhotoAlert() {
-    Alert.alert("Add Photo", "Choose source", [
-      { text: "Camera", onPress: () => pickWorkImage(true) },
-      { text: "Gallery", onPress: () => pickWorkImage(false) },
-      { text: "Cancel", style: "cancel" },
-    ]);
+  async function pickFromGallery() {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Required", "Gallery access is needed. Please enable it in Settings.");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        quality: 0.8,
+        allowsMultipleSelection: true,
+      });
+      if (!result.canceled) {
+        setWorkImages((prev) => [...prev, ...result.assets.map((a) => a.uri)]);
+      }
+    } catch (err: any) {
+      Alert.alert("Error", "Could not open gallery.");
+    }
   }
 
   function removeImage(index: number) {
@@ -110,6 +121,9 @@ export default function TaskDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <TouchableOpacity onPress={() => router.back()} style={{ position: "absolute", top: 50, left: 20, width: 44, height: 44, justifyContent: "center" }}>
+          <Ionicons name="arrow-back" size={28} color={colors.text} />
+        </TouchableOpacity>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -118,7 +132,14 @@ export default function TaskDetailScreen() {
   if (!task) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <Text style={{ color: colors.text }}>Task not found</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ position: "absolute", top: 50, left: 20, width: 44, height: 44, justifyContent: "center" }}>
+          <Ionicons name="arrow-back" size={28} color={colors.text} />
+        </TouchableOpacity>
+        <Ionicons name="alert-circle" size={48} color={colors.textMuted} />
+        <Text style={{ color: colors.text, marginTop: 12, fontSize: 16 }}>Task not found</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20, padding: 12 }}>
+          <Text style={{ color: colors.primary, fontSize: 16, fontWeight: "600" }}>Go Back</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -132,7 +153,7 @@ export default function TaskDetailScreen() {
         <Text style={[styles.title, { color: colors.text }]}>Task Details</Text>
         {task?.status === "PENDING" && (
           <TouchableOpacity
-            onPress={showAddPhotoAlert}
+            onPress={pickFromGallery}
             style={{ width: 44, height: 44, justifyContent: "center", alignItems: "center" }}
           >
             <Ionicons name="add-circle" size={28} color={colors.primary} />
@@ -151,13 +172,22 @@ export default function TaskDetailScreen() {
         {task.status === "PENDING" ? (
           <>
             <Text style={[styles.sectionLabel, { color: colors.text }]}>Upload Your Work</Text>
-            <TouchableOpacity
-              style={[styles.addImageBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={showAddPhotoAlert}
-            >
-              <Ionicons name="add-circle" size={32} color={colors.primary} />
-              <Text style={[styles.addImageText, { color: colors.primary }]}>Add Photos</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
+              <TouchableOpacity
+                style={[styles.addImageBtn, { backgroundColor: colors.card, borderColor: colors.border, flex: 1 }]}
+                onPress={pickFromCamera}
+              >
+                <Ionicons name="camera" size={28} color={colors.primary} />
+                <Text style={[styles.addImageText, { color: colors.primary }]}>Camera</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.addImageBtn, { backgroundColor: colors.card, borderColor: colors.border, flex: 1 }]}
+                onPress={pickFromGallery}
+              >
+                <Ionicons name="images" size={28} color={colors.primary} />
+                <Text style={[styles.addImageText, { color: colors.primary }]}>Gallery</Text>
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.imageGrid}>
               {workImages.map((uri, i) => (
@@ -273,12 +303,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 12,
     borderRadius: 12,
     borderWidth: 2,
     borderStyle: "dashed",
     gap: 8,
-    marginBottom: 16,
   },
   addImageText: { fontSize: 16, fontWeight: "600" },
   imageGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 },
