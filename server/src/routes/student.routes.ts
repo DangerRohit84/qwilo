@@ -219,8 +219,17 @@ router.get(
 
         const isExactType = ["MCQ", "TRUE_FALSE", "FILL_BLANK", "ONE_WORD"].includes(q.type);
 
+        const normalizeTf = (s: string) => {
+          const lower = s.trim().toLowerCase();
+          if (["true", "1", "yes", "correct", "నిజము", "నిజం", "సరైనది", "हाँ", "हा", "सही", "ஆம்", "ಹೌದು", "সত্য", "સાચું", "होय", "हो", "ඔව්", "ඔවුන්", " đúng"].includes(lower)) return "true";
+          if (["false", "0", "no", "incorrect", "తప్పు", "లేదు", "अशुद्ध", "इल्लै", "तप्प", "否", "సరికాదు"].includes(lower)) return "false";
+          return lower;
+        };
+
         if (answer && isExactType && score === 0 && !isCorrect) {
-          const correct = (answer.answerText || "").trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
+          const correct = q.type === "TRUE_FALSE"
+            ? normalizeTf(answer.answerText || "") === normalizeTf(q.correctAnswer)
+            : (answer.answerText || "").trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
           isCorrect = correct;
           score = correct ? 100 : 0;
 

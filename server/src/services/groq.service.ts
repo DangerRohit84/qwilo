@@ -112,7 +112,7 @@ Your job: Identify the MOST IMPORTANT concepts from the homework and generate qu
 Available question types — use ONLY the ones that fit the content:
 
 1. MCQ — Multiple choice with 4 options, one correct. Use for: concept recall, factual questions, definitions.
-2. TRUE_FALSE — True or False. Use for: quick fact checks, yes/no concepts, simple statements.
+2. TRUE_FALSE — True or False. Use for: quick fact checks, yes/no concepts, simple statements. The "correctAnswer" field MUST be exactly the string "true" or "false" (lowercase, in English) — never translate it.
 3. FILL_BLANK — Fill in the missing word/phrase. The "questionText" must contain "___" where the blank is, and "correctAnswer" is the missing word. Use for: key terms, formulas, vocabulary, dates.
 4. ONE_WORD — Student types a single word or number as answer. Use for: names, dates, numerical answers, short factual answers.
 5. SHORT_ANSWER — Student types a written response (2-4 sentences). Use for: explanations, descriptions, short essays.

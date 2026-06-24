@@ -150,7 +150,13 @@ async function evaluateTaskAnswers(taskId: string, studentId: string) {
           },
         });
       } else if (question.type === "TRUE_FALSE") {
-        const isCorrect = answer.answerText?.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
+        const normalizeTf = (s: string) => {
+          const lower = s.trim().toLowerCase();
+          if (["true", "1", "yes", "correct", "నిజము", "నిజం", "సరైనది", "हाँ", "हा", "सही", "ஆம்", "ಹೌದು", "সত্য", "સાચું", "होय", "हो", "ඔව්", "ඔවුන්", " đúng"].includes(lower)) return "true";
+          if (["false", "0", "no", "incorrect", "తప్పు", "లేదు", "अशुद्ध", "इल्लै", "तप्प", "否", "సరికాదు"].includes(lower)) return "false";
+          return lower;
+        };
+        const isCorrect = normalizeTf(answer.answerText || "") === normalizeTf(question.correctAnswer);
         await prisma.answer.update({
           where: { id: answer.id },
           data: {
