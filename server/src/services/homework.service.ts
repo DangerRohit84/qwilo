@@ -41,12 +41,21 @@ export async function processHomework(sessionId: string) {
   console.log(`[processHomework] Parsed ${tasks.length} tasks`);
 
   if (!tasks || tasks.length === 0) {
-    console.log(`[processHomework] No tasks found, marking FAILED for session ${sessionId}`);
+    console.log(`[processHomework] No tasks found, creating fallback task for session ${sessionId}`);
+    const fallbackTask = await prisma.task.create({
+      data: {
+        sessionId,
+        type: "OTHER",
+        subject: "General",
+        description: ocrText.slice(0, 500) || "Homework task",
+        orderIndex: 0,
+      },
+    });
     await prisma.homeworkSession.update({
       where: { id: sessionId },
-      data: { rawOcrText: ocrText, status: "FAILED" },
+      data: { rawOcrText: ocrText, status: "COMPLETED" },
     });
-    return { sessionId, ocrText, tasks: [] };
+    return { sessionId, ocrText, tasks: [fallbackTask] };
   }
 
   console.log(`[processHomework] Creating ${tasks.length} tasks for session ${sessionId}`);

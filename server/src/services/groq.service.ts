@@ -43,7 +43,7 @@ export async function parseTasksFromOcr(
       {
         role: "system",
         content:
-          "You are a homework parser. Given OCR text from a student's homework notebook, extract each task as a JSON object with fields: type (READING | WRITING | MATH | OTHER), subject (auto-detect from content, e.g. Science, English, Math), description (brief task description). Return ONLY a valid JSON array, no markdown, no explanation.",
+          'You are a homework parser. Given OCR text from a student\'s homework notebook, extract each task as a JSON object with fields: type (READING | WRITING | MATH | OTHER), subject (auto-detect from content, e.g. Science, English, Math), description (brief task description). Return a JSON object with a "tasks" key containing the array of tasks, e.g. {"tasks": [{"type": "MATH", "subject": "Math", "description": "..."}]}.',
       },
       { role: "user", content: ocrText },
     ],
@@ -51,11 +51,16 @@ export async function parseTasksFromOcr(
     max_tokens: 2000,
   });
 
-  const content = response.choices[0]?.message?.content || "[]";
+  const content = response.choices[0]?.message?.content || "{}";
+  console.log(`[parseTasksFromOcr] Raw response: ${content.slice(0, 500)}`);
   try {
     const parsed = JSON.parse(content);
-    return Array.isArray(parsed.tasks) ? parsed.tasks : Array.isArray(parsed) ? parsed : [];
-  } catch {
+    if (Array.isArray(parsed.tasks)) return parsed.tasks;
+    if (Array.isArray(parsed)) return parsed;
+    console.warn(`[parseTasksFromOcr] Unexpected shape: ${JSON.stringify(parsed).slice(0, 200)}`);
+    return [];
+  } catch (e) {
+    console.error(`[parseTasksFromOcr] JSON parse failed: ${content.slice(0, 300)}`);
     return [];
   }
 }
