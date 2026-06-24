@@ -77,6 +77,10 @@ export default function QuestionsScreen() {
   useEffect(() => {
     Audio.requestPermissionsAsync();
     loadQuestionWithRetry();
+    return () => {
+      stopWaveAnimation();
+      Speech.stop();
+    };
   }, []);
 
   async function loadQuestionWithRetry() {
@@ -107,6 +111,8 @@ export default function QuestionsScreen() {
       setSelectedAnswer(null);
       setRecordedUri(null);
       setTextAnswer("");
+      stopWaveAnimation();
+      setRecording(false);
       if (data.ready === false) {
         return false;
       }
@@ -141,12 +147,12 @@ export default function QuestionsScreen() {
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(
+      const recordingInstance = new Audio.Recording();
+      await recordingInstance.prepareToRecordAsync(
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
-      await recording.startAsync();
-      recordingRef.current = recording;
+      await recordingInstance.startAsync();
+      recordingRef.current = recordingInstance;
       setRecording(true);
       startWaveAnimation();
     } catch {
