@@ -58,12 +58,12 @@ export default function QuestionsScreen() {
   }
 
   async function fetchNextQuestion(): Promise<boolean> {
-    setSelectedAnswer(null);
-    setRecordedUri(null);
     try {
       const { data } = await api.get(
         `/student/tasks/${taskId}/questions/next`
       );
+      setSelectedAnswer(null);
+      setRecordedUri(null);
       if (data.ready === false) {
         return false;
       }
