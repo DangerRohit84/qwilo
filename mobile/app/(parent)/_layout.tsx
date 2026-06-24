@@ -70,7 +70,7 @@ export default function ParentLayout() {
 const styles = StyleSheet.create({
   themeToggle: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 54 : 30,
+    top: Platform.OS === "ios" ? 58 : 34,
     right: 14,
     width: 40,
     height: 40,
@@ -82,5 +82,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
+    zIndex: 10,
   },
 });

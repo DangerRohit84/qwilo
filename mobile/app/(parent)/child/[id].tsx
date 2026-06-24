@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 40,
   },
-  backBtn: { width: 28 },
+  backBtn: { width: 44, height: 44, justifyContent: "center" },
   title: { fontSize: 20, fontWeight: "700" },
   content: { padding: 20, paddingBottom: 40 },
   calendarToggle: {
