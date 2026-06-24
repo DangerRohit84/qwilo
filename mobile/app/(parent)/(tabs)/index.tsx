@@ -48,7 +48,7 @@ export default function ParentDashboard() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   }
 
-  const fetchProgress = useCallback(async (startDate?: string, endDate?: string) => {
+  const fetchProgress = useCallback(async (startDate?: string, endDate?: string, initialDate?: string) => {
     try {
       const params: any = {};
       if (startDate) params.startDate = startDate;
@@ -65,9 +65,10 @@ export default function ParentDashboard() {
           dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
         };
       });
-      if (selectedRef.current) {
-        marks[selectedRef.current] = {
-          ...marks[selectedRef.current],
+      const highlightDate = initialDate || selectedRef.current;
+      if (highlightDate) {
+        marks[highlightDate] = {
+          ...marks[highlightDate],
           selected: true,
           selectedColor: colors.primary,
         };
@@ -82,7 +83,10 @@ export default function ParentDashboard() {
 
   useEffect(() => {
     getStoredUser().then(setUser).catch(() => {});
-    fetchProgress();
+    const todayStr = getTodayStr();
+    setSelectedDate(todayStr);
+    selectedRef.current = todayStr;
+    fetchProgress(undefined, undefined, todayStr);
   }, []);
 
   function onDayPress(day: { dateString: string }) {
