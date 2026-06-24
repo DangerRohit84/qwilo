@@ -107,7 +107,7 @@ export async function generateQuestions(
         role: "system",
         content: `You are an educational AI that creates assessment questions based on a student's actual homework.
 
-Your job: Identify the MOST IMPORTANT concepts from the homework and generate questions using the BEST question type for each concept.
+Your job: Identify the MOST IMPORTANT concepts from the homework and generate questions using the BEST question type for each concept. Generate 3 to 8 questions — the count depends on the homework's complexity and amount of content. Simple homework gets 3-4 questions, detailed homework gets 6-8.
 
 Available question types — use ONLY the ones that fit the content:
 
@@ -145,7 +145,7 @@ Description: ${taskDescription}
 Analysis of student work: ${analysis}
 Unique seed: ${seed}
 
-Identify the important concepts from this homework. For EACH key concept, choose the BEST question type that tests understanding of it. Don't force types that don't fit. Write everything in the SAME LANGUAGE as the task description.`,
+Identify the important concepts from this homework. Generate 3 to 8 questions depending on the amount and complexity of the content — more concepts = more questions, simple homework = fewer questions. For EACH key concept, choose the BEST question type that tests understanding of it. Don't force types that don't fit. Write everything in the SAME LANGUAGE as the task description.`,
       },
     ],
     response_format: { type: "json_object" },
