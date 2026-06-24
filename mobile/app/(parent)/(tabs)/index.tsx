@@ -86,7 +86,9 @@ export default function ParentDashboard() {
     const todayStr = getTodayStr();
     setSelectedDate(todayStr);
     selectedRef.current = todayStr;
-    fetchProgress(undefined, undefined, todayStr);
+    const start = new Date(todayStr + "T00:00:00.000Z").toISOString();
+    const end = new Date(todayStr + "T23:59:59.999Z").toISOString();
+    fetchProgress(start, end, todayStr);
   }, []);
 
   function onDayPress(day: { dateString: string }) {
