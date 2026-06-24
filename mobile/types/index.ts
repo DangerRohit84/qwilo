@@ -83,6 +83,7 @@ export interface StudentProgress {
     status: string;
     taskCount: number;
   }[];
+  tasks: any[];
 }
 
 export interface TaskListResponse {

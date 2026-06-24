@@ -17,7 +17,6 @@ import { useTheme } from "../../../contexts/ThemeContext";
 export default function ProgressScreen() {
   const router = useRouter();
   const { theme, colors } = useTheme();
-  const [data, setData] = useState<StudentProgress | null>(null);
   const [allTasks, setAllTasks] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +24,7 @@ export default function ProgressScreen() {
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const selectedRef = useRef<string | null>(null);
+  const [recentSessions, setRecentSessions] = useState<any[]>([]);
 
   function getTodayStr() {
     const now = new Date();
@@ -50,15 +50,22 @@ export default function ProgressScreen() {
     setMarkedDates(marks);
   }
 
+  function filterByDate(list: any[], dateStr: string) {
+    const start = new Date(dateStr + "T00:00:00.000Z").getTime();
+    const end = new Date(dateStr + "T23:59:59.999Z").getTime();
+    return list.filter((t) => {
+      const d = new Date(t.sessionDate).getTime();
+      return d >= start && d <= end;
+    });
+  }
+
   const fetchProgress = useCallback(async () => {
     setLoading(true);
     try {
       const { data: result } = await api.get<StudentProgress>("/student/history");
-      setData(result);
+      setRecentSessions(result.recentSessions || []);
 
-      const { data: tasksRes } = await api.get("/student/tasks");
-      const all =
-        tasksRes?.completed?.concat(tasksRes?.pending || []) || [];
+      const all = result.tasks || [];
       all.sort(
         (a: any, b: any) =>
           new Date(b.sessionDate).getTime() - new Date(a.sessionDate).getTime()
@@ -69,14 +76,7 @@ export default function ProgressScreen() {
       updateMarkedDates(todayStr, result.recentSessions);
       setSelectedDate(todayStr);
       selectedRef.current = todayStr;
-
-      const today = new Date();
-      const start = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
-      const end = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
-      setTasks(all.filter((t) => {
-        const d = new Date(t.sessionDate).getTime();
-        return d >= start.getTime() && d <= end.getTime();
-      }));
+      setTasks(filterByDate(all, todayStr));
     } catch (err) {
       console.log("Progress fetch error:", err);
     } finally {
@@ -86,26 +86,56 @@ export default function ProgressScreen() {
 
   useFocusEffect(useCallback(() => { fetchProgress(); }, []));
 
+  function computeStats(list: any[]) {
+    const totalTasks = list.length;
+    const completedTasks = list.filter((t) => t.status === "COMPLETED").length;
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    let totalQuestions = 0;
+    let correctAnswers = 0;
+    const subjectBreakdown: Record<string, { total: number; completed: number }> = {};
+
+    for (const t of list) {
+      const subj = t.subject || "Other";
+      if (!subjectBreakdown[subj]) subjectBreakdown[subj] = { total: 0, completed: 0 };
+      subjectBreakdown[subj].total++;
+      if (t.status === "COMPLETED") subjectBreakdown[subj].completed++;
+
+      for (const q of t.questions || []) {
+        totalQuestions++;
+        const a = q.answers?.[0];
+        if (a?.isCorrect) correctAnswers++;
+      }
+    }
+
+    return {
+      totalTasks,
+      completedTasks,
+      completionRate,
+      totalQuestions,
+      correctAnswers,
+      accuracy: totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
+      subjectBreakdown,
+    };
+  }
+
+  const filteredStats = computeStats(tasks);
+
   function onDayPress(day: { dateString: string }) {
     setSelectedDate(day.dateString);
     selectedRef.current = day.dateString;
-    updateMarkedDates(day.dateString, data?.recentSessions || []);
-    const start = new Date(day.dateString + "T00:00:00.000Z").getTime();
-    const end = new Date(day.dateString + "T23:59:59.999Z").getTime();
-    setTasks(allTasks.filter((t) => {
-      const d = new Date(t.sessionDate).getTime();
-      return d >= start && d <= end;
-    }));
+    updateMarkedDates(day.dateString, recentSessions);
+    setTasks(filterByDate(allTasks, day.dateString));
   }
 
   function onMonthPress() {
     setSelectedDate(null);
     selectedRef.current = null;
-    updateMarkedDates(null, data?.recentSessions || []);
+    updateMarkedDates(null, recentSessions);
     setTasks(allTasks);
   }
 
-  if (loading && !data) {
+  if (loading && allTasks.length === 0) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -161,11 +191,11 @@ export default function ProgressScreen() {
 
         <View style={styles.cardsRow}>
           <View style={[styles.card, { backgroundColor: colors.inputBg }]}>
-            <Text style={[styles.cardVal, { color: colors.text }]}>{data?.completionRate || 0}%</Text>
+            <Text style={[styles.cardVal, { color: colors.text }]}>{filteredStats.completionRate}%</Text>
             <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Completion</Text>
           </View>
           <View style={[styles.card, { backgroundColor: colors.inputBg }]}>
-            <Text style={[styles.cardVal, { color: colors.text }]}>{data?.accuracy || 0}%</Text>
+            <Text style={[styles.cardVal, { color: colors.text }]}>{filteredStats.accuracy}%</Text>
             <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Accuracy</Text>
           </View>
         </View>
@@ -173,25 +203,24 @@ export default function ProgressScreen() {
         <View style={styles.miniRow}>
           <View style={[styles.miniCard, { backgroundColor: colors.card }]}>
             <Ionicons name="checkmark-done" size={20} color={colors.success} />
-            <Text style={[styles.miniVal, { color: colors.text }]}>{data?.totalTasks || 0}</Text>
+            <Text style={[styles.miniVal, { color: colors.text }]}>{filteredStats.totalTasks}</Text>
             <Text style={[styles.miniLabel, { color: colors.textMuted }]}>Tasks</Text>
           </View>
           <View style={[styles.miniCard, { backgroundColor: colors.card }]}>
             <Ionicons name="help-circle" size={20} color={colors.primary} />
-            <Text style={[styles.miniVal, { color: colors.text }]}>{data?.totalQuestions || 0}</Text>
+            <Text style={[styles.miniVal, { color: colors.text }]}>{filteredStats.totalQuestions}</Text>
             <Text style={[styles.miniLabel, { color: colors.textMuted }]}>Questions</Text>
           </View>
           <View style={[styles.miniCard, { backgroundColor: colors.card }]}>
             <Ionicons name="calendar" size={20} color={colors.warning} />
-            <Text style={[styles.miniVal, { color: colors.text }]}>{data?.totalSessions || 0}</Text>
+            <Text style={[styles.miniVal, { color: colors.text }]}>{filteredStats.completedTasks}</Text>
             <Text style={[styles.miniLabel, { color: colors.textMuted }]}>Sessions</Text>
           </View>
         </View>
 
         <Text style={[styles.sectionTitle, { color: colors.text }]}>By Subject</Text>
-        {data?.subjectBreakdown &&
-          Object.entries(data.subjectBreakdown).length > 0 ? (
-          Object.entries(data.subjectBreakdown).map(([subject, stats]) => {
+        {filteredStats.subjectBreakdown && Object.keys(filteredStats.subjectBreakdown).length > 0 ? (
+          Object.entries(filteredStats.subjectBreakdown).map(([subject, stats]) => {
             const pct =
               stats.total > 0
                 ? Math.round((stats.completed / stats.total) * 100)
