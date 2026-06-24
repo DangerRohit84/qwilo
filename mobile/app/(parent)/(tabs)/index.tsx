@@ -39,7 +39,7 @@ export default function ParentDashboard() {
   const [showLogout, setShowLogout] = useState(false);
 
   useEffect(() => {
-    getStoredUser().then(setUser);
+    getStoredUser().then(setUser).catch(() => {});
     api.get("/parent/progress").then(({ data }) => {
       setChildren(data.children || []);
       setAggregated(data.aggregated || null);

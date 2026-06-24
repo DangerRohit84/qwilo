@@ -18,7 +18,7 @@ export default function ParentLayout() {
       } else {
         setReady(true);
       }
-    });
+    }).catch(() => router.replace("/(auth)"));
   }, []);
 
   function handleToggle() {

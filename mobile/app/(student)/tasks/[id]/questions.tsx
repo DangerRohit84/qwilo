@@ -13,7 +13,7 @@ import * as Speech from "expo-speech";
 import { Audio } from "expo-av";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import api from "../../../../services/api";
-import { Question, AnswerResult } from "../../../../types";
+import { Question } from "../../../../types";
 import { useTheme } from "../../../../contexts/ThemeContext";
 
 export default function QuestionsScreen() {

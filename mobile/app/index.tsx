@@ -31,7 +31,7 @@ export default function SplashScreen() {
         } else {
           router.replace("/(auth)");
         }
-      });
+      }).catch(() => router.replace("/(auth)"));
     }, 2000);
 
     return () => clearTimeout(timer);

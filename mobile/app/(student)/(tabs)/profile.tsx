@@ -20,7 +20,7 @@ export default function ProfileScreen() {
   const [showLogout, setShowLogout] = useState(false);
 
   useEffect(() => {
-    getStoredUser().then(setUser);
+    getStoredUser().then(setUser).catch(() => {});
   }, []);
 
   async function handleLogout() {

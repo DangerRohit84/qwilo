@@ -6,13 +6,28 @@ import * as questionService from "../services/question.service";
 import * as notificationService from "../services/notification.service";
 import * as groqService from "../services/groq.service";
 import * as queueService from "../services/queue.service";
-import { uploadFromBuffer } from "../utils/cloudinary";
 import prisma from "../utils/prisma";
 import fs from "fs";
 import path from "path";
 import os from "os";
 
 const router = Router();
+
+async function verifyTaskOwnership(taskId: string, studentId: string): Promise<boolean> {
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: { session: { select: { studentId: true } } },
+  });
+  return task?.session.studentId === studentId;
+}
+
+async function verifyQuestionOwnership(questionId: string, studentId: string): Promise<boolean> {
+  const question = await prisma.question.findUnique({
+    where: { id: questionId },
+    include: { task: { include: { session: { select: { studentId: true } } } } },
+  });
+  return question?.task.session.studentId === studentId;
+}
 
 router.use(authenticate);
 router.use(authorize("STUDENT"));
@@ -82,6 +97,7 @@ router.get(
         include: { tasks: true },
       });
       if (!session) return res.status(404).json({ error: "Session not found" });
+      if (session.studentId !== req.user!.id) return res.status(403).json({ error: "Forbidden" });
       res.json({
         status: session.status,
         taskCount: session.tasks.length,
@@ -151,6 +167,9 @@ router.post(
         return res.status(400).json({ error: "At least one image required" });
       }
       const taskId = req.params.id as string;
+      if (!(await verifyTaskOwnership(taskId, req.user!.id))) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
       const submission = await homeworkService.submitTaskWork(
         taskId,
         files.map((f) => ({ buffer: f.buffer, mimetype: f.mimetype }))
@@ -173,9 +192,12 @@ router.post(
 
 router.get(
   "/tasks/:id/review",
-  async (req: AuthRequest, res: Response) => {
+    async (req: AuthRequest, res: Response) => {
     try {
       const taskId = req.params.id as string;
+      if (!(await verifyTaskOwnership(taskId, req.user!.id))) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
       const questions = await prisma.question.findMany({
         where: { taskId },
         include: {
@@ -240,9 +262,12 @@ router.get(
 
 router.get(
   "/tasks/:id/questions/next",
-  async (req: AuthRequest, res: Response) => {
+    async (req: AuthRequest, res: Response) => {
     try {
       const taskId = req.params.id as string;
+      if (!(await verifyTaskOwnership(taskId, req.user!.id))) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
       const question = await questionService.getNextQuestion(
         taskId,
         req.user!.id
@@ -265,6 +290,9 @@ router.post(
   async (req: AuthRequest, res: Response) => {
     try {
       const questionId = req.params.id as string;
+      if (!(await verifyQuestionOwnership(questionId, req.user!.id))) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
       const { answerText } = req.body;
       const result = await questionService.submitAnswer(
         questionId,
@@ -276,7 +304,7 @@ router.post(
         where: { id: questionId },
       });
 
-      if (result.answer.isCorrect && question) {
+      if (question) {
         const task = await prisma.task.findUnique({
           where: { id: question.taskId },
         });
@@ -305,14 +333,20 @@ router.post(
       }
 
       const questionId = req.params.id as string;
+      if (!(await verifyQuestionOwnership(questionId, req.user!.id))) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
 
       const ext = req.file.mimetype.split("/")[1] || "webm";
       const tmpFile = path.join(os.tmpdir(), `voice-${Date.now()}.${ext}`);
       fs.writeFileSync(tmpFile, req.file.buffer);
 
-      const transcript = await groqService.transcribeAudio(tmpFile);
-
-      fs.unlinkSync(tmpFile);
+      let transcript = "";
+      try {
+        transcript = await groqService.transcribeAudio(tmpFile);
+      } finally {
+        try { fs.unlinkSync(tmpFile); } catch {}
+      }
 
       const result = await questionService.submitAnswer(
         questionId,
@@ -324,7 +358,7 @@ router.post(
         where: { id: questionId },
       });
 
-      if (result.answer.isCorrect && question) {
+      if (question) {
         const task = await prisma.task.findUnique({
           where: { id: question.taskId },
         });

@@ -149,7 +149,7 @@ export async function transcribeAudio(audioPath: string): Promise<string> {
     response_format: "text",
   });
 
-  return (response as unknown as string) || "";
+  return typeof response === "string" ? response : (response as any)?.text || "";
 }
 
 export async function evaluateVoiceAnswer(

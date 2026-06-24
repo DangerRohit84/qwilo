@@ -16,7 +16,7 @@ export default function AuthLayout() {
       } else {
         setReady(true);
       }
-    });
+    }).catch(() => setReady(true));
   }, []);
 
   if (!ready) {

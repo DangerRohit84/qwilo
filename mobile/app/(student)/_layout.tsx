@@ -14,7 +14,7 @@ export default function StudentLayout() {
       } else {
         setReady(true);
       }
-    });
+    }).catch(() => router.replace("/(auth)"));
   }, []);
 
   if (!ready) {
