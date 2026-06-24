@@ -9,12 +9,7 @@ router.use(authorize("PARENT"));
 
 router.get("/progress", async (req: AuthRequest, res: Response) => {
   try {
-    let { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
-    if (!startDate && !endDate) {
-      const now = new Date();
-      startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())).toISOString();
-      endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)).toISOString();
-    }
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
     const links = await prisma.studentParent.findMany({
       where: { parentId: req.user!.id },
       include: {
@@ -107,7 +102,7 @@ router.get("/children/:id/sessions", async (req: AuthRequest, res: Response) => 
       orderBy: { date: "desc" },
       include: {
         tasks: {
-          include: { submission: true, questions: { include: { answers: true } } },
+          include: { questions: { include: { answers: true } } },
           orderBy: { orderIndex: "asc" },
         },
       },

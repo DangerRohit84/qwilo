@@ -99,7 +99,6 @@ export async function getStudentTasks(
     orderBy: { date: "desc" },
     include: {
       tasks: {
-        include: { submission: true },
         orderBy: { orderIndex: "asc" },
       },
     },
@@ -146,7 +145,7 @@ export async function submitTaskWork(
     urls,
     task.type,
     task.description
-  );
+  ).catch(() => "Analysis pending");
 
   const submission = await prisma.submission.create({
     data: {
@@ -181,7 +180,7 @@ export async function getStudentProgress(
     orderBy: { date: "desc" },
     include: {
       tasks: {
-        include: { submission: true, questions: { include: { answers: true } } },
+        include: { questions: { include: { answers: true } } },
       },
     },
   });

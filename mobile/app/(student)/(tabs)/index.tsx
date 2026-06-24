@@ -42,7 +42,7 @@ export default function StudentDashboard() {
   useFocusEffect(
     useCallback(() => {
       fetchTasks();
-      const interval = setInterval(fetchTasks, 5000);
+      const interval = setInterval(fetchTasks, 30000);
       return () => clearInterval(interval);
     }, [])
   );
