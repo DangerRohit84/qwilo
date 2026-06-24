@@ -199,7 +199,20 @@ router.get(
           const correct = answer.answerText?.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
           isCorrect = correct;
           score = correct ? 100 : 0;
-          feedback = correct ? "Correct!" : `The correct answer is: ${q.correctAnswer}`;
+
+          try {
+            const result = await groqService.explainCorrectAnswer(
+              q.questionText,
+              q.correctAnswer,
+              answer.answerText || ""
+            );
+            feedback = result.explanation;
+          } catch {
+            feedback = correct
+              ? "Correct!"
+              : `The correct answer is: ${q.correctAnswer}`;
+          }
+
           await prisma.answer.update({
             where: { id: answer.id },
             data: { isCorrect: correct, score, feedback },

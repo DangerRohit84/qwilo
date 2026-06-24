@@ -187,16 +187,19 @@ export async function explainCorrectAnswer(
   correctAnswer: string,
   studentAnswer: string
 ): Promise<{ explanation: string }> {
+  const isCorrect = studentAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
   const response = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: [
       {
         role: "system",
-        content: "You explain correct answers to students. Given the question, correct answer, and the student's wrong answer, provide a brief explanation (2-3 sentences) of why the correct answer is right. Be encouraging and educational.",
+        content: "You are a helpful tutor. Explain answers clearly and concisely in 2-3 sentences. Be encouraging and educational.",
       },
       {
         role: "user",
-        content: `Question: "${questionText}"\nCorrect answer: "${correctAnswer}"\nStudent answered: "${studentAnswer}"\n\nExplain why the correct answer is right.`,
+        content: isCorrect
+          ? `Question: "${questionText}"\nThe student correctly answered: "${correctAnswer}". Briefly explain why this answer is correct.`
+          : `Question: "${questionText}"\nCorrect answer: "${correctAnswer}"\nStudent answered: "${studentAnswer}"\nExplain why the student's answer is wrong and why "${correctAnswer}" is correct.`,
       },
     ],
     response_format: { type: "json_object" },
