@@ -193,9 +193,7 @@ export default function QuestionsScreen() {
         <Ionicons name="help-circle" size={64} color={colors.primary} />
         <Text style={[styles.readyTitle, { color: colors.text }]}>Quiz Ready!</Text>
         <Text style={[styles.readySub, { color: colors.textSecondary }]}>
-          {totalQuestions > 0
-            ? `${totalQuestions} questions to answer`
-            : "Test your knowledge"}
+          Answer all questions to complete this task
         </Text>
         <TouchableOpacity
           style={[styles.startBtn, { backgroundColor: colors.primary }]}
