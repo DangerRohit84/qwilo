@@ -99,4 +99,5 @@ export interface ReviewQuestion {
   studentAnswer: string | null;
   score: number | null;
   isCorrect: boolean | null;
+  feedback?: string | null;
 }

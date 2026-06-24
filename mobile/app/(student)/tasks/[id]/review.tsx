@@ -113,7 +113,7 @@ export default function ReviewScreen() {
                 </View>
               )}
 
-              {q.score !== null && q.type !== "MCQ" && (
+              {q.score !== null && (
                 <View style={[styles.scoreRow, { borderTopColor: colors.border }]}>
                   <Ionicons
                     name={q.isCorrect ? "checkmark-circle" : "close-circle"}
@@ -124,6 +124,10 @@ export default function ReviewScreen() {
                     {q.isCorrect ? "Correct" : "Incorrect"} — Score: {q.score}/100
                   </Text>
                 </View>
+              )}
+
+              {q.feedback && (
+                <Text style={[styles.feedbackText, { color: colors.textSecondary }]}>{q.feedback}</Text>
               )}
 
               {q.studentAnswer === null && (
@@ -202,6 +206,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   scoreText: { fontSize: 14, fontWeight: "600" },
+  feedbackText: { fontSize: 13, marginTop: 6, lineHeight: 18, fontStyle: "italic" },
   unansweredBadge: {
     flexDirection: "row",
     alignItems: "center",

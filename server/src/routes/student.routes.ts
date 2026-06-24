@@ -187,16 +187,38 @@ router.get(
         },
         orderBy: { createdAt: "asc" },
       });
-      res.json(questions.map((q) => ({
-        id: q.id,
-        questionText: q.questionText,
-        type: q.type,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
-        studentAnswer: q.answers[0]?.answerText || null,
-        score: q.answers[0]?.score || null,
-        isCorrect: q.answers[0]?.isCorrect ?? null,
-      })));
+
+      const results: any[] = [];
+      for (const q of questions) {
+        const answer = q.answers[0];
+        let isCorrect = answer?.isCorrect ?? null;
+        let score = answer?.score ?? null;
+        let feedback = answer?.feedback ?? null;
+
+        if (answer && q.type === "MCQ" && score === 0 && !isCorrect) {
+          const correct = answer.answerText?.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
+          isCorrect = correct;
+          score = correct ? 100 : 0;
+          feedback = correct ? "Correct!" : `The correct answer is: ${q.correctAnswer}`;
+          await prisma.answer.update({
+            where: { id: answer.id },
+            data: { isCorrect: correct, score, feedback },
+          });
+        }
+
+        results.push({
+          id: q.id,
+          questionText: q.questionText,
+          type: q.type,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          studentAnswer: answer?.answerText || null,
+          score,
+          isCorrect,
+          feedback,
+        });
+      }
+      res.json(results);
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
