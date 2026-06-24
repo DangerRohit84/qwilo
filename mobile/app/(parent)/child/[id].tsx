@@ -70,6 +70,11 @@ export default function ChildProgressScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const selectedRef = useRef<string | null>(null);
 
+  function getTodayStr() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }
+
   useEffect(() => {
     (async () => {
       try {
@@ -77,6 +82,7 @@ export default function ChildProgressScreen() {
         setAllTasks(result.tasks || []);
         setAllSessions(result.recentSessions || []);
 
+        const todayStr = getTodayStr();
         const marks: Record<string, any> = {};
         (result.recentSessions || []).forEach((s: any) => {
           const dateStr = s.date.split("T")[0];
@@ -85,9 +91,19 @@ export default function ChildProgressScreen() {
             dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
           };
         });
+        marks[todayStr] = {
+          ...marks[todayStr],
+          selected: true,
+          selectedColor: colors.primary,
+        };
         setMarkedDates(marks);
 
-        setData(computeStats(result.tasks || []));
+        const today = new Date();
+        const start = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+        const end = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
+        setData(computeStats(filterTasksByDate(result.tasks || [], start, end)));
+        setSelectedDate(todayStr);
+        selectedRef.current = todayStr;
       } catch (err) {
         console.error("Failed to fetch child progress");
       } finally {
@@ -96,9 +112,29 @@ export default function ChildProgressScreen() {
     })();
   }, [id]);
 
+  function updateMarkedDates(dateStr: string | null) {
+    const marks: Record<string, any> = {};
+    allSessions.forEach((s: any) => {
+      const d = s.date.split("T")[0];
+      marks[d] = {
+        marked: true,
+        dotColor: s.status === "COMPLETED" ? "#10B981" : "#F59E0B",
+      };
+    });
+    if (dateStr) {
+      marks[dateStr] = {
+        ...marks[dateStr],
+        selected: true,
+        selectedColor: colors.primary,
+      };
+    }
+    setMarkedDates(marks);
+  }
+
   function onDayPress(day: { dateString: string }) {
     setSelectedDate(day.dateString);
     selectedRef.current = day.dateString;
+    updateMarkedDates(day.dateString);
     const start = new Date(day.dateString + "T00:00:00.000Z");
     const end = new Date(day.dateString + "T23:59:59.999Z");
     setData(computeStats(filterTasksByDate(allTasks, start, end)));
@@ -107,6 +143,7 @@ export default function ChildProgressScreen() {
   function onMonthPress() {
     setSelectedDate(null);
     selectedRef.current = null;
+    updateMarkedDates(null);
     setData(computeStats(allTasks));
   }
 
@@ -137,7 +174,7 @@ export default function ChildProgressScreen() {
           <Text style={[styles.calendarToggleText, { color: colors.textSecondary }]}>
             {selectedDate
               ? new Date(selectedDate + "T00:00:00").toLocaleDateString()
-              : "Select a date"}
+              : new Date().toLocaleDateString()}
           </Text>
           <Ionicons
             name={showCalendar ? "chevron-up" : "chevron-down"}
@@ -149,6 +186,7 @@ export default function ChildProgressScreen() {
         {showCalendar && (
           <View style={[styles.calendarWrap, { backgroundColor: colors.card }]}>
             <Calendar key={theme}
+              current={getTodayStr()}
               theme={{
                 backgroundColor: colors.card,
                 calendarBackground: colors.card,
