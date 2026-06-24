@@ -166,7 +166,8 @@ export async function submitTaskWork(
 export async function getStudentProgress(
   studentId: string,
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
+  light = false
 ) {
   const dateFilter: any = {};
   if (startDate || endDate) {
@@ -178,7 +179,11 @@ export async function getStudentProgress(
   const sessions = await prisma.homeworkSession.findMany({
     where: { studentId, ...dateFilter },
     orderBy: { date: "desc" },
-    include: {
+    include: light ? {
+      tasks: {
+        select: { id: true, status: true, subject: true, type: true, description: true },
+      },
+    } : {
       tasks: {
         include: { questions: { include: { answers: true } } },
       },
@@ -195,13 +200,28 @@ export async function getStudentProgress(
     ? Math.round((completedTasks.length / totalTasks.length) * 100)
     : 0;
 
-  const allAnswers = totalTasks.flatMap((t) =>
-    t.questions.flatMap((q) => q.answers)
+  const allAnswers = light ? [] : (totalTasks as any[]).flatMap((t) =>
+    (t.questions || []).flatMap((q: any) => q.answers || [])
   );
-  const correctAnswers = allAnswers.filter((a) => a.isCorrect);
-  const accuracy = allAnswers.length
-    ? Math.round((correctAnswers.length / allAnswers.length) * 100)
-    : 0;
+  const correctAnswers = allAnswers.filter((a: any) => a.isCorrect);
+
+  let accuracy = 0;
+  if (light) {
+    const taskIds = totalTasks.map((t) => t.id);
+    const [totalQ, correctQ] = await Promise.all([
+      prisma.question.count({ where: { taskId: { in: taskIds } } }),
+      prisma.answer.count({ where: { question: { taskId: { in: taskIds } }, isCorrect: true } }),
+    ]);
+    accuracy = totalQ > 0 ? Math.round((correctQ / totalQ) * 100) : 0;
+    var totalQuestions = totalQ;
+    var correctAnswersCount = correctQ;
+  } else {
+    accuracy = allAnswers.length
+      ? Math.round((correctAnswers.length / allAnswers.length) * 100)
+      : 0;
+    var totalQuestions = allAnswers.length;
+    var correctAnswersCount = correctAnswers.length;
+  }
 
   const subjectBreakdown: Record<string, { total: number; completed: number }> =
     {};
@@ -219,8 +239,8 @@ export async function getStudentProgress(
     totalTasks: totalTasks.length,
     completedTasks: completedTasks.length,
     completionRate,
-    totalQuestions: allAnswers.length,
-    correctAnswers: correctAnswers.length,
+    totalQuestions: totalQuestions,
+    correctAnswers: correctAnswersCount,
     accuracy,
     subjectBreakdown,
     recentSessions: sessions.slice(0, 7).map((s) => ({
@@ -229,29 +249,31 @@ export async function getStudentProgress(
       status: s.status,
       taskCount: s.tasks.length,
     })),
-    tasks: sessions.flatMap((s) =>
-      s.tasks.map((t) => ({
-        id: t.id,
-        description: t.description,
-        subject: t.subject,
-        type: t.type,
-        status: t.status,
-        sessionDate: s.date,
-        sessionId: s.id,
-        questions: t.questions.map((q) => ({
-          id: q.id,
-          questionText: q.questionText,
-          type: q.type,
-          options: q.options,
-          answers: q.answers.map((a) => ({
-            id: a.id,
-            answer: a.answerText,
-            isCorrect: a.isCorrect,
-            score: a.score,
-            feedback: a.feedback,
+    ...(light ? {} : {
+      tasks: sessions.flatMap((s) =>
+        s.tasks.map((t: any) => ({
+          id: t.id,
+          description: t.description,
+          subject: t.subject,
+          type: t.type,
+          status: t.status,
+          sessionDate: s.date,
+          sessionId: s.id,
+          questions: (t.questions || []).map((q: any) => ({
+            id: q.id,
+            questionText: q.questionText,
+            type: q.type,
+            options: q.options,
+            answers: (q.answers || []).map((a: any) => ({
+              id: a.id,
+              answer: a.answerText,
+              isCorrect: a.isCorrect,
+              score: a.score,
+              feedback: a.feedback,
+            })),
           })),
-        })),
-      }))
-    ),
+        }))
+      ),
+    }),
   };
 }

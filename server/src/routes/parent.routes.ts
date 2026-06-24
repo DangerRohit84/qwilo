@@ -25,7 +25,8 @@ router.get("/progress", async (req: AuthRequest, res: Response) => {
         const progress = await getStudentProgress(
           l.student.id,
           startDate ? new Date(startDate) : undefined,
-          endDate ? new Date(endDate) : undefined
+          endDate ? new Date(endDate) : undefined,
+          true
         );
         return { id: l.student.id, name: l.student.name, email: l.student.email, ...progress };
       })
