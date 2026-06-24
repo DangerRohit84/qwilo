@@ -20,20 +20,21 @@ export async function generateAndSaveQuestions(taskId: string) {
     task.submission.aiAnalysis || ""
   );
 
-  const saved: any[] = [];
-  for (const q of questions) {
-    if (!q.questionText || !q.correctAnswer || !q.type) continue;
-    const savedQ = await prisma.question.create({
-      data: {
-        taskId,
-        questionText: q.questionText,
-        type: q.type,
-        options: q.options || undefined,
-        correctAnswer: q.correctAnswer,
-      },
-    });
-    saved.push(savedQ);
-  }
+  const saved = await prisma.$transaction(
+    questions
+      .filter((q) => q.questionText && q.correctAnswer && q.type)
+      .map((q) =>
+        prisma.question.create({
+          data: {
+            taskId,
+            questionText: q.questionText,
+            type: q.type,
+            options: q.options || undefined,
+            correctAnswer: q.correctAnswer,
+          },
+        })
+      )
+  );
 
   return saved;
 }
@@ -94,46 +95,16 @@ export async function submitAnswer(
   });
   if (!question) throw new Error("Question not found");
 
-  let isCorrect = false;
-  let score = 0;
-  let explanation: string | undefined;
-
-  if (question.type === "MCQ") {
-    isCorrect = answerText?.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
-    score = isCorrect ? 100 : 0;
-    explanation = isCorrect
-      ? "Correct!"
-      : `The correct answer is: ${question.correctAnswer}`;
-  }
-
   const answer = await prisma.answer.create({
     data: {
       questionId,
       studentId,
       answerText,
       answerAudio: answerAudioUrl,
-      isCorrect,
-      score,
-      feedback: explanation,
+      isCorrect: false,
+      score: 0,
     },
   });
-
-  if (question.type === "VOICE" && answerText) {
-    groqService.evaluateVoiceAnswer(
-      question.questionText,
-      question.correctAnswer,
-      answerText
-    ).then(async (result) => {
-      await prisma.answer.update({
-        where: { id: answer.id },
-        data: {
-          isCorrect: result.isCorrect,
-          score: result.score,
-          feedback: result.feedback,
-        },
-      });
-    }).catch(() => {});
-  }
 
   const questionCount = await prisma.question.count({
     where: { taskId: question.taskId },
@@ -150,9 +121,53 @@ export async function submitAnswer(
       where: { id: question.taskId },
       data: { status: "COMPLETED" },
     });
+    evaluateTaskAnswers(question.taskId, studentId).catch(() => {});
   }
 
-  return { answer, isCorrect, score, correctAnswer: question.correctAnswer, explanation };
+  return { answer, isCorrect: false, score: 0, correctAnswer: question.correctAnswer, explanation: undefined };
+}
+
+async function evaluateTaskAnswers(taskId: string, studentId: string) {
+  const questions = await prisma.question.findMany({ where: { taskId } });
+  const answers = await prisma.answer.findMany({
+    where: {
+      questionId: { in: questions.map((q) => q.id) },
+      studentId,
+    },
+  });
+
+  for (const answer of answers) {
+    const question = questions.find((q) => q.id === answer.questionId);
+    if (!question) continue;
+
+    try {
+      if (question.type === "MCQ") {
+        const isCorrect = answer.answerText?.trim().toLowerCase() === question.correctAnswer.trim().toLowerCase();
+        await prisma.answer.update({
+          where: { id: answer.id },
+          data: {
+            isCorrect,
+            score: isCorrect ? 100 : 0,
+            feedback: isCorrect ? "Correct!" : `The correct answer is: ${question.correctAnswer}`,
+          },
+        });
+      } else if (question.type === "VOICE" && answer.answerText) {
+        const result = await groqService.evaluateVoiceAnswer(
+          question.questionText,
+          question.correctAnswer,
+          answer.answerText
+        );
+        await prisma.answer.update({
+          where: { id: answer.id },
+          data: {
+            isCorrect: result.isCorrect,
+            score: result.score,
+            feedback: result.feedback,
+          },
+        });
+      }
+    } catch {}
+  }
 }
 
 function shuffleArray<T>(arr: T[]): T[] {
