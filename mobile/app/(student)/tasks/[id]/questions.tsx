@@ -126,26 +126,24 @@ export default function QuestionsScreen() {
   async function submitMCQAnswer(answer: string) {
     setSelectedAnswer(answer);
     setSubmittingAnswer(true);
-    try {
-      await api.post<AnswerResult>(
-        `/student/questions/${question!.id}/answer`,
-        { answerText: answer }
-      );
-      const hasNext = await fetchNextQuestion();
-      if (!hasNext) {
-        setQuestion(null);
-        setDone(true);
-      }
-    } catch {
-      Alert.alert("Error", "Failed to submit answer");
-    } finally {
-      setSubmittingAnswer(false);
+    const currentQuestion = question;
+    const hasNextPromise = fetchNextQuestion();
+    api.post(
+      `/student/questions/${currentQuestion!.id}/answer`,
+      { answerText: answer }
+    ).catch(() => {});
+    const hasNext = await hasNextPromise;
+    if (!hasNext) {
+      setQuestion(null);
+      setDone(true);
     }
+    setSubmittingAnswer(false);
   }
 
   async function submitVoiceAnswer(uri: string | null) {
     if (!uri) return;
     setSubmittingAnswer(true);
+    const currentQuestion = question;
     try {
       const formData = new FormData();
       if (Platform.OS === "web") {
@@ -162,18 +160,17 @@ export default function QuestionsScreen() {
         } as any);
       }
 
-      await api.post<AnswerResult>(
-        `/student/questions/${question!.id}/answer-voice`,
+      const hasNextPromise = fetchNextQuestion();
+      api.post(
+        `/student/questions/${currentQuestion!.id}/answer-voice`,
         formData
-      );
-      const hasNext = await fetchNextQuestion();
+      ).catch(() => {});
+      const hasNext = await hasNextPromise;
       if (!hasNext) {
         setQuestion(null);
         setDone(true);
       }
-    } catch (err: any) {
-      console.log("Voice answer error:", err.response?.status, err.response?.data);
-      Alert.alert("Error", err.response?.data?.error || "Failed to submit voice answer");
+    } catch {
     } finally {
       setSubmittingAnswer(false);
     }

@@ -106,14 +106,11 @@ export async function submitAnswer(
     },
   });
 
+  const answerCount = await prisma.answer.count({
+    where: { question: { taskId: question.taskId }, studentId },
+  });
   const questionCount = await prisma.question.count({
     where: { taskId: question.taskId },
-  });
-  const answerCount = await prisma.answer.count({
-    where: {
-      questionId: { in: (await prisma.question.findMany({ where: { taskId: question.taskId }, select: { id: true } })).map(q => q.id) },
-      studentId,
-    },
   });
 
   if (answerCount >= questionCount) {
