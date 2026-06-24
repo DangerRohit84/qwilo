@@ -9,6 +9,7 @@ import {
   Alert,
   ScrollView,
   Platform,
+  Modal,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -25,6 +26,7 @@ export default function TaskDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [workImages, setWorkImages] = useState<string[]>([]);
+  const [viewImage, setViewImage] = useState<string | null>(null);
 
   useEffect(() => {
     api.get(`/student/tasks/${id}`).then(({ data }) => {
@@ -36,12 +38,11 @@ export default function TaskDetailScreen() {
     });
   }, [id]);
 
-  async function pickWorkImage() {
+  async function pickWorkImage(useCamera: boolean = false) {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        quality: 0.8,
-        allowsMultipleSelection: true,
-      });
+      const result = useCamera
+        ? await ImagePicker.launchCameraAsync({ quality: 0.8 })
+        : await ImagePicker.launchImageLibraryAsync({ quality: 0.8, allowsMultipleSelection: true });
       if (!result.canceled) {
         setWorkImages((prev) => [
           ...prev,
@@ -49,8 +50,12 @@ export default function TaskDetailScreen() {
         ]);
       }
     } catch (err: any) {
-      Alert.alert("Gallery Error", "Could not open gallery. Please check storage permissions in Settings.");
+      Alert.alert("Error", "Could not open camera/gallery. Check permissions in Settings.");
     }
+  }
+
+  function removeImage(index: number) {
+    setWorkImages((prev) => prev.filter((_, i) => i !== index));
   }
 
   async function submitWork() {
@@ -117,7 +122,21 @@ export default function TaskDetailScreen() {
           <Ionicons name="arrow-back" size={28} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Task Details</Text>
-        <View style={{ width: 28 }} />
+        {task?.status === "PENDING" && (
+          <TouchableOpacity
+            onPress={() => {
+              Alert.alert("Add Photo", "Choose source", [
+                { text: "Camera", onPress: () => pickWorkImage(true) },
+                { text: "Gallery", onPress: () => pickWorkImage(false) },
+                { text: "Cancel", style: "cancel" },
+              ]);
+            }}
+            style={{ width: 44, height: 44, justifyContent: "center", alignItems: "center" }}
+          >
+            <Ionicons name="add-circle" size={28} color={colors.primary} />
+          </TouchableOpacity>
+        )}
+        {task?.status !== "PENDING" && <View style={{ width: 28 }} />}
       </View>
 
       <ScrollView style={styles.content}>
@@ -132,7 +151,13 @@ export default function TaskDetailScreen() {
             <Text style={[styles.sectionLabel, { color: colors.text }]}>Upload Your Work</Text>
             <TouchableOpacity
               style={[styles.addImageBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={pickWorkImage}
+              onPress={() => {
+                Alert.alert("Add Photo", "Choose source", [
+                  { text: "Camera", onPress: () => pickWorkImage(true) },
+                  { text: "Gallery", onPress: () => pickWorkImage(false) },
+                  { text: "Cancel", style: "cancel" },
+                ]);
+              }}
             >
               <Ionicons name="add-circle" size={32} color={colors.primary} />
               <Text style={[styles.addImageText, { color: colors.primary }]}>Add Photos</Text>
@@ -140,7 +165,15 @@ export default function TaskDetailScreen() {
 
             <View style={styles.imageGrid}>
               {workImages.map((uri, i) => (
-                <Image key={i} source={{ uri }} style={styles.thumb} />
+                <TouchableOpacity key={i} onPress={() => setViewImage(uri)} style={styles.thumbWrap}>
+                  <Image source={{ uri }} style={styles.thumb} />
+                  <TouchableOpacity
+                    style={styles.removeBtn}
+                    onPress={() => removeImage(i)}
+                  >
+                    <Ionicons name="close-circle" size={22} color="#EF4444" />
+                  </TouchableOpacity>
+                </TouchableOpacity>
               ))}
             </View>
 
@@ -191,6 +224,17 @@ export default function TaskDetailScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      <Modal visible={!!viewImage} transparent animationType="fade" onRequestClose={() => setViewImage(null)}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={styles.modalClose} onPress={() => setViewImage(null)}>
+            <Ionicons name="close" size={32} color="#fff" />
+          </TouchableOpacity>
+          {viewImage && (
+            <Image source={{ uri: viewImage }} style={styles.modalImage} resizeMode="contain" />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -242,7 +286,32 @@ const styles = StyleSheet.create({
   },
   addImageText: { fontSize: 16, fontWeight: "600" },
   imageGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 },
+  thumbWrap: { position: "relative" },
   thumb: { width: 100, height: 100, borderRadius: 8 },
+  removeBtn: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    backgroundColor: "#fff",
+    borderRadius: 11,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalClose: {
+    position: "absolute",
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    padding: 8,
+  },
+  modalImage: {
+    width: "90%",
+    height: "80%",
+  },
   submitBtn: {
     padding: 16,
     borderRadius: 12,
