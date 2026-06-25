@@ -80,6 +80,10 @@ export default function QuestionsScreen() {
     return () => {
       stopWaveAnimation();
       Speech.stop();
+      if (recordingRef.current) {
+        recordingRef.current.stopAndUnloadAsync().catch(() => {});
+        recordingRef.current = null;
+      }
     };
   }, []);
 
@@ -179,10 +183,12 @@ export default function QuestionsScreen() {
     setSubmittingAnswer(true);
     const currentQuestion = question;
     const hasNextPromise = fetchNextQuestion();
-    api.post(
-      `/student/questions/${currentQuestion!.id}/answer`,
-      { answerText: answer }
-    ).catch(() => {});
+    if (currentQuestion) {
+      api.post(
+        `/student/questions/${currentQuestion.id}/answer`,
+        { answerText: answer }
+      ).catch(() => {});
+    }
     const hasNext = await hasNextPromise;
     if (!hasNext) {
       setQuestion(null);
@@ -212,10 +218,12 @@ export default function QuestionsScreen() {
       }
 
       const hasNextPromise = fetchNextQuestion();
-      api.post(
-        `/student/questions/${currentQuestion!.id}/answer-voice`,
-        formData
-      ).catch(() => {});
+      if (currentQuestion) {
+        api.post(
+          `/student/questions/${currentQuestion.id}/answer-voice`,
+          formData
+        ).catch(() => {});
+      }
       const hasNext = await hasNextPromise;
       if (!hasNext) {
         setQuestion(null);
@@ -233,10 +241,12 @@ export default function QuestionsScreen() {
     setSubmittingAnswer(true);
     const currentQuestion = question;
     const hasNextPromise = fetchNextQuestion();
-    api.post(
-      `/student/questions/${currentQuestion!.id}/answer`,
-      { answerText: answer.trim() }
-    ).catch(() => {});
+    if (currentQuestion) {
+      api.post(
+        `/student/questions/${currentQuestion.id}/answer`,
+        { answerText: answer.trim() }
+      ).catch(() => {});
+    }
     const hasNext = await hasNextPromise;
     if (!hasNext) {
       setQuestion(null);

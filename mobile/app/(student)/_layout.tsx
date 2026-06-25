@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { getStoredUser } from "../../services/auth";
+import { setOnUnauthorized } from "../../services/api";
 
 export default function StudentLayout() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    setOnUnauthorized(() => router.replace("/(auth)"));
     getStoredUser().then((user) => {
       if (!user || user.role !== "STUDENT") {
         router.replace("/(auth)");

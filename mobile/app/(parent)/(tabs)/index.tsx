@@ -11,7 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { Calendar } from "react-native-calendars";
-import api from "../../../services/api";
+import { cachedGet } from "../../../services/api";
 import { logout, getStoredUser } from "../../../services/auth";
 import { User } from "../../../types";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -59,11 +59,8 @@ export default function ParentDashboard() {
       const completed = tasks.filter((t: any) => t.status === "COMPLETED").length;
       let totalQ = 0, correctQ = 0;
       for (const t of tasks) {
-        for (const q of t.questions || []) {
-          totalQ++;
-          const a = q.answers?.[0];
-          if (a?.isCorrect) correctQ++;
-        }
+        totalQ += t.questionCount || 0;
+        correctQ += t.correctCount || 0;
       }
       return {
         ...child,
@@ -94,13 +91,13 @@ export default function ParentDashboard() {
 
   const fetchProgress = useCallback(async () => {
     try {
-      const { data } = await api.get("/parent/progress");
+      const { data } = await cachedGet("/parent/progress");
       setAllChildren(data.children || []);
 
       const marks: Record<string, any> = {};
       for (const child of data.children || []) {
         for (const t of child.tasks || []) {
-          const dateStr = t.sessionDate.split("T")[0];
+          const dateStr = t.sessionDate?.split("T")[0];
           if (!marks[dateStr]) {
             marks[dateStr] = {
               marked: true,

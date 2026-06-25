@@ -15,15 +15,17 @@ export async function notifyParentsOnTaskComplete(
     include: { parent: true },
   });
 
-  for (const link of links) {
-    if (link.parent.pushToken) {
-      await sendPushNotification(link.parent.pushToken, {
-        title: "Task Completed! 🎉",
-        body: `${task.subject || "Task"} - ${task.description.slice(0, 60)}`,
-        data: { studentId, taskId, sessionId: task.sessionId },
-      });
-    }
-  }
+  await Promise.allSettled(
+    links.map(async (link) => {
+      if (link.parent.pushToken) {
+        await sendPushNotification(link.parent.pushToken, {
+          title: "Task Completed! 🎉",
+          body: `${task.subject || "Task"} - ${task.description.slice(0, 60)}`,
+          data: { studentId, taskId, sessionId: task.sessionId },
+        });
+      }
+    })
+  );
 }
 
 export async function notifyParentsOnSessionComplete(studentId: string, sessionId: string) {
@@ -41,15 +43,17 @@ export async function notifyParentsOnSessionComplete(studentId: string, sessionI
     include: { parent: true },
   });
 
-  for (const link of links) {
-    if (link.parent.pushToken) {
-      await sendPushNotification(link.parent.pushToken, {
-        title: `${session.student.name} completed homework!`,
-        body: `${completed}/${total} tasks done for ${session.date.toLocaleDateString()}`,
-        data: { studentId, sessionId },
-      });
-    }
-  }
+  await Promise.allSettled(
+    links.map(async (link) => {
+      if (link.parent.pushToken) {
+        await sendPushNotification(link.parent.pushToken, {
+          title: `${session.student.name} completed homework!`,
+          body: `${completed}/${total} tasks done for ${session.date.toLocaleDateString()}`,
+          data: { studentId, sessionId },
+        });
+      }
+    })
+  );
 }
 
 async function sendPushNotification(

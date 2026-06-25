@@ -155,10 +155,12 @@ export async function submitTaskWork(
     },
   });
 
-  await prisma.task.update({
-    where: { id: taskId },
-    data: { status: "SUBMITTED" },
-  });
+  if (task.status !== "COMPLETED" && task.status !== "SUBMITTED") {
+    await prisma.task.update({
+      where: { id: taskId },
+      data: { status: "SUBMITTED" },
+    });
+  }
 
   return submission;
 }
@@ -179,68 +181,57 @@ export async function getStudentProgress(
   const sessions = await prisma.homeworkSession.findMany({
     where: { studentId, ...dateFilter },
     orderBy: { date: "desc" },
-    include: light ? {
+    include: {
       tasks: {
-        select: { id: true, status: true, subject: true, type: true, description: true },
-      },
-    } : {
-      tasks: {
-        include: { questions: { include: { answers: true } } },
+        select: { id: true, status: true, subject: true, type: true, description: true, orderIndex: true },
       },
     },
   });
 
   const totalSessions = sessions.length;
-  const totalTasks = sessions.flatMap((s) => s.tasks);
+  const allTasks = sessions.flatMap((s) => s.tasks);
+  const taskIds = allTasks.map((t) => t.id);
 
-  const completedTasks = totalTasks.filter(
-    (t) => t.status === "COMPLETED"
-  );
-  const completionRate = totalTasks.length
-    ? Math.round((completedTasks.length / totalTasks.length) * 100)
+  const completedTasks = allTasks.filter((t) => t.status === "COMPLETED");
+  const completionRate = allTasks.length
+    ? Math.round((completedTasks.length / allTasks.length) * 100)
     : 0;
 
-  const allAnswers = light ? [] : (totalTasks as any[]).flatMap((t) =>
-    (t.questions || []).flatMap((q: any) => q.answers || [])
-  );
-  const correctAnswers = allAnswers.filter((a: any) => a.isCorrect);
+  const [totalQ, questionCounts, correctAnswers] = await Promise.all([
+    prisma.question.count({ where: { taskId: { in: taskIds } } }),
+    prisma.question.groupBy({ by: ["taskId"], where: { taskId: { in: taskIds } }, _count: true }),
+    prisma.answer.findMany({
+      where: { question: { taskId: { in: taskIds } }, isCorrect: true },
+      select: { question: { select: { taskId: true } } },
+    }),
+  ]);
 
-  let accuracy = 0;
-  if (light) {
-    const taskIds = totalTasks.map((t) => t.id);
-    const [totalQ, correctQ] = await Promise.all([
-      prisma.question.count({ where: { taskId: { in: taskIds } } }),
-      prisma.answer.count({ where: { question: { taskId: { in: taskIds } }, isCorrect: true } }),
-    ]);
-    accuracy = totalQ > 0 ? Math.round((correctQ / totalQ) * 100) : 0;
-    var totalQuestions = totalQ;
-    var correctAnswersCount = correctQ;
-  } else {
-    accuracy = allAnswers.length
-      ? Math.round((correctAnswers.length / allAnswers.length) * 100)
-      : 0;
-    var totalQuestions = allAnswers.length;
-    var correctAnswersCount = correctAnswers.length;
+  const qCountMap: Record<string, number> = {};
+  for (const qc of questionCounts) qCountMap[qc.taskId] = qc._count;
+
+  const correctByTask: Record<string, number> = {};
+  for (const a of correctAnswers) {
+    const tid = a.question.taskId;
+    correctByTask[tid] = (correctByTask[tid] || 0) + 1;
   }
 
-  const subjectBreakdown: Record<string, { total: number; completed: number }> =
-    {};
-  for (const t of totalTasks) {
+  const accuracy = totalQ > 0 ? Math.round((correctAnswers.length / totalQ) * 100) : 0;
+
+  const subjectBreakdown: Record<string, { total: number; completed: number }> = {};
+  for (const t of allTasks) {
     const subj = t.subject || "Other";
-    if (!subjectBreakdown[subj])
-      subjectBreakdown[subj] = { total: 0, completed: 0 };
+    if (!subjectBreakdown[subj]) subjectBreakdown[subj] = { total: 0, completed: 0 };
     subjectBreakdown[subj].total++;
-    if (t.status === "COMPLETED")
-      subjectBreakdown[subj].completed++;
+    if (t.status === "COMPLETED") subjectBreakdown[subj].completed++;
   }
 
   return {
     totalSessions,
-    totalTasks: totalTasks.length,
+    totalTasks: allTasks.length,
     completedTasks: completedTasks.length,
     completionRate,
-    totalQuestions: totalQuestions,
-    correctAnswers: correctAnswersCount,
+    totalQuestions: totalQ,
+    correctAnswers: correctAnswers.length,
     accuracy,
     subjectBreakdown,
     recentSessions: sessions.slice(0, 7).map((s) => ({
@@ -250,7 +241,7 @@ export async function getStudentProgress(
       taskCount: s.tasks.length,
     })),
     tasks: sessions.flatMap((s) =>
-      (s.tasks as any[]).map((t) => ({
+      s.tasks.map((t) => ({
         id: t.id,
         description: t.description,
         subject: t.subject,
@@ -258,19 +249,8 @@ export async function getStudentProgress(
         status: t.status,
         sessionDate: s.date,
         sessionId: s.id,
-        questions: t.questions ? t.questions.map((q: any) => ({
-          id: q.id,
-          questionText: q.questionText,
-          type: q.type,
-          options: q.options,
-          answers: (q.answers || []).map((a: any) => ({
-            id: a.id,
-            answer: a.answerText,
-            isCorrect: a.isCorrect,
-            score: a.score,
-            feedback: a.feedback,
-          })),
-        })) : undefined,
+        questionCount: qCountMap[t.id] || 0,
+        correctCount: correctByTask[t.id] || 0,
       }))
     ),
   };

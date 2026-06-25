@@ -10,7 +10,7 @@ import {
 import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { Calendar } from "react-native-calendars";
-import api from "../../../services/api";
+import { cachedGet } from "../../../services/api";
 import { StudentProgress } from "../../../types";
 import { useTheme } from "../../../contexts/ThemeContext";
 
@@ -32,7 +32,7 @@ export default function ProgressScreen() {
   function updateMarkedDates(dateStr: string | null, taskList: any[]) {
     const marks: Record<string, any> = {};
     for (const t of taskList) {
-      const d = t.sessionDate.split("T")[0];
+      const d = t.sessionDate?.split("T")[0];
       if (!marks[d]) {
         marks[d] = {
           marked: true,
@@ -65,7 +65,7 @@ export default function ProgressScreen() {
   const fetchProgress = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: result } = await api.get<StudentProgress>("/student/history");
+      const { data: result } = await cachedGet<StudentProgress>("/student/history");
 
       const all = result.tasks || [];
       all.sort(
@@ -101,12 +101,8 @@ export default function ProgressScreen() {
       if (!subjectBreakdown[subj]) subjectBreakdown[subj] = { total: 0, completed: 0 };
       subjectBreakdown[subj].total++;
       if (t.status === "COMPLETED") subjectBreakdown[subj].completed++;
-
-      for (const q of t.questions || []) {
-        totalQuestions++;
-        const a = q.answers?.[0];
-        if (a?.isCorrect) correctAnswers++;
-      }
+      totalQuestions += t.questionCount || 0;
+      correctAnswers += t.correctCount || 0;
     }
 
     return {

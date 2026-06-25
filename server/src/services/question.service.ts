@@ -2,6 +2,13 @@ import prisma from "../utils/prisma";
 import * as groqService from "./groq.service";
 
 const recentStyles = new Map<string, string[]>();
+const STYLE_CACHE_MAX = 1000;
+setInterval(() => {
+  if (recentStyles.size > STYLE_CACHE_MAX) {
+    const keys = [...recentStyles.keys()].slice(0, recentStyles.size - STYLE_CACHE_MAX);
+    for (const k of keys) recentStyles.delete(k);
+  }
+}, 60_000);
 
 export async function generateAndSaveQuestions(taskId: string) {
   const existing = await prisma.question.findMany({ where: { taskId } });
@@ -39,18 +46,32 @@ export async function generateAndSaveQuestions(taskId: string) {
   return saved;
 }
 
-export async function getNextQuestion(taskId: string, studentId: string) {
-  const questions = await prisma.question.findMany({
-    where: { taskId },
-    include: { answers: { where: { studentId } } },
+export type NextQuestionResult = {
+  id: string;
+  questionText: string;
+  type: string;
+  options?: string[];
+  currentIndex: number;
+  totalCount: number;
+} | null | { ready: false };
+
+export async function getNextQuestion(taskId: string, studentId: string): Promise<NextQuestionResult> {
+  const totalCount = await prisma.question.count({ where: { taskId } });
+  if (totalCount === 0) return { ready: false };
+
+  const answered = await prisma.answer.findMany({
+    where: { question: { taskId }, studentId },
+    select: { questionId: true },
+  });
+  const answeredIds = new Set(answered.map((a) => a.questionId));
+
+  if (answeredIds.size >= totalCount) return null;
+
+  const unanswered = await prisma.question.findMany({
+    where: { taskId, id: { notIn: [...answeredIds] } },
     orderBy: { createdAt: "asc" },
   });
 
-  const unanswered = questions.filter(
-    (q) => !q.answers || q.answers.length === 0
-  );
-
-  if (questions.length === 0) return { ready: false } as any;
   if (unanswered.length === 0) return null;
 
   const key = `${taskId}-${studentId}`;
@@ -65,21 +86,18 @@ export async function getNextQuestion(taskId: string, studentId: string) {
 
   const pool = available.length > 0 ? available : unanswered;
 
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const shuffled = shuffleArray(pool);
   const selected = shuffled[0];
 
   used.push(selected.type);
   if (used.length > 3) used.shift();
-
-  const totalCount = questions.length;
-  const answeredCount = totalCount - unanswered.length;
 
   return {
     id: selected.id,
     questionText: selected.questionText,
     type: selected.type,
     options: selected.type === "MCQ" ? shuffleArray(selected.options as string[] || []) : undefined,
-    currentIndex: answeredCount + 1,
+    currentIndex: answeredIds.size + 1,
     totalCount,
   };
 }
@@ -94,6 +112,13 @@ export async function submitAnswer(
     where: { id: questionId },
   });
   if (!question) throw new Error("Question not found");
+
+  const existing = await prisma.answer.findFirst({
+    where: { questionId, studentId },
+  });
+  if (existing) {
+    return { answer: existing, isCorrect: existing.isCorrect, score: existing.score, correctAnswer: question.correctAnswer, explanation: existing.feedback };
+  }
 
   const answer = await prisma.answer.create({
     data: {
@@ -119,7 +144,9 @@ export async function submitAnswer(
       data: { status: "COMPLETED" },
     });
     recentStyles.delete(`${question.taskId}-${studentId}`);
-    evaluateTaskAnswers(question.taskId, studentId).catch(() => {});
+    evaluateTaskAnswers(question.taskId, studentId).catch((err) => {
+      console.error("Background evaluation failed:", err.message);
+    });
   }
 
   return { answer, isCorrect: false, score: 0, correctAnswer: question.correctAnswer, explanation: undefined };
@@ -218,7 +245,9 @@ async function evaluateTaskAnswers(taskId: string, studentId: string) {
           },
         });
       }
-    } catch {}
+    } catch (err) {
+      console.error(`Evaluation failed for answer ${answer.id}:`, err);
+    }
   }
 }
 

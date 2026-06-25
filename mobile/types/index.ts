@@ -32,6 +32,8 @@ export interface Task {
   sessionStatus?: string;
   submission?: Submission;
   questions?: Question[];
+  questionCount?: number;
+  correctCount?: number;
 }
 
 export interface Submission {

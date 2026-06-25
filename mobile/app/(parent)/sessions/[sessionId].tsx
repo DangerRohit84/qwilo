@@ -99,7 +99,7 @@ export default function SessionDetailScreen() {
               <>
                 <Text style={[styles.subSection, { color: colors.text }]}>Submitted Work</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {(task.submission.images as string[]).map((url, i) => (
+                  {(Array.isArray(task.submission.images) ? (task.submission.images as string[]) : []).map((url, i) => (
                     <Image
                       key={i}
                       source={{ uri: url }}

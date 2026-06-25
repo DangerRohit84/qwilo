@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { login, register } from "../../services/auth";
-import api from "../../services/api";
+import { registerForPushNotifications } from "../../services/notifications";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export default function AuthScreen() {
@@ -25,9 +25,6 @@ export default function AuthScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    api.get("/health").catch(() => {});
-  }, []);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -50,6 +47,7 @@ export default function AuthScreen() {
     try {
       if (isLogin) {
         const result = await login(form.email, form.password);
+        registerForPushNotifications().catch(() => {});
         router.replace(result.user.role === "PARENT" ? "/(parent)" : "/(student)");
       } else {
         const result = await register(
@@ -59,6 +57,7 @@ export default function AuthScreen() {
           form.role,
           form.parentEmail || undefined
         );
+        registerForPushNotifications().catch(() => {});
         router.replace(result.user.role === "PARENT" ? "/(parent)" : "/(student)");
       }
     } catch (err: any) {
@@ -195,12 +194,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "800",
-    textAlign: "center",
-    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,

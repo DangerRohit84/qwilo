@@ -10,6 +10,12 @@ router.post("/register", async (req: Request, res: Response) => {
     if (!email || !password || !name || !role) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+    if (typeof email !== "string" || !email.includes("@") || email.length > 254) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+    if (typeof password !== "string" || password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
     if (!["STUDENT", "PARENT", "TEACHER"].includes(role)) {
       return res.status(400).json({ error: "Invalid role" });
     }

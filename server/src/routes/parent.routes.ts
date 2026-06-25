@@ -51,7 +51,7 @@ router.get("/progress", async (req: AuthRequest, res: Response) => {
       recentSessions: allSessions.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -67,7 +67,7 @@ router.get("/children", async (req: AuthRequest, res: Response) => {
     });
     res.json(links.map((l: { student: { id: string; name: string; email: string } }) => l.student));
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -87,7 +87,7 @@ router.get("/children/:id/progress", async (req: AuthRequest, res: Response) => 
     );
     res.json(progress);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -103,39 +103,72 @@ router.get("/children/:id/sessions", async (req: AuthRequest, res: Response) => 
       orderBy: { date: "desc" },
       include: {
         tasks: {
-          include: { questions: { include: { answers: true } } },
+          select: { id: true, status: true, subject: true, type: true, description: true, orderIndex: true },
           orderBy: { orderIndex: "asc" },
         },
       },
     });
-    res.json(sessions);
+
+    const allTaskIds = sessions.flatMap((s) => s.tasks.map((t) => t.id));
+    const [questionCounts, correctAnswers] = await Promise.all([
+      prisma.question.groupBy({ by: ["taskId"], where: { taskId: { in: allTaskIds } }, _count: true }),
+      prisma.answer.findMany({
+        where: { question: { taskId: { in: allTaskIds } }, isCorrect: true },
+        select: { question: { select: { taskId: true } } },
+      }),
+    ]);
+
+    const qCountMap: Record<string, number> = {};
+    for (const qc of questionCounts) qCountMap[qc.taskId] = qc._count;
+
+    const correctByTask: Record<string, number> = {};
+    for (const a of correctAnswers) {
+      const tid = a.question.taskId;
+      correctByTask[tid] = (correctByTask[tid] || 0) + 1;
+    }
+
+    const result = sessions.map((s) => ({
+      ...s,
+      tasks: s.tasks.map((t: any) => ({
+        ...t,
+        questionCount: qCountMap[t.id] || 0,
+        correctCount: correctByTask[t.id] || 0,
+      })),
+    }));
+
+    res.json(result);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
 router.get("/sessions/:id", async (req: AuthRequest, res: Response) => {
   try {
+    const preSession = await prisma.homeworkSession.findUnique({
+      where: { id: req.params.id as string },
+      select: { studentId: true },
+    });
+    if (!preSession) return res.status(404).json({ error: "Session not found" });
+
+    const link = await prisma.studentParent.findFirst({
+      where: { parentId: req.user!.id, studentId: preSession.studentId },
+    });
+    if (!link) return res.status(403).json({ error: "Not your child" });
+
     const session = await prisma.homeworkSession.findUnique({
       where: { id: req.params.id as string },
       include: {
         student: { select: { id: true, name: true } },
         tasks: {
-          include: { submission: true, questions: { include: { answers: true } } },
+          include: { submission: true, questions: { include: { answers: { where: { studentId: preSession.studentId } } } } },
           orderBy: { orderIndex: "asc" },
         },
       },
     });
-    if (!session) return res.status(404).json({ error: "Session not found" });
-
-    const link = await prisma.studentParent.findFirst({
-      where: { parentId: req.user!.id, studentId: session.student.id },
-    });
-    if (!link) return res.status(403).json({ error: "Not your child" });
 
     res.json(session);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 

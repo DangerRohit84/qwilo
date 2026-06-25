@@ -3,6 +3,7 @@ import { View, ActivityIndicator, TouchableOpacity, StyleSheet, Platform, Animat
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { getStoredUser } from "../../services/auth";
+import { setOnUnauthorized } from "../../services/api";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export default function ParentLayout() {
@@ -10,8 +11,10 @@ export default function ParentLayout() {
   const { theme, toggle, colors } = useTheme();
   const [ready, setReady] = useState(false);
   const rotateAnim = useRef(new Animated.Value(0)).current;
+  const toggleCount = useRef(0);
 
   useEffect(() => {
+    setOnUnauthorized(() => router.replace("/(auth)"));
     getStoredUser().then((user) => {
       if (!user || user.role !== "PARENT") {
         router.replace("/(auth)");
@@ -22,8 +25,9 @@ export default function ParentLayout() {
   }, []);
 
   function handleToggle() {
+    toggleCount.current += 1;
     Animated.timing(rotateAnim, {
-      toValue: rotateAnim._value + 1,
+      toValue: toggleCount.current,
       duration: 500,
       useNativeDriver: true,
     }).start();
@@ -33,6 +37,7 @@ export default function ParentLayout() {
   const rotateInterpolate = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
+    extrapolate: "extend",
   });
 
   if (!ready) {

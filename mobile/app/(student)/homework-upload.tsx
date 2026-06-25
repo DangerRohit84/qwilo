@@ -12,7 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import api from "../../services/api";
+import api, { invalidateCache } from "../../services/api";
 
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -24,6 +24,11 @@ export default function HomeworkUploadScreen() {
 
   async function pickImage() {
     try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Required", "Camera permission is needed to take photos. Please enable it in Settings.");
+        return;
+      }
       const result = await ImagePicker.launchCameraAsync({
         quality: 0.8,
         allowsEditing: true,
@@ -38,6 +43,11 @@ export default function HomeworkUploadScreen() {
 
   async function pickFromGallery() {
     try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Required", "Storage permission is needed to access photos. Please enable it in Settings.");
+        return;
+      }
       const result = await ImagePicker.launchImageLibraryAsync({
         quality: 0.8,
         allowsEditing: true,
@@ -72,6 +82,8 @@ export default function HomeworkUploadScreen() {
 
       await api.post(`/student/homework/${session.id}/process`);
 
+      invalidateCache("student/tasks");
+      invalidateCache("student/history");
       router.replace("/(student)/(tabs)");
     } catch (err: any) {
       const msg =

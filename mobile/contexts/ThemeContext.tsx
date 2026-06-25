@@ -57,10 +57,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   function toggle() {
     setTheme((prev) => {
       const next = prev === "light" ? "dark" : "light";
-      storeData("theme", next);
       return next;
     });
   }
+
+  useEffect(() => {
+    storeData("theme", theme);
+  }, [theme]);
 
   return (
     <ThemeContext.Provider

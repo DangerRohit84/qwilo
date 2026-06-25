@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import api from "../../../services/api";
+import { cachedGet } from "../../../services/api";
 import { getStoredUser } from "../../../services/auth";
 import { TaskListResponse, User } from "../../../types";
 
@@ -27,7 +27,7 @@ export default function StudentDashboard() {
 
   async function fetchTasks() {
     try {
-      const { data: tasks } = await api.get<TaskListResponse>(
+      const { data: tasks } = await cachedGet<TaskListResponse>(
         "/student/tasks"
       );
       setData(tasks);

@@ -12,28 +12,34 @@ export async function register(
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw new Error("Email already registered");
 
+  if (password.length < 6) throw new Error("Password must be at least 6 characters");
+
   const passwordHash = await bcrypt.hash(password, 12);
 
-  const user = await prisma.user.create({
-    data: { email, passwordHash, name, role },
+  const result = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: { email, passwordHash, name, role },
+    });
+
+    if (role === "STUDENT") {
+      if (!parentEmail) throw new Error("Parent email is required for student registration");
+
+      const parent = await tx.user.findUnique({
+        where: { email: parentEmail },
+      });
+      if (!parent || parent.role !== "PARENT") {
+        throw new Error("Parent not found with that email");
+      }
+      await tx.studentParent.create({
+        data: { studentId: user.id, parentId: parent.id },
+      });
+    }
+
+    return user;
   });
 
-  if (role === "STUDENT") {
-    if (!parentEmail) throw new Error("Parent email is required for student registration");
-
-    const parent = await prisma.user.findUnique({
-      where: { email: parentEmail },
-    });
-    if (!parent || parent.role !== "PARENT") {
-      throw new Error("Parent not found with that email");
-    }
-    await prisma.studentParent.create({
-      data: { studentId: user.id, parentId: parent.id },
-    });
-  }
-
-  const token = generateToken(user.id, user.email, user.role);
-  return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
+  const token = generateToken(result.id, result.email, result.role);
+  return { token, user: { id: result.id, email: result.email, name: result.name, role: result.role } };
 }
 
 export async function login(email: string, password: string) {
@@ -57,6 +63,9 @@ export async function getProfile(userId: string) {
 }
 
 export async function updatePushToken(userId: string, pushToken: string) {
+  if (typeof pushToken !== "string" || pushToken.length > 500) {
+    throw new Error("Invalid push token");
+  }
   return prisma.user.update({
     where: { id: userId },
     data: { pushToken },
@@ -64,7 +73,9 @@ export async function updatePushToken(userId: string, pushToken: string) {
 }
 
 function generateToken(id: string, email: string, role: string) {
-  return jwt.sign({ id, email, role }, process.env.JWT_SECRET!, {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET not configured");
+  return jwt.sign({ id, email, role }, secret, {
     expiresIn: (process.env.JWT_EXPIRES_IN || "7d") as jwt.SignOptions["expiresIn"],
   });
 }

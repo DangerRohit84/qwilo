@@ -4,7 +4,11 @@ import fs from "fs";
 
 dotenv.config();
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const apiKey = process.env.GROQ_API_KEY;
+if (!apiKey) {
+  console.error("GROQ_API_KEY is not set in environment variables");
+}
+const groq = new Groq({ apiKey });
 
 function resizeUrl(url: string): string {
   return url.replace(

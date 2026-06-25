@@ -10,7 +10,7 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { Calendar } from "react-native-calendars";
-import api from "../../../services/api";
+import { cachedGet } from "../../../services/api";
 import { useTheme } from "../../../contexts/ThemeContext";
 
 function filterTasksByDate(tasks: any[], startDate?: Date, endDate?: Date) {
@@ -38,11 +38,8 @@ function computeStats(tasks: any[]) {
     subjectBreakdown[subj].total++;
     if (t.status === "COMPLETED") subjectBreakdown[subj].completed++;
 
-    for (const q of t.questions || []) {
-      totalQuestions++;
-      const a = q.answers?.[0];
-      if (a?.isCorrect) correctAnswers++;
-    }
+    totalQuestions += t.questionCount || 0;
+    correctAnswers += t.correctCount || 0;
   }
 
   return {
@@ -60,7 +57,7 @@ function computeStats(tasks: any[]) {
 export default function ChildProgressScreen() {
   const router = useRouter();
   const { theme, colors } = useTheme();
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [allTasks, setAllTasks] = useState<any[]>([]);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -74,15 +71,19 @@ export default function ChildProgressScreen() {
   }
 
   useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
-        const { data: result } = await api.get(`/parent/children/${id}/progress`);
+        const { data: result } = await cachedGet(`/parent/children/${id}/progress`);
         setAllTasks(result.tasks || []);
 
         const todayStr = getTodayStr();
         const marks: Record<string, any> = {};
         for (const t of result.tasks || []) {
-          const dateStr = t.sessionDate.split("T")[0];
+          const dateStr = t.sessionDate?.split("T")[0];
           if (!marks[dateStr]) {
             marks[dateStr] = {
               marked: true,
@@ -116,7 +117,7 @@ export default function ChildProgressScreen() {
   function updateMarkedDates(dateStr: string | null) {
     const marks: Record<string, any> = {};
     for (const t of allTasks) {
-      const d = t.sessionDate.split("T")[0];
+      const d = t.sessionDate?.split("T")[0];
       if (!marks[d]) {
         marks[d] = {
           marked: true,

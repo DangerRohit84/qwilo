@@ -18,7 +18,7 @@ async function verifyTaskOwnership(taskId: string, studentId: string): Promise<b
     where: { id: taskId },
     include: { session: { select: { studentId: true } } },
   });
-  return task?.session.studentId === studentId;
+  return !!task?.session && task.session.studentId === studentId;
 }
 
 async function verifyQuestionOwnership(questionId: string, studentId: string): Promise<boolean> {
@@ -26,7 +26,7 @@ async function verifyQuestionOwnership(questionId: string, studentId: string): P
     where: { id: questionId },
     include: { task: { include: { session: { select: { studentId: true } } } } },
   });
-  return question?.task.session.studentId === studentId;
+  return !!question?.task?.session && question.task.session.studentId === studentId;
 }
 
 router.use(authenticate);
@@ -47,7 +47,7 @@ router.post(
       );
       res.status(201).json(session);
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(500).json({ error: err.message });
     }
   }
 );
@@ -83,7 +83,7 @@ router.post(
       });
       res.json({ message: "Processing started" });
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(500).json({ error: err.message });
     }
   }
 );
@@ -103,7 +103,7 @@ router.get(
         taskCount: session.tasks.length,
       });
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(500).json({ error: err.message });
     }
   }
 );
@@ -126,7 +126,7 @@ router.get("/tasks", async (req: AuthRequest, res: Response) => {
     );
     res.json(tasks);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -138,22 +138,15 @@ router.get("/tasks/:id", async (req: AuthRequest, res: Response) => {
       include: {
         session: { select: { date: true, studentId: true } },
         submission: true,
-        questions: {
-          include: {
-            answers: {
-              where: { studentId: req.user!.id },
-              take: 1,
-            },
-          },
-        },
+        _count: { select: { questions: true } },
       },
     });
     if (!task || task.session.studentId !== req.user!.id) {
       return res.status(404).json({ error: "Task not found" });
     }
-    res.json(task);
+    res.json({ ...task, questionCount: task._count.questions });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -185,7 +178,7 @@ router.post(
 
       res.json({ submission, questionCount: "pending" });
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(500).json({ error: err.message });
     }
   }
 );
@@ -306,7 +299,7 @@ router.get(
       }
       res.json(results);
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(500).json({ error: err.message });
     }
   }
 );
@@ -326,12 +319,12 @@ router.get(
       if (!question) {
         return res.json({ done: true, message: "All questions answered!" });
       }
-      if ((question as any).ready === false) {
+      if ("ready" in question && question.ready === false) {
         return res.json({ ready: false });
       }
       res.json(question);
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(500).json({ error: err.message });
     }
   }
 );
@@ -345,6 +338,9 @@ router.post(
         return res.status(403).json({ error: "Forbidden" });
       }
       const { answerText } = req.body;
+      if (answerText !== undefined && (typeof answerText !== "string" || answerText.length > 5000)) {
+        return res.status(400).json({ error: "Invalid answer text" });
+      }
       const result = await questionService.submitAnswer(
         questionId,
         req.user!.id,
@@ -369,7 +365,7 @@ router.post(
 
       res.json(result);
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(500).json({ error: err.message });
     }
   }
 );
@@ -423,7 +419,7 @@ router.post(
 
       res.json(result);
     } catch (err: any) {
-      res.status(400).json({ error: err.message });
+      res.status(500).json({ error: err.message });
     }
   }
 );
@@ -441,7 +437,7 @@ router.get("/history", async (req: AuthRequest, res: Response) => {
     );
     res.json(progress);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 

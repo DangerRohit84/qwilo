@@ -14,7 +14,7 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import api from "../../../../services/api";
+import api, { invalidateCache } from "../../../../services/api";
 import { Task } from "../../../../types";
 import { useTheme } from "../../../../contexts/ThemeContext";
 
@@ -106,6 +106,7 @@ export default function TaskDetailScreen() {
         formData
       );
 
+      invalidateCache("student/tasks");
       router.push(`/(student)/tasks/${id}/questions`);
     } catch (err: any) {
       console.log("Submit error:", err.response?.status, err.response?.data, err.message);
@@ -239,7 +240,7 @@ export default function TaskDetailScreen() {
         ) : null}
       </ScrollView>
 
-      {task.status === "COMPLETED" && task.questions?.some(q => q.answers?.length) && (
+      {task.status === "COMPLETED" && (task.questionCount || 0) > 0 && (
         <View style={[styles.bottomBar, { backgroundColor: colors.card }]}>
           <TouchableOpacity
             style={[styles.reviewBtn, { backgroundColor: colors.primary }]}

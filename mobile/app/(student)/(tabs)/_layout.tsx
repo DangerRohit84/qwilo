@@ -7,10 +7,12 @@ import { useTheme } from "../../../contexts/ThemeContext";
 export default function TabsLayout() {
   const { theme, toggle, colors } = useTheme();
   const rotateAnim = useRef(new Animated.Value(0)).current;
+  const toggleCount = useRef(0);
 
   function handleToggle() {
+    toggleCount.current += 1;
     Animated.timing(rotateAnim, {
-      toValue: rotateAnim.__getValue() + 1,
+      toValue: toggleCount.current,
       duration: 500,
       useNativeDriver: true,
     }).start();
@@ -20,6 +22,7 @@ export default function TabsLayout() {
   const spin = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
+    extrapolate: "extend",
   });
 
   return (
